@@ -11,6 +11,8 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { X, ChevronDown, ChevronRight } from 'lucide-react-native';
 import { Filters, PropertyType, Transaction } from '../../types/listing';
@@ -84,7 +86,11 @@ export function FilterSheetModal({
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.backdrop}>
+      <KeyboardAvoidingView
+        style={styles.backdrop}
+        behavior="padding"
+        keyboardVerticalOffset={Platform.OS === 'android' ? 12 : 0}
+      >
         <View style={styles.sheet}>
           {/* Header : Filtres + bouton X circulaire */}
           <View style={styles.header}>
@@ -415,7 +421,7 @@ export function FilterSheetModal({
             </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

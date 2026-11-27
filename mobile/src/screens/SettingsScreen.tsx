@@ -12,6 +12,8 @@ import {
   Switch,
   StyleSheet,
   Alert,
+  Modal,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -26,6 +28,12 @@ import {
   Info,
   ChevronRight,
   ShieldCheck,
+  X,
+  Search,
+  Home,
+  Scale,
+  Calculator,
+  MessageCircle,
 } from 'lucide-react-native';
 
 import { useLang } from '../i18n/LangContext';
@@ -85,6 +93,7 @@ export function SettingsScreen() {
 
   const [priceAlerts, setPriceAlerts] = useState(true);
   const [newListingsAlerts, setNewListingsAlerts] = useState(true);
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   const handleClearCache = () => {
     Alert.alert(
@@ -265,17 +274,152 @@ export function SettingsScreen() {
           />
           <View style={styles.divider} />
           <SettingRow
-            icon={<Info color={colors.textMuted} size={18} strokeWidth={2} />}
-            iconBg="#F1F5F9"
-            title="IMMO DU LETCH"
+            icon={<Info color={colors.navy} size={18} strokeWidth={2} />}
+            iconBg="#EFF6FF"
+            title={isFr ? 'À propos d’IMMO DU LETCH' : 'About IMMO DU LETCH'}
             subtitle={
               isFr
-                ? 'Version 1.0.0 · Cameroun (Douala, Yaoundé, Kribi)'
-                : 'Version 1.0.0 · Cameroon (Douala, Yaoundé, Kribi)'
+                ? 'Découvrir l’application et ses services · v1.0.0'
+                : 'Learn about the app and services · v1.0.0'
             }
+            onPress={() => setAboutOpen(true)}
           />
         </View>
       </ScrollView>
+
+      {/* Modal À propos */}
+      <Modal
+        visible={aboutOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setAboutOpen(false)}
+      >
+        <View style={styles.aboutOverlay}>
+          <View style={styles.aboutCard}>
+            <View style={styles.aboutHeader}>
+              <Text style={styles.aboutHeaderTitle}>
+                {isFr ? 'À propos' : 'About'}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setAboutOpen(false)}
+                style={styles.aboutCloseBtn}
+              >
+                <X size={18} color={colors.navy} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View style={styles.aboutHero}>
+                <Image
+                  source={require('../../immo.png')}
+                  style={styles.aboutLogo}
+                  resizeMode="contain"
+                />
+                <Text style={styles.aboutVersion}>Version 1.0.0 · Cameroun</Text>
+                <Text style={styles.aboutTagline}>
+                  {isFr
+                    ? 'Votre plateforme immobilière de confiance pour acheter, louer ou publier un bien au Cameroun (Douala, Yaoundé, Kribi).'
+                    : 'Your trusted real estate platform to buy, rent, or list properties in Cameroon (Douala, Yaoundé, Kribi).'}
+                </Text>
+              </View>
+
+              <Text style={styles.aboutSectionTitle}>
+                {isFr ? 'Comment l’app vous aide au quotidien' : 'How the app helps you'}
+              </Text>
+
+              <View style={styles.aboutFeatureRow}>
+                <View style={styles.aboutFeatureIcon}>
+                  <Search size={16} color={colors.navy} />
+                </View>
+                <View style={styles.aboutFeatureText}>
+                  <Text style={styles.aboutFeatureTitle}>
+                    {isFr ? 'Recherche ciblée & filtres avancés' : 'Targeted search & filters'}
+                  </Text>
+                  <Text style={styles.aboutFeatureDesc}>
+                    {isFr
+                      ? 'Filtrez par transaction (achat/location), ville, quartier, budget, surface, équipements et documents fonciers.'
+                      : 'Filter by transaction, city, district, budget, area, amenities, and legal documents.'}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.aboutFeatureRow}>
+                <View style={styles.aboutFeatureIcon}>
+                  <Scale size={16} color={colors.navy} />
+                </View>
+                <View style={styles.aboutFeatureText}>
+                  <Text style={styles.aboutFeatureTitle}>
+                    {isFr ? 'Comparateur intelligent' : 'Smart comparison'}
+                  </Text>
+                  <Text style={styles.aboutFeatureDesc}>
+                    {isFr
+                      ? 'Comparez jusqu’à 3 biens similaires côte à côte (prix, m², équipements) pour faire le meilleur choix.'
+                      : 'Compare up to 3 similar properties side by side (price, area, amenities).'}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.aboutFeatureRow}>
+                <View style={styles.aboutFeatureIcon}>
+                  <Calculator size={16} color={colors.navy} />
+                </View>
+                <View style={styles.aboutFeatureText}>
+                  <Text style={styles.aboutFeatureTitle}>
+                    {isFr ? 'Simulateur de mensualité' : 'Monthly payment simulator'}
+                  </Text>
+                  <Text style={styles.aboutFeatureDesc}>
+                    {isFr
+                      ? 'Estimez votre financement immobilier directement sur les fiches de biens à vendre.'
+                      : 'Estimate your mortgage financing directly on property sale pages.'}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.aboutFeatureRow}>
+                <View style={styles.aboutFeatureIcon}>
+                  <Home size={16} color={colors.navy} />
+                </View>
+                <View style={styles.aboutFeatureText}>
+                  <Text style={styles.aboutFeatureTitle}>
+                    {isFr ? 'Dépôt d’annonces simplifié' : 'Easy listing submission'}
+                  </Text>
+                  <Text style={styles.aboutFeatureDesc}>
+                    {isFr
+                      ? 'Publiez votre villa, appartement, studio, terrain ou bureau en quelques clics et gérez vos favoris hors-ligne.'
+                      : 'Post your villa, apartment, studio, land, or office in a few taps and access favorites offline.'}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.aboutFeatureRow}>
+                <View style={styles.aboutFeatureIcon}>
+                  <MessageCircle size={16} color={colors.navy} />
+                </View>
+                <View style={styles.aboutFeatureText}>
+                  <Text style={styles.aboutFeatureTitle}>
+                    {isFr ? 'Contact direct annonceur' : 'Direct advertiser contact'}
+                  </Text>
+                  <Text style={styles.aboutFeatureDesc}>
+                    {isFr
+                      ? 'Appelez ou envoyez une demande de visite en un clic depuis chaque annonce.'
+                      : 'Call or send a visit request in one tap from any listing.'}
+                  </Text>
+                </View>
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.aboutOkBtn}
+              onPress={() => setAboutOpen(false)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.aboutOkText}>
+                {isFr ? 'Compris' : 'Got it'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -376,6 +520,112 @@ const styles = StyleSheet.create({
   notifBadgeText: {
     color: '#FFFFFF',
     fontSize: 11,
+    fontWeight: '800',
+  },
+  aboutOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(7, 31, 73, 0.55)',
+    justifyContent: 'flex-end',
+  },
+  aboutCard: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 18,
+    paddingTop: 16,
+    paddingBottom: 24,
+    maxHeight: '85%',
+  },
+  aboutHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  aboutHeaderTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.navy,
+  },
+  aboutCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  aboutHero: {
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 16,
+  },
+  aboutLogo: {
+    width: 120,
+    height: 44,
+    marginBottom: 6,
+  },
+  aboutVersion: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.gold,
+    marginBottom: 8,
+  },
+  aboutTagline: {
+    fontSize: 13,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 19,
+  },
+  aboutSectionTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.navy,
+    marginBottom: 12,
+  },
+  aboutFeatureRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    marginBottom: 14,
+  },
+  aboutFeatureIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  aboutFeatureText: {
+    flex: 1,
+  },
+  aboutFeatureTitle: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: colors.navy,
+    marginBottom: 2,
+  },
+  aboutFeatureDesc: {
+    fontSize: 12.5,
+    color: colors.textMuted,
+    lineHeight: 18,
+  },
+  aboutOkBtn: {
+    backgroundColor: colors.gold,
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  aboutOkText: {
+    color: colors.navy,
+    fontSize: 15,
     fontWeight: '800',
   },
 });

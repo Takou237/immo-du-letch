@@ -360,6 +360,8 @@ const styles = StyleSheet.create({
   },
   sortWrapper: {
     height: 42,
+    flexGrow: 0,
+    flexShrink: 0,
   },
   sortScroll: {
     paddingHorizontal: 16,
@@ -434,7 +436,9 @@ const styles = StyleSheet.create({
     color: colors.danger,
   },
   activeChipsBar: {
-    maxHeight: 38,
+    height: 36,
+    flexGrow: 0,
+    flexShrink: 0,
     marginBottom: 6,
   },
   activeChipsScroll: {
@@ -449,7 +453,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.goldSoft,
     borderRadius: 8,
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingVertical: 6,
   },
   activeChipText: {
     color: colors.navy,

@@ -12,6 +12,8 @@ import {
   ScrollView,
   StyleSheet,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -188,11 +190,17 @@ export function ProfileScreen({ navigation }: Props) {
   if (!user) {
     return (
       <SafeAreaView style={styles.authBackdrop} edges={['top', 'bottom']}>
-        <ScrollView
-          contentContainerStyle={styles.authScrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+        <KeyboardAvoidingView
+          style={styles.scroll}
+          behavior="padding"
+          keyboardVerticalOffset={Platform.OS === 'android' ? 20 : 0}
         >
+          <ScrollView
+            contentContainerStyle={styles.authScrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            automaticallyAdjustKeyboardInsets
+          >
           <View style={styles.authCard}>
             {/* Header carte */}
             <View style={styles.authHeaderRow}>
@@ -501,7 +509,8 @@ export function ProfileScreen({ navigation }: Props) {
               </View>
             )}
           </View>
-        </ScrollView>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     );
   }
@@ -519,7 +528,18 @@ export function ProfileScreen({ navigation }: Props) {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView
+        style={styles.scroll}
+        behavior="padding"
+        keyboardVerticalOffset={Platform.OS === 'android' ? 20 : 0}
+      >
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
+        >
         <View style={styles.profileBanner}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{user.name.slice(0, 2).toUpperCase()}</Text>
@@ -599,7 +619,8 @@ export function ProfileScreen({ navigation }: Props) {
             <Text style={styles.submitGoldText}>{t.common.save}</Text>
           </TouchableOpacity>
         </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
