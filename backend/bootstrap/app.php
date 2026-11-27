@@ -16,6 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Trust Railway reverse proxy so HTTPS scheme & client IP are detected accurately
+        $middleware->trustProxies(at: '*');
         // Allow CORS for API routes — FRONTEND_URL is set in Railway env vars
         $middleware->prepend(HandleCors::class);
         $middleware->alias([

@@ -5,11 +5,7 @@ nixPkgs = ["php83", "php83Extensions.pdo", "php83Extensions.pdo_pgsql", "php83Ex
 cmds = ["composer install --no-dev --optimize-autoloader --no-interaction"]
 
 [phases.build]
-cmds = [
-  "php artisan config:cache",
-  "php artisan route:cache",
-  "php artisan view:cache"
-]
+cmds = ["php artisan config:clear"]
 
 [start]
-cmd = "php artisan migrate --force --seed && php artisan serve --host=0.0.0.0 --port=$PORT"
+cmd = "sh -c 'php artisan storage:link || true; php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan migrate --force --seed && php artisan serve --host=0.0.0.0 --port=$PORT'"

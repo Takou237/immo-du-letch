@@ -4,15 +4,15 @@ return [
 
     /*
      * Allowed origins — set FRONTEND_URL in Railway environment variables.
-     * Example: https://immo-du-letch.vercel.app
-     * Wildcard '*' is accepted for quick testing but should be narrowed in production.
      */
-    'allowed_origins' => [
+    'allowed_origins' => array_values(array_filter([
         env('FRONTEND_URL', 'http://localhost:5173'),
-        env('FRONTEND_URL_PREVIEW', ''), // optional preview URL
-    ],
+        env('FRONTEND_URL_PREVIEW'),
+    ])),
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => [
+        '#^https://immo-du-letch(-[a-z0-9-]+)?\.vercel\.app$#',
+    ],
 
     'allowed_methods' => ['*'],
 
