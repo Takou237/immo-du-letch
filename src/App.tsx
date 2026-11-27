@@ -6,6 +6,10 @@ import DepositModal from "./components/DepositModal";
 import FavoritesPanel from "./components/FavoritesPanel";
 import Toast from "./components/Toast";
 import { useIsMobile } from "./hooks/useIsMobile";
+import AdvancedSearchPage from "./pages/AdvancedSearchPage";
+import AdviceDetailPage from "./pages/AdviceDetailPage";
+import AdvicePage from "./pages/AdvicePage";
+import ContactPage from "./pages/ContactPage";
 import DetailPage from "./pages/DetailPage";
 import HomePage from "./pages/HomePage";
 import MobileDetailPage from "./pages/MobileDetailPage";
@@ -50,6 +54,14 @@ function Shell() {
           <MobileResultsPage />
         ) : page === "detail" ? (
           <MobileDetailPage />
+        ) : page === "advice" ? (
+          <AdvicePage />
+        ) : page === "advice-detail" ? (
+          <AdviceDetailPage />
+        ) : page === "contact" ? (
+          <ContactPage />
+        ) : page === "advanced-search" ? (
+          <AdvancedSearchPage />
         ) : (
           <MobileProfilePage />
         )
@@ -59,6 +71,10 @@ function Shell() {
           {page === "results" && <ResultsPage />}
           {page === "detail" && <DetailPage />}
           {page === "profile" && <ProfilePage />}
+          {page === "advice" && <AdvicePage />}
+          {page === "advice-detail" && <AdviceDetailPage />}
+          {page === "contact" && <ContactPage />}
+          {page === "advanced-search" && <AdvancedSearchPage />}
         </div>
       )}
       <Toast />

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import HelpAndContactSection from "../components/HelpAndContactSection";
 import ListingTile from "../components/ListingTile";
-import Modal from "../components/Modal";
 import SiteFooter from "../components/SiteFooter";
 import SiteNav from "../components/SiteNav";
 import { ArrowIcon, ChevronIcon, PinIcon, SearchIcon, ShieldIcon } from "../components/icons";
@@ -36,23 +36,8 @@ const imgDouala = asset("7bb4a.png");
 const imgYaounde = asset("52f31.png");
 const imgTerrainResidentielDe500M = asset("26532.png");
 
-function PlusIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      aria-hidden="true"
-    >
-      <path d="M10 3.5v13M3.5 10h13" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 export default function AccueilImmoDuLetch() {
-  const { searchWith, browseAll, openDeposit, openListing, recentlyViewed, allListings, articles, faqs, heroSlides, platformStats, siteSettings } = useApp();
+  const { searchWith, browseAll, openDeposit, openListing, openArticle, openAdvancedSearch, navigate, recentlyViewed, allListings, articles, heroSlides, platformStats, siteSettings } = useApp();
   const t = useT();
   const [tab, setTab] = useState<HomeTab>("vente");
   const [city, setCity] = useState("");
@@ -64,8 +49,6 @@ export default function AccueilImmoDuLetch() {
   const [surfaceMin, setSurfaceMin] = useState("");
   const [roomsMin, setRoomsMin] = useState("");
   const [slideIndex, setSlideIndex] = useState(0);
-  const [articleIndex, setArticleIndex] = useState<number | null>(null);
-  const [faqIndex, setFaqIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -396,7 +379,7 @@ export default function AccueilImmoDuLetch() {
               <div className="mt-4 flex items-center justify-between gap-3 border-t border-[#eef2f6] pt-3.5">
                 <button
                   type="button"
-                  onClick={handleSearch}
+                  onClick={() => openAdvancedSearch(heroFilters)}
                   className="cursor-pointer border-0 bg-transparent p-0 text-left"
                 >
                   <span className="block font-['Inter:Semi_Bold'] text-[12px] font-semibold text-[#071f49] hover:text-[#a26b00]">
@@ -919,21 +902,32 @@ export default function AccueilImmoDuLetch() {
         </div>
       </div>
 
-      {/* Conseils immobiliers (6 articles) */}
+      {/* Conseils immobiliers (3 articles + lien Voir tous les conseils) */}
       <div id="conseils" className="w-full px-[100px] py-[44px]" data-name="Conseils immobiliers">
-        <p className="font-['Inter:Bold'] text-[28px] font-bold leading-[1.3] text-[#071f49]">
-          {t.home.adviceTitle}
-        </p>
-        <p className="mt-1 font-['Inter:Regular'] text-[15px] text-[#637084]">
-          {t.home.adviceSub}
-        </p>
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className="font-['Inter:Bold'] text-[28px] font-bold leading-[1.3] text-[#071f49]">
+              {t.home.adviceTitle}
+            </p>
+            <p className="mt-1 font-['Inter:Regular'] text-[15px] text-[#637084]">
+              {t.home.adviceSub}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate("advice")}
+            className="inline-flex h-[40px] shrink-0 cursor-pointer items-center gap-2 rounded-[8px] border border-[#dce2e9] bg-white px-4 font-['Inter:Semi_Bold'] text-[13px] font-semibold text-[#071f49] transition-colors hover:border-[#f3ad19]"
+          >
+            Voir tous les conseils <ArrowIcon className="size-[15px]" />
+          </button>
+        </div>
 
         <div className="mt-7 grid grid-cols-3 gap-[20px]">
-          {articles.map((article, index) => (
+          {articles.slice(0, 3).map((article) => (
             <button
-              key={article.title}
+              key={article.id}
               type="button"
-              onClick={() => setArticleIndex(index)}
+              onClick={() => openArticle(article.id)}
               className="group relative flex h-[280px] cursor-pointer flex-col overflow-hidden rounded-[8px] border border-[#dce2e9] bg-white text-left transition-all hover:-translate-y-[2px] hover:border-[#f3ad19] hover:shadow-[0_12px_28px_rgb(7_31_73/10%)]"
             >
               <div className="h-[146px] w-full shrink-0 overflow-hidden">
@@ -980,102 +974,10 @@ export default function AccueilImmoDuLetch() {
         </div>
       ) : null}
 
-      {/* FAQ (8 questions) */}
-      <div
-        className="w-full bg-[#f4f6f8] px-[100px] py-[48px]"
-        data-name="Questions fréquentes"
-      >
-        <div className="flex items-start justify-between gap-12">
-          <div className="w-[380px] shrink-0">
-            <p className="font-['Inter:Bold'] text-[28px] font-bold leading-[1.3] text-[#071f49]">
-              {t.home.faqTitle}
-            </p>
-            <p className="mt-3 text-[15px] leading-[1.5] text-[#637084]">
-              Quelques réponses pour bien démarrer votre recherche avec IMMO DU LETCH.
-            </p>
-          </div>
-
-          <div className="grid flex-1 grid-cols-1 gap-3">
-            {faqs.map((faq, index) => (
-              <button
-                key={faq.q}
-                type="button"
-                onClick={() => setFaqIndex(index)}
-                className="flex h-[60px] w-full cursor-pointer items-center justify-between rounded-[6px] border border-[#dce2e9] bg-white px-5 text-left transition-colors hover:border-[#f3ad19]"
-              >
-                <span className="font-['Inter:Semi_Bold'] text-[15px] font-semibold text-[#071f49]">
-                  {faq.q}
-                </span>
-                <PlusIcon className="size-[18px] shrink-0 text-[#071f49]" />
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* Aide & Contact (FAQ + Formulaire + Coordonnées) */}
+      <HelpAndContactSection compact />
 
       <SiteFooter />
-
-      {articleIndex !== null ? (
-        <Modal
-          onClose={() => setArticleIndex(null)}
-          label={articles[articleIndex].title}
-          panelClassName="w-[560px] max-w-[92vw]"
-        >
-          <img
-            alt=""
-            src={articles[articleIndex].image}
-            className="h-[230px] w-full object-cover"
-          />
-          <div className="p-7">
-            <p className="font-['Inter:Bold'] text-[10px] font-bold tracking-[0.08em] text-[#996300]">
-              {articles[articleIndex].tag}
-            </p>
-            <p className="mt-2 font-['Inter:Bold'] text-[22px] font-bold leading-[1.3] text-[#071f49]">
-              {articles[articleIndex].title}
-            </p>
-            {(typeof articles[articleIndex].body === "string"
-              ? [articles[articleIndex].body as string]
-              : (articles[articleIndex].body as unknown as string[])
-            ).map((paragraph) => (
-              <p key={paragraph} className="mt-4 text-[13px] leading-[1.6] text-[#4a5a70]">
-                {paragraph}
-              </p>
-            ))}
-            <button
-              type="button"
-              onClick={() => {
-                setArticleIndex(null);
-                browseAll();
-              }}
-              className="mt-6 inline-flex h-[44px] cursor-pointer items-center gap-2 rounded-[6px] bg-[#f3ad19] px-5 font-['Inter:Semi_Bold'] text-[13px] font-semibold text-[#071f49]"
-            >
-              Voir les annonces <ArrowIcon className="size-[16px]" />
-            </button>
-          </div>
-        </Modal>
-      ) : null}
-
-      {faqIndex !== null ? (
-        <Modal
-          onClose={() => setFaqIndex(null)}
-          label={faqs[faqIndex].q}
-          panelClassName="w-[560px] max-w-[92vw]"
-        >
-          <div className="p-8 pr-16">
-            <p className="font-['Inter:Bold'] text-[20px] font-bold leading-[1.35] text-[#071f49]">
-              {faqs[faqIndex].q}
-            </p>
-            <p className="mt-4 text-[14px] leading-[1.65] text-[#4a5a70]">{faqs[faqIndex].a}</p>
-            <button
-              type="button"
-              onClick={() => setFaqIndex(null)}
-              className="mt-6 inline-flex h-[42px] cursor-pointer items-center rounded-[6px] bg-[#071f49] px-5 font-['Inter:Semi_Bold'] text-[13px] font-semibold text-white"
-            >
-              J'ai compris
-            </button>
-          </div>
-        </Modal>
-      ) : null}
     </div>
   );
 }

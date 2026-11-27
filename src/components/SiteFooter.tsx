@@ -22,7 +22,7 @@ function FooterLink({ left, top, children, onClick }: FooterLinkProps) {
 }
 
 export default function SiteFooter() {
-  const { searchWith, browseAll, scrollToSection, showToast, openDeposit, siteSettings } = useApp();
+  const { searchWith, browseAll, navigate, showToast, openDeposit } = useApp();
   const t = useT();
 
   return (
@@ -75,17 +75,13 @@ export default function SiteFooter() {
       >
         {t.footer.postListing}
       </FooterLink>
-      <FooterLink left={810} top={112} onClick={() => scrollToSection("conseils")}>
+      <FooterLink left={810} top={112} onClick={() => navigate("advice")}>
         {t.footer.realEstateAdvice}
       </FooterLink>
       <FooterLink
         left={810}
         top={142}
-        onClick={() =>
-          showToast(
-            `Aide & contact : ${siteSettings?.contactEmail ?? "contact@immoduletch.cm"} — ${siteSettings?.contactPhone ?? "+237 6 55 00 00 00"}`,
-          )
-        }
+        onClick={() => navigate("contact")}
       >
         {t.footer.helpContact}
       </FooterLink>

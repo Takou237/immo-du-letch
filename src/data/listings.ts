@@ -1025,10 +1025,17 @@ export type Filters = {
   surfaceMax: number | null;
   roomsMin: number | null;
   bedroomsMin: number | null;
+  bathroomsMin: number | null;
+  parkingMin: number | null;
+  landMin: number | null;
+  yearBuiltMin: number | null;
   documents: string[];
   features: string[];
   condition: Condition | "";
   sellerType: SellerType | "";
+  priceDroppedOnly: boolean;
+  isNewOnly: boolean;
+  goodDealOnly: boolean;
   query: string;
 };
 
@@ -1042,10 +1049,17 @@ export const DEFAULT_FILTERS: Filters = {
   surfaceMax: null,
   roomsMin: null,
   bedroomsMin: null,
+  bathroomsMin: null,
+  parkingMin: null,
+  landMin: null,
+  yearBuiltMin: null,
   documents: [],
   features: [],
   condition: "",
   sellerType: "",
+  priceDroppedOnly: false,
+  isNewOnly: false,
+  goodDealOnly: false,
   query: "",
 };
 
@@ -1170,6 +1184,15 @@ export function filterListings(listings: Listing[], filters: Filters): Listing[]
     if (filters.surfaceMax !== null && listing.surface > filters.surfaceMax) return false;
     if (filters.roomsMin !== null && listing.rooms < filters.roomsMin) return false;
     if (filters.bedroomsMin !== null && listing.bedrooms < filters.bedroomsMin) return false;
+    if (filters.bathroomsMin !== null && listing.bathrooms < filters.bathroomsMin) return false;
+    if (filters.parkingMin !== null && listing.parking < filters.parkingMin) return false;
+    if (filters.landMin !== null && (listing.land ?? 0) < filters.landMin) return false;
+    if (filters.yearBuiltMin !== null && (listing.yearBuilt ?? 0) < filters.yearBuiltMin) {
+      return false;
+    }
+    if (filters.priceDroppedOnly && !listing.priceDropped) return false;
+    if (filters.isNewOnly && !listing.isNew) return false;
+    if (filters.goodDealOnly && !isGoodDeal(listing)) return false;
     if (
       filters.documents.length > 0 &&
       !filters.documents.every((doc) => listing.documents.includes(doc))
@@ -1230,6 +1253,13 @@ export function describeFilters(filters: Filters): string {
   }
   if (filters.roomsMin !== null) parts.push(`${filters.roomsMin} pièces +`);
   if (filters.bedroomsMin !== null) parts.push(`${filters.bedroomsMin} chambres +`);
+  if (filters.bathroomsMin !== null) parts.push(`${filters.bathroomsMin} sdb +`);
+  if (filters.parkingMin !== null) parts.push(`${filters.parkingMin} parking +`);
+  if (filters.landMin !== null) parts.push(`Terrain ≥ ${filters.landMin} m²`);
+  if (filters.yearBuiltMin !== null) parts.push(`Après ${filters.yearBuiltMin}`);
+  if (filters.priceDroppedOnly) parts.push("Baisse de prix");
+  if (filters.isNewOnly) parts.push("Nouveautés");
+  if (filters.goodDealOnly) parts.push("Bonnes affaires");
   if (filters.condition) parts.push(CONDITION_LABELS[filters.condition]);
   if (filters.sellerType) {
     parts.push(filters.sellerType === "professionnel" ? "Professionnel" : "Particulier");

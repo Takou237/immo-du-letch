@@ -154,12 +154,22 @@ export default function MobileNav() {
                 type="button"
                 onClick={() => {
                   close();
-                  navigate("home");
-                  window.setTimeout(() => scrollToSection("conseils"), 60);
+                  navigate("advice");
                 }}
                 className="flex cursor-pointer items-center justify-between border-b border-[#eef2f6] py-3 text-left text-[14px] font-medium text-[#172b45]"
               >
                 {t.nav.ourAdvice}
+                <ChevronIcon className="size-[14px] text-[#8a95a5]" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  close();
+                  navigate("contact");
+                }}
+                className="flex cursor-pointer items-center justify-between border-b border-[#eef2f6] py-3 text-left text-[14px] font-medium text-[#172b45]"
+              >
+                Aide & Contact
                 <ChevronIcon className="size-[14px] text-[#8a95a5]" />
               </button>
             </nav>

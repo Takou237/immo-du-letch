@@ -31,7 +31,15 @@ export type SiteHeroSlide = { id: string; image: string; tag: string; title: str
 export type SiteStat = { value: string; label: string; suffix: string };
 export type SiteSettings = { yearsExperience: string; contactPhone: string; contactEmail: string };
 
-export type Page = "home" | "results" | "detail" | "profile";
+export type Page =
+  | "home"
+  | "results"
+  | "detail"
+  | "profile"
+  | "advice"
+  | "advice-detail"
+  | "contact"
+  | "advanced-search";
 export type ViewMode = "list" | "grid";
 export type AuthMode = "login" | "register";
 export type ListingStatus = "pending" | "approved" | "rejected";
@@ -157,6 +165,9 @@ type AppContextValue = {
   selectedId: string;
   selectedListing: Listing;
   openListing: (listingId: string) => void;
+  selectedArticleId: number;
+  openArticle: (articleId: number) => void;
+  openAdvancedSearch: (initialFilters?: Partial<Filters>) => void;
   filters: Filters;
   updateFilters: (partial: Partial<Filters>) => void;
   resetFilters: () => void;
@@ -258,12 +269,19 @@ function writeStored<T>(key: string, value: T): void {
   }
 }
 
-function parseHash(): { page: Page; listingId?: string } {
+function parseHash(): { page: Page; listingId?: string; articleId?: number } {
   const raw = decodeURIComponent(window.location.hash.replace(/^#/, ""));
   if (raw.startsWith("detail")) {
     const listingId = raw.split("/")[1];
     return { page: "detail", listingId };
   }
+  if (raw.startsWith("conseil/")) {
+    const articleId = Number(raw.split("/")[1]);
+    return { page: "advice-detail", articleId: Number.isFinite(articleId) ? articleId : undefined };
+  }
+  if (raw === "conseils") return { page: "advice" };
+  if (raw === "contact" || raw === "aide-et-contact") return { page: "contact" };
+  if (raw === "recherche-avancee") return { page: "advanced-search" };
   if (raw.startsWith("results")) return { page: "results" };
   if (raw.startsWith("profile")) return { page: "profile" };
   return { page: "home" };
@@ -274,6 +292,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [page, setPage] = useState<Page>(initialHash.page);
   const [selectedId, setSelectedId] = useState<string>(
     initialHash.listingId ?? LISTINGS[0].id,
+  );
+  const [selectedArticleId, setSelectedArticleId] = useState<number>(
+    initialHash.articleId ?? 1,
   );
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [sort, setSort] = useState<SortKey>("pertinence");
@@ -450,6 +471,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
             : allListings[0].id;
         setSelectedId(nextId);
       }
+      if (parsed.page === "advice-detail" && parsed.articleId) {
+        setSelectedArticleId(parsed.articleId);
+      }
     };
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
@@ -496,13 +520,44 @@ export function AppProvider({ children }: { children: ReactNode }) {
             ? "results"
             : nextPage === "profile"
               ? "profile"
-              : `detail/${nextId ?? selectedId}`;
+              : nextPage === "advice"
+                ? "conseils"
+                : nextPage === "advice-detail"
+                  ? `conseil/${selectedArticleId}`
+                  : nextPage === "contact"
+                    ? "contact"
+                    : nextPage === "advanced-search"
+                      ? "recherche-avancee"
+                      : `detail/${nextId ?? selectedId}`;
       if (window.location.hash.replace(/^#/, "") !== hash) {
         window.location.hash = hash;
       }
       window.scrollTo({ top: 0, behavior: "smooth" });
     },
-    [allListings, selectedId],
+    [allListings, selectedArticleId, selectedId],
+  );
+
+  const openArticle = useCallback(
+    (articleId: number) => {
+      setSelectedArticleId(articleId);
+      setPage("advice-detail");
+      const hash = `conseil/${articleId}`;
+      if (window.location.hash.replace(/^#/, "") !== hash) {
+        window.location.hash = hash;
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    [],
+  );
+
+  const openAdvancedSearch = useCallback(
+    (initialFilters?: Partial<Filters>) => {
+      if (initialFilters) {
+        setFilters({ ...DEFAULT_FILTERS, ...initialFilters });
+      }
+      navigate("advanced-search");
+    },
+    [navigate],
   );
 
   const scrollToSection = useCallback(
@@ -959,6 +1014,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       selectedId,
       selectedListing: allListings.find((item) => item.id === selectedId) ?? allListings[0],
       openListing,
+      selectedArticleId,
+      openArticle,
+      openAdvancedSearch,
       filters,
       updateFilters,
       resetFilters,
@@ -1030,6 +1088,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       scrollToSection,
       selectedId,
       openListing,
+      selectedArticleId,
+      openArticle,
+      openAdvancedSearch,
       filters,
       updateFilters,
       resetFilters,

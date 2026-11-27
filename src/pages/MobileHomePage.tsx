@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import HelpAndContactSection from "../components/HelpAndContactSection";
 import MobileFooter from "../components/MobileFooter";
 import MobileListingCard from "../components/MobileListingCard";
 import MobileNav from "../components/MobileNav";
@@ -31,7 +32,7 @@ const FEATURED_IDS = [
 ];
 
 export default function MobileHomePage() {
-  const { allListings, searchWith, browseAll, openDeposit, openListing, recentlyViewed, articles, faqs, heroSlides, platformStats, siteSettings, searchHistory, applySearchHistory, clearSearchHistory } = useApp();
+  const { allListings, searchWith, browseAll, openDeposit, openListing, openArticle, openAdvancedSearch, navigate, recentlyViewed, articles, heroSlides, platformStats, siteSettings, searchHistory, applySearchHistory, clearSearchHistory } = useApp();
   const t = useT();
 
   const [tab, setTab] = useState<HomeTab>("vente");
@@ -229,6 +230,13 @@ export default function MobileHomePage() {
             >
               <SearchIcon className="size-[16px]" />
               {t.home.searchCount(matchCount)}
+            </button>
+            <button
+              type="button"
+              onClick={() => openAdvancedSearch(draftFilters)}
+              className="mt-2 w-full cursor-pointer border-0 bg-transparent py-1 text-center text-[12px] font-semibold text-[#071f49] underline decoration-[#f3ad19] underline-offset-4"
+            >
+              {t.home.moreCriteria} →
             </button>
           </form>
 
@@ -429,56 +437,49 @@ export default function MobileHomePage() {
         </div>
       </section>
 
-      {/* Conseils */}
+      {/* Conseils (3 articles + Voir tous les conseils) */}
       <section className="px-4 pt-7">
-        <h2 className="text-[16px] font-bold text-[#071f49]">Conseils immobiliers</h2>
-        <div className="mt-2 flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-[16px] font-bold text-[#071f49]">Conseils immobiliers</h2>
+          <button
+            type="button"
+            onClick={() => navigate("advice")}
+            className="cursor-pointer border-0 bg-transparent p-0 text-[12px] font-semibold text-[#996300]"
+          >
+            Voir tous les conseils →
+          </button>
+        </div>
+        <div className="mt-2.5 flex flex-col gap-2.5">
           {articles.slice(0, 3).map((article) => (
-            <details
-              key={article.title}
-              className="group rounded-[10px] border border-[#dce2e9] bg-white px-3 py-2.5"
+            <button
+              key={article.id}
+              type="button"
+              onClick={() => openArticle(article.id)}
+              className="flex w-full cursor-pointer items-center gap-3 rounded-[10px] border border-[#dce2e9] bg-white p-2.5 text-left transition-colors hover:border-[#f3ad19]"
             >
-              <summary className="flex cursor-pointer list-none items-start gap-2">
-                <span className="mt-0.5 shrink-0 rounded-[4px] bg-[#fff7e6] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#a26b00]">
+              <img
+                src={article.image}
+                alt={article.title}
+                className="size-[56px] shrink-0 rounded-[7px] object-cover"
+              />
+              <div className="min-w-0 flex-1">
+                <span className="inline-block rounded-[4px] bg-[#fff7e6] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#a26b00]">
                   {article.tag}
                 </span>
-                <span className="flex-1 text-[13px] font-semibold leading-snug text-[#071f49]">
+                <p className="mt-1 line-clamp-2 text-[13px] font-semibold leading-snug text-[#071f49]">
                   {article.title}
-                </span>
-                <ChevronIcon className="mt-0.5 size-[13px] shrink-0 text-[#8a95a5] transition-transform group-open:rotate-180" />
-              </summary>
-              <div className="mt-2 space-y-2 border-t border-[#eef2f6] pt-2 text-[12px] leading-relaxed text-[#4a5a70]">
-                {(typeof article.body === "string" ? [article.body] : (article.body as unknown as string[])).map((paragraph) => (
-                  <p key={paragraph.slice(0, 24)}>{paragraph}</p>
-                ))}
+                </p>
               </div>
-            </details>
+              <ArrowIcon className="size-[15px] shrink-0 text-[#071f49]" />
+            </button>
           ))}
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="px-4 pt-7">
-        <h2 className="text-[16px] font-bold text-[#071f49]">Questions fréquentes</h2>
-        <div className="mt-2 flex flex-col gap-2">
-          {faqs.map((faq) => (
-            <details
-              key={faq.q}
-              className="group rounded-[10px] border border-[#dce2e9] bg-white px-3 py-2.5"
-            >
-              <summary className="flex cursor-pointer list-none items-start gap-2">
-                <span className="flex-1 text-[13px] font-semibold leading-snug text-[#071f49]">
-                  {faq.q}
-                </span>
-                <ChevronIcon className="mt-0.5 size-[13px] shrink-0 text-[#8a95a5] transition-transform group-open:rotate-180" />
-              </summary>
-              <p className="mt-2 border-t border-[#eef2f6] pt-2 text-[12px] leading-relaxed text-[#4a5a70]">
-                {faq.a}
-              </p>
-            </details>
-          ))}
-        </div>
-      </section>
+      {/* Aide & Contact */}
+      <div className="mt-7">
+        <HelpAndContactSection compact />
+      </div>
 
       <MobileFooter />
     </div>

@@ -2,7 +2,7 @@ import { useT } from "../i18n/translations";
 import { useApp } from "../store/AppStore";
 
 export default function MobileFooter() {
-  const { searchWith, openDeposit, scrollToSection, navigate, siteSettings } = useApp();
+  const { searchWith, openDeposit, navigate, siteSettings } = useApp();
   const t = useT();
 
   const links: { label: string; onClick: () => void }[] = [
@@ -11,13 +11,8 @@ export default function MobileFooter() {
     { label: t.footer.landForSale, onClick: () => searchWith({ transaction: "vente", type: "terrain" }) },
     { label: t.footer.officesCommerce, onClick: () => searchWith({ transaction: "location", type: "bureau" }) },
     { label: t.footer.postListing, onClick: openDeposit },
-    {
-      label: t.footer.ourAdvice,
-      onClick: () => {
-        navigate("home");
-        window.setTimeout(() => scrollToSection("conseils"), 60);
-      },
-    },
+    { label: t.footer.ourAdvice, onClick: () => navigate("advice") },
+    { label: t.footer.helpContact, onClick: () => navigate("contact") },
   ];
 
   return (
