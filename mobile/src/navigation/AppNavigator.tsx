@@ -69,14 +69,6 @@ function MainTabs() {
         }}
       />
       <Tab.Screen
-        name="Settings"
-        component={SettingsScreen}
-        options={{
-          tabBarLabel: t.nav.settings,
-          tabBarIcon: ({ color, size }) => <Settings color={color} size={size} />,
-        }}
-      />
-      <Tab.Screen
         name="MySearches"
         component={MySearchesScreen}
         options={{
@@ -98,6 +90,14 @@ function MainTabs() {
         options={{
           tabBarLabel: t.nav.sell,
           tabBarIcon: ({ color, size }) => <PlusCircle color={color} size={size} />,
+        }}
+      />
+      <Tab.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{
+          tabBarLabel: t.nav.settings,
+          tabBarIcon: ({ color, size }) => <Settings color={color} size={size} />,
         }}
       />
     </Tab.Navigator>
