@@ -1,11 +1,16 @@
 /**
- * FeaturedCategoriesSection — 2 grandes cartes VENTE / LOCATION, style mobile.de.
+ * FeaturedCategoriesSection — 2 grandes cartes Acheter / Louer avec icônes Lucide.
  */
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Home, KeyRound } from 'lucide-react-native';
+import { colors } from '../../theme';
 
 interface FeaturedCategoriesSectionProps {
-  lang: 'fr' | 'en';
+  title: string;
+  buyLabel: string;
+  rentLabel: string;
+  listingsWord: string;
   countVente: number;
   countLocation: number;
   onPressVente: () => void;
@@ -13,34 +18,34 @@ interface FeaturedCategoriesSectionProps {
 }
 
 export function FeaturedCategoriesSection({
-  lang,
+  title,
+  buyLabel,
+  rentLabel,
+  listingsWord,
   countVente,
   countLocation,
   onPressVente,
   onPressLocation,
 }: FeaturedCategoriesSectionProps) {
-  const title    = lang === 'fr' ? 'Catégories'       : 'Categories';
-  const buyLabel = lang === 'fr' ? 'Acheter'          : 'Buy';
-  const rentLabel = lang === 'fr' ? 'Louer'           : 'Rent';
-  const listings = lang === 'fr' ? 'annonces'         : 'listings';
-
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
 
       <View style={styles.row}>
-        {/* Vente */}
         <TouchableOpacity style={[styles.card, styles.cardVente]} onPress={onPressVente} activeOpacity={0.85}>
-          <Text style={styles.emoji}>🏠</Text>
+          <View style={styles.iconBox}>
+            <Home size={22} color={colors.gold} strokeWidth={2.2} />
+          </View>
           <Text style={styles.cardLabel}>{buyLabel}</Text>
-          <Text style={styles.cardCount}>{countVente} {listings}</Text>
+          <Text style={styles.cardCount}>{countVente} {listingsWord}</Text>
         </TouchableOpacity>
 
-        {/* Location */}
         <TouchableOpacity style={[styles.card, styles.cardLocation]} onPress={onPressLocation} activeOpacity={0.85}>
-          <Text style={styles.emoji}>🔑</Text>
-          <Text style={styles.cardLabel}>{rentLabel}</Text>
-          <Text style={styles.cardCount}>{countLocation} {listings}</Text>
+          <View style={styles.iconBoxLight}>
+            <KeyRound size={22} color={colors.navy} strokeWidth={2.2} />
+          </View>
+          <Text style={styles.cardLabelDark}>{rentLabel}</Text>
+          <Text style={styles.cardCountDark}>{countLocation} {listingsWord}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -49,14 +54,14 @@ export function FeaturedCategoriesSection({
 
 const styles = StyleSheet.create({
   section: {
-    marginTop: 28,
+    marginTop: 24,
     marginHorizontal: 16,
   },
   sectionTitle: {
-    color: '#F9FAFB',
-    fontSize: 20,
+    color: colors.textPrimary,
+    fontSize: 18,
     fontWeight: '800',
-    marginBottom: 14,
+    marginBottom: 12,
   },
   row: {
     flexDirection: 'row',
@@ -65,28 +70,54 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     borderRadius: 14,
-    padding: 20,
-    justifyContent: 'flex-end',
-    minHeight: 140,
+    padding: 16,
+    justifyContent: 'space-between',
+    minHeight: 126,
   },
   cardVente: {
-    backgroundColor: '#1a3a5c',
+    backgroundColor: colors.navy,
   },
   cardLocation: {
-    backgroundColor: '#1a4731',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  emoji: {
-    fontSize: 36,
-    marginBottom: 10,
+  iconBox: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: colors.navyLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  iconBoxLight: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: colors.goldSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   cardLabel: {
-    color: '#F9FAFB',
-    fontSize: 18,
+    color: colors.textOnNavy,
+    fontSize: 17,
     fontWeight: '800',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   cardCount: {
-    color: '#9CA3AF',
+    color: '#CBD5E1',
+    fontSize: 12,
+  },
+  cardLabelDark: {
+    color: colors.textPrimary,
+    fontSize: 17,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  cardCountDark: {
+    color: colors.textSecondary,
     fontSize: 12,
   },
 });

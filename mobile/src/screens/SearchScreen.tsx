@@ -1,11 +1,482 @@
-import React from 'react';
-import { ScreenShell } from '../components/ScreenShell';
+/**
+ * SearchScreen — Recherche, filtres et tri IMMO DU LETCH Mobile.
+ * Principe S : composition des sous-composants, logique via useListings / useFavorites / useLang.
+ */
+import React, { useState, useMemo } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  ScrollView,
+  StyleSheet,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Search, SlidersHorizontal, X, ArrowUpDown, SearchX, Bookmark, Check } from 'lucide-react-native';
+
+import { AppHeader } from '../components/AppHeader';
+import { ListingRowCard } from '../components/search/ListingRowCard';
+import { FilterSheetModal } from '../components/search/FilterSheetModal';
+import { useListings } from '../hooks/useListings';
+import { useFavorites } from '../hooks/useFavorites';
+import { useSavedSearches } from '../hooks/useSavedSearches';
+import { useLang } from '../i18n/LangContext';
+import { SortKey } from '../types/listing';
+import { RootStackParamList } from '../navigation/types';
+import { colors } from '../theme';
+import { formatFCFA } from '../utils/formatPrice';
+
+type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
 export function SearchScreen() {
+  const navigation = useNavigation<NavProp>();
+  const { lang, t } = useLang();
+  const {
+    filteredListings,
+    filters,
+    setFilters,
+    resetFilters,
+    sortKey,
+    setSortKey,
+  } = useListings();
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const { saveSearch } = useSavedSearches();
+
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
+
+  const handleSaveSearch = () => {
+    saveSearch(filters);
+    setJustSaved(true);
+    setTimeout(() => setJustSaved(false), 2000);
+  };
+
+  const sortOptions: { key: SortKey; label: string }[] = useMemo(() => [
+    { key: 'relevance',  label: t.search.sortRelevance },
+    { key: 'price_asc',  label: t.search.sortPriceAsc },
+    { key: 'price_desc', label: t.search.sortPriceDesc },
+    { key: 'newest',     label: t.search.sortNewest },
+    { key: 'surface',    label: t.search.sortSurface },
+    { key: 'views',      label: t.search.sortViews },
+  ], [t]);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filters.transaction) count++;
+    if (filters.city) count++;
+    if (filters.type) count++;
+    if (filters.priceMax > 0) count++;
+    if (filters.bedroomsMin > 0) count++;
+    return count;
+  }, [filters]);
+
   return (
-    <ScreenShell
-      title="Rechercher"
-      subtitle="Filtres multicritères en accordéon et compteur dynamique d'offres en FCFA."
-    />
+    <View style={styles.root}>
+      <AppHeader />
+
+      {/* Barre de recherche + bouton filtres */}
+      <View style={styles.searchBarRow}>
+        <View style={styles.inputWrap}>
+          <Search size={17} color={colors.textMuted} />
+          <TextInput
+            style={styles.input}
+            value={filters.query}
+            onChangeText={text => setFilters({ query: text })}
+            placeholder={
+              lang === 'fr'
+                ? 'Ville, quartier, mot-clé...'
+                : 'City, neighborhood, keyword...'
+            }
+            placeholderTextColor={colors.textMuted}
+            returnKeyType="search"
+          />
+          {filters.query.length > 0 && (
+            <TouchableOpacity onPress={() => setFilters({ query: '' })} hitSlop={8}>
+              <X size={16} color={colors.textMuted} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <TouchableOpacity
+          style={[styles.filterBtn, activeFilterCount > 0 && styles.filterBtnActive]}
+          onPress={() => setFilterModalOpen(true)}
+          activeOpacity={0.85}
+        >
+          <SlidersHorizontal
+            size={18}
+            color={activeFilterCount > 0 ? colors.navy : colors.textPrimary}
+          />
+          {activeFilterCount > 0 && (
+            <View style={styles.filterBadge}>
+              <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {/* Chips de tri horizontal */}
+      <View style={styles.sortWrapper}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.sortScroll}
+        >
+          <View style={styles.sortLabelWrap}>
+            <ArrowUpDown size={13} color={colors.textSecondary} />
+            <Text style={styles.sortLabel}>{t.search.sortBy}:</Text>
+          </View>
+          {sortOptions.map(opt => {
+            const active = sortKey === opt.key;
+            return (
+              <TouchableOpacity
+                key={opt.key}
+                style={[styles.sortChip, active && styles.sortChipActive]}
+                onPress={() => setSortKey(opt.key)}
+              >
+                <Text style={[styles.sortChipText, active && styles.sortChipTextActive]}>
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      {/* Filtres actifs + compteur résultats */}
+      <View style={styles.summaryBar}>
+        <Text style={styles.resultsCount}>
+          {t.search.results(filteredListings.length)}
+        </Text>
+        <View style={styles.summaryActions}>
+          {(activeFilterCount > 0 || filters.query.trim().length > 0) && (
+            <TouchableOpacity style={styles.saveSearchBtn} onPress={handleSaveSearch}>
+              {justSaved ? (
+                <Check size={13} color={colors.success} />
+              ) : (
+                <Bookmark size={13} color={colors.navy} />
+              )}
+              <Text style={[styles.saveSearchText, justSaved && { color: colors.success }]}>
+                {justSaved
+                  ? (lang === 'fr' ? 'Enregistrée' : 'Saved')
+                  : t.common.save}
+              </Text>
+            </TouchableOpacity>
+          )}
+          {activeFilterCount > 0 && (
+            <TouchableOpacity onPress={resetFilters}>
+              <Text style={styles.clearAllText}>{t.search.resetFilters}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {activeFilterCount > 0 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.activeChipsScroll}
+          style={styles.activeChipsBar}
+        >
+          {filters.transaction !== '' && (
+            <TouchableOpacity
+              style={styles.activeChip}
+              onPress={() => setFilters({ transaction: '' })}
+            >
+              <Text style={styles.activeChipText}>
+                {filters.transaction === 'vente' ? t.home.buyTab : t.home.rentTab}
+              </Text>
+              <X size={12} color={colors.navy} />
+            </TouchableOpacity>
+          )}
+          {filters.city !== '' && (
+            <TouchableOpacity
+              style={styles.activeChip}
+              onPress={() => setFilters({ city: '' })}
+            >
+              <Text style={styles.activeChipText}>{filters.city}</Text>
+              <X size={12} color={colors.navy} />
+            </TouchableOpacity>
+          )}
+          {filters.type !== '' && (
+            <TouchableOpacity
+              style={styles.activeChip}
+              onPress={() => setFilters({ type: '' })}
+            >
+              <Text style={styles.activeChipText}>{t.propertyTypeSingular[filters.type]}</Text>
+              <X size={12} color={colors.navy} />
+            </TouchableOpacity>
+          )}
+          {filters.priceMax > 0 && (
+            <TouchableOpacity
+              style={styles.activeChip}
+              onPress={() => setFilters({ priceMax: 0 })}
+            >
+              <Text style={styles.activeChipText}>≤ {formatFCFA(filters.priceMax)}</Text>
+              <X size={12} color={colors.navy} />
+            </TouchableOpacity>
+          )}
+          {filters.bedroomsMin > 0 && (
+            <TouchableOpacity
+              style={styles.activeChip}
+              onPress={() => setFilters({ bedroomsMin: 0 })}
+            >
+              <Text style={styles.activeChipText}>
+                {filters.bedroomsMin}+ {t.detail.bedrooms}
+              </Text>
+              <X size={12} color={colors.navy} />
+            </TouchableOpacity>
+          )}
+        </ScrollView>
+      )}
+
+      {/* Liste des résultats */}
+      <FlatList
+        data={filteredListings}
+        keyExtractor={item => item.id}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        renderItem={({ item }) => (
+          <ListingRowCard
+            listing={item}
+            isFav={isFavorite(item.id)}
+            lang={lang}
+            transactionLabel={t.transactions[item.transaction]}
+            newLabel={t.home.new.toUpperCase()}
+            perMonthLabel={t.common.perMonth}
+            onPress={() => navigation.navigate('ListingDetail', { listingId: item.id })}
+            onToggleFav={() => toggleFavorite(item.id)}
+          />
+        )}
+        ListEmptyComponent={
+          <View style={styles.emptyBox}>
+            <View style={styles.emptyIconWrap}>
+              <SearchX size={34} color={colors.navy} />
+            </View>
+            <Text style={styles.emptyTitle}>{t.search.noResults}</Text>
+            <Text style={styles.emptySub}>{t.search.noResultsSub}</Text>
+            <TouchableOpacity style={styles.emptyBtn} onPress={resetFilters}>
+              <Text style={styles.emptyBtnText}>{t.search.resetFilters}</Text>
+            </TouchableOpacity>
+          </View>
+        }
+      />
+
+      {/* Modale filtres */}
+      <FilterSheetModal
+        visible={filterModalOpen}
+        filters={filters}
+        resultCount={filteredListings.length}
+        onChangeFilters={setFilters}
+        onReset={resetFilters}
+        onClose={() => setFilterModalOpen(false)}
+      />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  searchBarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  inputWrap: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 46,
+  },
+  input: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.textPrimary,
+    paddingVertical: 0,
+  },
+  filterBtn: {
+    width: 46,
+    height: 46,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterBtnActive: {
+    backgroundColor: colors.gold,
+    borderColor: colors.gold,
+  },
+  filterBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: colors.navy,
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  filterBadgeText: {
+    color: colors.gold,
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  sortWrapper: {
+    height: 42,
+  },
+  sortScroll: {
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    gap: 8,
+  },
+  sortLabelWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginRight: 2,
+  },
+  sortLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  sortChip: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  sortChipActive: {
+    backgroundColor: colors.navy,
+    borderColor: colors.navy,
+  },
+  sortChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  sortChipTextActive: {
+    color: colors.gold,
+  },
+  summaryBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  summaryActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  saveSearchBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: 8,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+  },
+  saveSearchText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.navy,
+  },
+  resultsCount: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.textPrimary,
+  },
+  clearAllText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.danger,
+  },
+  activeChipsBar: {
+    maxHeight: 38,
+    marginBottom: 6,
+  },
+  activeChipsScroll: {
+    paddingHorizontal: 16,
+    gap: 8,
+    alignItems: 'center',
+  },
+  activeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: colors.goldSoft,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  activeChipText: {
+    color: colors.navy,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  listContent: {
+    paddingTop: 4,
+    paddingBottom: 24,
+  },
+  emptyBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    paddingVertical: 48,
+  },
+  emptyIconWrap: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: colors.surfaceAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  emptySub: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 18,
+  },
+  emptyBtn: {
+    backgroundColor: colors.navy,
+    borderRadius: 10,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+  },
+  emptyBtnText: {
+    color: colors.gold,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+});

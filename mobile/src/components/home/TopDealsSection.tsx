@@ -1,11 +1,12 @@
 /**
- * TopDealsSection — section "Top offres pour vous" style mobile.de.
- * Principe S : affichage de la liste des deals, navigation déléguée via onPressCard.
+ * TopDealsSection — section "Biens en vedette / Top deals" thème IMMO DU LETCH.
  */
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { ArrowRight } from 'lucide-react-native';
 import { ListingCard } from './ListingCard';
 import { Listing } from '../../types/listing';
+import { colors } from '../../theme';
 
 interface TopDealsSectionProps {
   listings: Listing[];
@@ -14,18 +15,12 @@ interface TopDealsSectionProps {
   onPressCard: (id: string) => void;
   onToggleFav: (id: string) => void;
   onPressViewAll: () => void;
-  titleFr: string;
-  titleEn: string;
-  badgeFr: string;
-  badgeEn: string;
-  viewAllFr: string;
-  viewAllEn: string;
-  dealFr: string;
-  dealEn: string;
-  newFr: string;
-  newEn: string;
-  priceDropFr: string;
-  priceDropEn: string;
+  title: string;
+  badge: string;
+  viewAllLabel: string;
+  dealLabel: string;
+  newLabel: string;
+  perMonthLabel: string;
 }
 
 export function TopDealsSection({
@@ -35,36 +30,28 @@ export function TopDealsSection({
   onPressCard,
   onToggleFav,
   onPressViewAll,
-  titleFr, titleEn,
-  badgeFr, badgeEn,
-  viewAllFr, viewAllEn,
-  dealFr, dealEn,
-  newFr, newEn,
-  priceDropFr, priceDropEn,
+  title,
+  badge,
+  viewAllLabel,
+  dealLabel,
+  newLabel,
+  perMonthLabel,
 }: TopDealsSectionProps) {
-  const title    = lang === 'fr' ? titleFr    : titleEn;
-  const badge    = lang === 'fr' ? badgeFr    : badgeEn;
-  const viewAll  = lang === 'fr' ? viewAllFr  : viewAllEn;
-  const deal     = lang === 'fr' ? dealFr     : dealEn;
-  const newLabel = lang === 'fr' ? newFr      : newEn;
-  const priceDrop = lang === 'fr' ? priceDropFr : priceDropEn;
-
   return (
     <View style={styles.section}>
-      {/* En-tête */}
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Text style={styles.titleText}>{title} </Text>
+          <Text style={styles.titleText}>{title}</Text>
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{badge}</Text>
           </View>
         </View>
-        <TouchableOpacity onPress={onPressViewAll} hitSlop={8}>
-          <Text style={styles.viewAll}>{viewAll} →</Text>
+        <TouchableOpacity style={styles.viewAllBtn} onPress={onPressViewAll} hitSlop={8}>
+          <Text style={styles.viewAll}>{viewAllLabel}</Text>
+          <ArrowRight size={14} color={colors.navy} strokeWidth={2.5} />
         </TouchableOpacity>
       </View>
 
-      {/* Scroll horizontal */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -78,12 +65,11 @@ export function TopDealsSection({
             lang={lang}
             onPress={() => onPressCard(listing.id)}
             onToggleFav={() => onToggleFav(listing.id)}
-            dealLabel={deal}
+            dealLabel={dealLabel}
             newLabel={newLabel}
-            priceDropLabel={priceDrop}
+            perMonthLabel={perMonthLabel}
           />
         ))}
-        {/* Espace droit */}
         <View style={{ width: 16 }} />
       </ScrollView>
     </View>
@@ -92,42 +78,48 @@ export function TopDealsSection({
 
 const styles = StyleSheet.create({
   section: {
-    marginTop: 24,
+    marginTop: 20,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginHorizontal: 16,
-    marginBottom: 14,
+    marginBottom: 12,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
   titleText: {
-    color: '#F9FAFB',
-    fontSize: 20,
+    color: colors.textPrimary,
+    fontSize: 18,
     fontWeight: '800',
   },
   badge: {
-    backgroundColor: '#D4AF37',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    backgroundColor: colors.goldSoft,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
   badgeText: {
-    color: '#0B1B2B',
-    fontSize: 12,
+    color: colors.navy,
+    fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
+  viewAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   viewAll: {
-    color: '#D4AF37',
-    fontSize: 14,
-    fontWeight: '600',
+    color: colors.navy,
+    fontSize: 13,
+    fontWeight: '700',
   },
   scroll: {
-    paddingRight: 0,
+    paddingBottom: 4,
   },
 });

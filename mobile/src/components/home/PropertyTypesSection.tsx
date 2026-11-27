@@ -1,29 +1,26 @@
 /**
- * PropertyTypesSection — grille 2×N des types de biens avec compteurs.
- * Style "Vehicle types" de mobile.de adapté immobilier.
+ * PropertyTypesSection — grille 2×N des types de biens avec icônes Lucide (sans emoji).
  */
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { PropertyType } from '../../types/listing';
+import { PropertyTypeIcon } from '../PropertyTypeIcon';
+import { colors } from '../../theme';
 
 interface TypeItem {
   type: PropertyType;
-  emoji: string;
-  labelFr: string;
-  labelEn: string;
+  label: string;
   count: number;
 }
 
 interface PropertyTypesSectionProps {
-  lang: 'fr' | 'en';
+  title: string;
+  listingsWord: string;
   items: TypeItem[];
   onPress: (type: PropertyType) => void;
 }
 
-export function PropertyTypesSection({ lang, items, onPress }: PropertyTypesSectionProps) {
-  const title    = lang === 'fr' ? 'Types de biens' : 'Property types';
-  const listings = lang === 'fr' ? 'annonces'       : 'listings';
-
+export function PropertyTypesSection({ title, listingsWord, items, onPress }: PropertyTypesSectionProps) {
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -36,9 +33,11 @@ export function PropertyTypesSection({ lang, items, onPress }: PropertyTypesSect
             onPress={() => onPress(item.type)}
             activeOpacity={0.8}
           >
-            <Text style={styles.emoji}>{item.emoji}</Text>
-            <Text style={styles.label}>{lang === 'fr' ? item.labelFr : item.labelEn}</Text>
-            <Text style={styles.count}>{item.count} {listings}</Text>
+            <View style={styles.iconWrap}>
+              <PropertyTypeIcon type={item.type} size={22} color={colors.navy} />
+            </View>
+            <Text style={styles.label} numberOfLines={1}>{item.label}</Text>
+            <Text style={styles.count}>{item.count} {listingsWord}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -48,15 +47,15 @@ export function PropertyTypesSection({ lang, items, onPress }: PropertyTypesSect
 
 const styles = StyleSheet.create({
   section: {
-    marginTop: 28,
+    marginTop: 24,
     marginHorizontal: 16,
-    marginBottom: 32,
+    marginBottom: 28,
   },
   sectionTitle: {
-    color: '#F9FAFB',
-    fontSize: 20,
+    color: colors.textPrimary,
+    fontSize: 18,
     fontWeight: '800',
-    marginBottom: 14,
+    marginBottom: 12,
   },
   grid: {
     flexDirection: 'row',
@@ -64,27 +63,34 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   cell: {
-    width: '47%',
-    backgroundColor: '#1E293B',
+    width: '48%',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
     borderRadius: 14,
     padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 100,
+    minHeight: 110,
   },
-  emoji: {
-    fontSize: 30,
-    marginBottom: 8,
+  iconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: colors.surfaceAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
   },
   label: {
-    color: '#F9FAFB',
-    fontSize: 14,
+    color: colors.textPrimary,
+    fontSize: 13,
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: 3,
     textAlign: 'center',
   },
   count: {
-    color: '#6B7280',
+    color: colors.textSecondary,
     fontSize: 11,
     textAlign: 'center',
   },

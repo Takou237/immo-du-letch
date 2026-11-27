@@ -1,10 +1,7 @@
 /**
  * HomeScreen — Page d'accueil IMMO DU LETCH Mobile.
- * Dark theme fidèle aux screenshots mobile.de.
- * Architecture SOLID + Providers.
- *
- * Principe D : dépend uniquement des hooks useListings, useFavorites, useLang.
- * Principe S : ne contient que la composition des sections — logique déléguée aux providers/utils.
+ * Thème officiel du site (Navy #0B1B2B, Or #D4AF37, Fond #F8FAFC, Blanc #FFFFFF)
+ * avec icônes vectorielles Lucide et traduction FR/EN complète.
  */
 import React, { useCallback } from 'react';
 import { ScrollView, StyleSheet, View, StatusBar } from 'react-native';
@@ -23,20 +20,15 @@ import { useFavorites } from '../hooks/useFavorites';
 import { useLang } from '../i18n/LangContext';
 import { PropertyType } from '../types/listing';
 import { RootStackParamList } from '../navigation/types';
+import { colors } from '../theme';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
-const TYPE_ITEMS = [
-  { type: 'villa'       as PropertyType, emoji: '🏡', labelFr: 'Villa',       labelEn: 'Villa' },
-  { type: 'appartement' as PropertyType, emoji: '🏢', labelFr: 'Appartement', labelEn: 'Apartment' },
-  { type: 'terrain'     as PropertyType, emoji: '🌿', labelFr: 'Terrain',     labelEn: 'Land' },
-  { type: 'studio'      as PropertyType, emoji: '🛏️', labelFr: 'Studio',      labelEn: 'Studio' },
-  { type: 'bureau'      as PropertyType, emoji: '🏪', labelFr: 'Bureau',      labelEn: 'Office' },
-];
+const PROPERTY_TYPES: PropertyType[] = ['villa', 'appartement', 'terrain', 'studio', 'bureau'];
 
 export default function HomeScreen() {
   const navigation = useNavigation<NavProp>();
-  const { lang } = useLang();
+  const { lang, t } = useLang();
   const {
     getFeatured,
     countByTypeFn,
@@ -47,9 +39,8 @@ export default function HomeScreen() {
 
   const deals = getFeatured(8);
 
-  /* ── Handlers ── */
   const handleSearchPress = useCallback(() => {
-    navigation.navigate('MainTabs', { screen: 'Search' } as never);
+    navigation.navigate('MainTabs', { screen: 'Search' });
   }, [navigation]);
 
   const handleCardPress = useCallback((id: string) => {
@@ -57,60 +48,50 @@ export default function HomeScreen() {
   }, [navigation]);
 
   const handleViewAllDeals = useCallback(() => {
-    navigation.navigate('MainTabs', { screen: 'Search' } as never);
+    navigation.navigate('MainTabs', { screen: 'Search' });
   }, [navigation]);
 
   const handleVente = useCallback(() => {
     setFilters({ transaction: 'vente' });
-    navigation.navigate('MainTabs', { screen: 'Search' } as never);
+    navigation.navigate('MainTabs', { screen: 'Search' });
   }, [navigation, setFilters]);
 
   const handleLocation = useCallback(() => {
     setFilters({ transaction: 'location' });
-    navigation.navigate('MainTabs', { screen: 'Search' } as never);
+    navigation.navigate('MainTabs', { screen: 'Search' });
   }, [navigation, setFilters]);
 
   const handleType = useCallback((type: PropertyType) => {
     setFilters({ type });
-    navigation.navigate('MainTabs', { screen: 'Search' } as never);
+    navigation.navigate('MainTabs', { screen: 'Search' });
   }, [navigation, setFilters]);
 
-  const handlePromoCta = useCallback(() => {
-    navigation.navigate('MainTabs', { screen: 'Search' } as never);
-  }, [navigation]);
-
-  /* ── Counts pour types ── */
-  const typeItems = TYPE_ITEMS.map(item => ({
-    ...item,
-    count: countByTypeFn(item.type),
+  const typeItems = PROPERTY_TYPES.map(type => ({
+    type,
+    label: t.propertyTypes[type],
+    count: countByTypeFn(type),
   }));
+
+  const listingsWord = lang === 'fr' ? 'annonces' : 'listings';
 
   return (
     <View style={styles.root}>
       <StatusBar barStyle="light-content" />
-
-      {/* Header fixe */}
       <AppHeader />
 
-      {/* Contenu scrollable */}
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        {/* Bannière hero */}
         <PromoBanner
-          title={lang === 'fr'
-            ? 'Trouvez le bien\nqui vous ressemble.'
-            : 'Find the property\nthat suits you.'}
-          subtitle={lang === 'fr'
-            ? 'Acheter, louer ou investir en toute confiance\nau Cameroun.'
-            : 'Buy, rent or invest with confidence\nin Cameroon.'}
-          ctaLabel={lang === 'fr' ? 'DÉCOUVRIR' : 'EXPLORE'}
-          onPressCta={handlePromoCta}
+          badgeLabel={lang === 'fr' ? 'CAMEROUN • DOUALA • YAOUNDÉ • KRIBI' : 'CAMEROON • DOUALA • YAOUNDE • KRIBI'}
+          title={t.home.heroTitle}
+          subtitle={t.home.heroSubtitle}
+          ctaLabel={t.home.heroCta}
+          onPressCta={handleSearchPress}
         />
 
-        {/* Barre de recherche pill */}
         <SearchBar
           placeholder={
             lang === 'fr'
@@ -120,7 +101,6 @@ export default function HomeScreen() {
           onPress={handleSearchPress}
         />
 
-        {/* Top offres */}
         <TopDealsSection
           listings={deals}
           favorites={favorites}
@@ -128,32 +108,28 @@ export default function HomeScreen() {
           onPressCard={handleCardPress}
           onToggleFav={toggleFavorite}
           onPressViewAll={handleViewAllDeals}
-          titleFr="Top offres"
-          titleEn="Top deals"
-          badgeFr="OFFRES"
-          badgeEn="DEALS"
-          viewAllFr="Voir tout"
-          viewAllEn="Show all"
-          dealFr="OPPORTUNITÉ"
-          dealEn="DEAL"
-          newFr="NOUVEAU"
-          newEn="NEW"
-          priceDropFr="Prix baissé"
-          priceDropEn="Price drop"
+          title={t.home.featuredTitle}
+          badge={lang === 'fr' ? 'OFFRES' : 'DEALS'}
+          viewAllLabel={t.home.viewAll}
+          dealLabel={lang === 'fr' ? 'OPPORTUNITÉ' : 'DEAL'}
+          newLabel={t.home.new.toUpperCase()}
+          perMonthLabel={t.common.perMonth}
         />
 
-        {/* Catégories VENTE / LOCATION */}
         <FeaturedCategoriesSection
-          lang={lang}
+          title={t.home.categoriesTitle}
+          buyLabel={t.home.buyTab}
+          rentLabel={t.home.rentTab}
+          listingsWord={listingsWord}
           countVente={countByTransactionFn('vente')}
           countLocation={countByTransactionFn('location')}
           onPressVente={handleVente}
           onPressLocation={handleLocation}
         />
 
-        {/* Types de biens */}
         <PropertyTypesSection
-          lang={lang}
+          title={t.home.typeLabel}
+          listingsWord={listingsWord}
           items={typeItems}
           onPress={handleType}
         />
@@ -165,7 +141,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#111827',
+    backgroundColor: colors.background,
   },
   scroll: {
     flex: 1,

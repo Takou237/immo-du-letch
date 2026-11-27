@@ -1,13 +1,14 @@
 /**
- * ListingCard — carte d'annonce horizontale scrollable, style mobile.de dark.
- * Principe S : affichage uniquement, pas de logique métier.
- * Principe O : onPress + onFavorite extensibles.
+ * ListingCard — carte d'annonce horizontale scrollable, thème officiel IMMO DU LETCH.
+ * Principe S : affichage uniquement, icône vectorielle au lieu d'emoji.
  */
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Heart, MapPin, Maximize2, BedDouble, Star, TrendingDown } from 'lucide-react-native';
 import { Listing } from '../../types/listing';
 import { formatFCFA, formatSurface } from '../../utils/formatPrice';
+import { PropertyTypeIcon } from '../PropertyTypeIcon';
+import { colors } from '../../theme';
 
 interface ListingCardProps {
   listing: Listing;
@@ -15,9 +16,9 @@ interface ListingCardProps {
   lang: 'fr' | 'en';
   onPress: () => void;
   onToggleFav: () => void;
-  dealLabel: string;        // "OPPORTUNITÉ" / "DEAL"
-  newLabel: string;         // "NOUVEAU" / "NEW"
-  priceDropLabel: string;   // "Prix baissé" / "Price drop"
+  dealLabel: string;
+  newLabel: string;
+  perMonthLabel: string;
 }
 
 export function ListingCard({
@@ -28,75 +29,70 @@ export function ListingCard({
   onToggleFav,
   dealLabel,
   newLabel,
-  priceDropLabel,
+  perMonthLabel,
 }: ListingCardProps) {
   const title = lang === 'fr' ? listing.title : listing.titleEn;
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.88}>
-      {/* Zone couleur (image placeholder) */}
+      {/* Zone visuelle */}
       <View style={[styles.colorBlock, { backgroundColor: listing.gradientColors[0] }]}>
-        {/* Badge deal */}
         <View style={styles.dealBadge}>
           <Text style={styles.dealText}>{listing.isNew ? newLabel : dealLabel}</Text>
         </View>
 
-        {/* Badge prix baissé */}
-        {listing.priceDropped && (
+        {listing.priceDropped && listing.priceDropPercent && (
           <View style={styles.dropBadge}>
             <TrendingDown size={10} color="#fff" />
             <Text style={styles.dropText}>-{listing.priceDropPercent}%</Text>
           </View>
         )}
 
-        {/* Favori */}
         <TouchableOpacity style={styles.heartBtn} onPress={onToggleFav} hitSlop={8}>
           <Heart
-            size={18}
-            color={isFav ? '#ef4444' : '#fff'}
-            fill={isFav ? '#ef4444' : 'transparent'}
+            size={17}
+            color={isFav ? colors.danger : '#fff'}
+            fill={isFav ? colors.danger : 'transparent'}
             strokeWidth={2}
           />
         </TouchableOpacity>
 
-        {/* Emoji type */}
-        <Text style={styles.typeEmoji}>
-          {listing.type === 'villa' ? '🏡'
-            : listing.type === 'appartement' ? '🏢'
-            : listing.type === 'terrain' ? '🌿'
-            : listing.type === 'studio' ? '🛏️'
-            : '🏪'}
-        </Text>
+        <View style={styles.typeIconWrap}>
+          <PropertyTypeIcon type={listing.type} size={26} color="rgba(255,255,255,0.9)" />
+        </View>
       </View>
 
-      {/* Corps de la carte */}
+      {/* Corps */}
       <View style={styles.body}>
         <Text style={styles.title} numberOfLines={2}>{title}</Text>
 
-        <Text style={styles.price}>{formatFCFA(listing.price)}</Text>
+        <Text style={styles.price}>
+          {formatFCFA(listing.price)}
+          {listing.transaction === 'location' ? (
+            <Text style={styles.perMonth}> {perMonthLabel}</Text>
+          ) : null}
+        </Text>
 
-        {/* Chips */}
         <View style={styles.chips}>
           <View style={styles.chip}>
-            <Maximize2 size={10} color="#9CA3AF" />
+            <Maximize2 size={10} color={colors.textSecondary} />
             <Text style={styles.chipText}>{formatSurface(listing.surface)}</Text>
           </View>
           {listing.bedrooms != null && (
             <View style={styles.chip}>
-              <BedDouble size={10} color="#9CA3AF" />
+              <BedDouble size={10} color={colors.textSecondary} />
               <Text style={styles.chipText}>{listing.bedrooms}</Text>
             </View>
           )}
           <View style={styles.chip}>
-            <MapPin size={10} color="#9CA3AF" />
+            <MapPin size={10} color={colors.textSecondary} />
             <Text style={styles.chipText}>{listing.city}</Text>
           </View>
         </View>
 
-        {/* Rating */}
         {listing.rating != null && (
           <View style={styles.ratingRow}>
-            <Star size={11} color="#D4AF37" fill="#D4AF37" />
+            <Star size={12} color={colors.goldBright} fill={colors.goldBright} />
             <Text style={styles.ratingText}>{listing.rating.toFixed(1)}</Text>
             <Text style={styles.ratingCount}>({listing.ratingCount})</Text>
           </View>
@@ -108,40 +104,47 @@ export function ListingCard({
 
 const styles = StyleSheet.create({
   card: {
-    width: 200,
-    backgroundColor: '#1E293B',
+    width: 210,
+    backgroundColor: colors.surface,
     borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
     marginLeft: 16,
     overflow: 'hidden',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
   },
   colorBlock: {
-    height: 120,
+    height: 112,
     justifyContent: 'flex-end',
-    padding: 8,
+    padding: 10,
   },
   dealBadge: {
     position: 'absolute',
     top: 8,
     left: 8,
-    backgroundColor: '#D4AF37',
+    backgroundColor: colors.gold,
     borderRadius: 6,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
   dealText: {
-    color: '#0B1B2B',
+    color: colors.navy,
     fontSize: 9,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   dropBadge: {
     position: 'absolute',
-    top: 32,
+    top: 34,
     left: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
-    backgroundColor: '#ef4444',
+    gap: 3,
+    backgroundColor: colors.danger,
     borderRadius: 6,
     paddingHorizontal: 6,
     paddingVertical: 2,
@@ -155,61 +158,70 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(11,27,43,0.55)',
     borderRadius: 20,
-    padding: 5,
+    padding: 6,
   },
-  typeEmoji: {
-    fontSize: 28,
+  typeIconWrap: {
     alignSelf: 'flex-end',
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderRadius: 10,
+    padding: 7,
   },
   body: {
-    padding: 10,
+    padding: 12,
   },
   title: {
-    color: '#F9FAFB',
+    color: colors.textPrimary,
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
     lineHeight: 18,
     marginBottom: 4,
+    minHeight: 36,
   },
   price: {
-    color: '#D4AF37',
-    fontSize: 16,
+    color: colors.navy,
+    fontSize: 15,
     fontWeight: '800',
-    marginBottom: 6,
+    marginBottom: 8,
+  },
+  perMonth: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '500',
   },
   chips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 4,
-    marginBottom: 6,
+    marginBottom: 8,
   },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: '#252F3F',
+    backgroundColor: colors.surfaceAlt,
     borderRadius: 6,
     paddingHorizontal: 6,
     paddingVertical: 3,
   },
   chipText: {
-    color: '#9CA3AF',
+    color: colors.textSecondary,
     fontSize: 10,
+    fontWeight: '600',
   },
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
+    gap: 4,
   },
   ratingText: {
-    color: '#D4AF37',
+    color: colors.textPrimary,
     fontSize: 11,
     fontWeight: '700',
   },
   ratingCount: {
-    color: '#6B7280',
+    color: colors.textMuted,
     fontSize: 10,
   },
 });
