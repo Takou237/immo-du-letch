@@ -4,6 +4,7 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -39,11 +40,12 @@ export function AppHeader({
       <View style={styles.container}>
 
         {/* ── Logo gauche ── */}
-        <View style={styles.logoRow}>
-          {/* Carré rouge accent (inspiré de mobile.de) */}
-          <View style={styles.logoAccent} />
-          <Text style={styles.logoText}>IMMO DU LETCH</Text>
-        </View>
+        <Image
+          source={require('../../immo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+          accessibilityLabel="IMMO DU LETCH"
+        />
 
         {/* ── Icônes droite ── */}
         <View style={styles.actions}>
@@ -121,22 +123,9 @@ const styles = StyleSheet.create({
   },
 
   // Logo
-  logoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  logoAccent: {
-    width: 10,
-    height: 24,
-    backgroundColor: colors.gold,
-    borderRadius: 2,
-  },
-  logoText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+  logo: {
+    width: 120,
+    height: 40,
   },
 
   // Icônes
