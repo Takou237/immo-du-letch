@@ -9,15 +9,6 @@ use Illuminate\Support\Facades\Route;
 // Healthcheck
 Route::get('/health', fn () => response()->json(['status' => 'ok']));
 
-// Temporary seed endpoint – remove after initial data population
-Route::post('/seed', function (\Illuminate\Http\Request $request) {
-    if ($request->header('X-Seed-Secret') !== env('SEED_SECRET', 'changeme')) {
-        abort(403);
-    }
-    \Illuminate\Support\Facades\Artisan::call('db:seed', ['--force' => true]);
-    return response()->json(['status' => 'seeded', 'output' => \Illuminate\Support\Facades\Artisan::output()]);
-});
-
 // Contenu dynamique du site (articles, FAQ, carrousel, stats)
 Route::get('/site-content', [SiteContentController::class, 'index']);
 
