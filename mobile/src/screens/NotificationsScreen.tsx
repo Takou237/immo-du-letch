@@ -161,7 +161,7 @@ export function NotificationsScreen() {
   const SeparatorNotif = () => <View style={styles.separator} />;
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.safe} edges={[]}>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>

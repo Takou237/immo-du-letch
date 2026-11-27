@@ -257,7 +257,7 @@ export function SellScreen() {
   // ── Succès ──
   if (submitted) {
     return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
+      <SafeAreaView style={styles.safe} edges={[]}>
         <AppHeader />
         <View style={styles.successWrap}>
           <View style={styles.successIcon}>
@@ -285,7 +285,7 @@ export function SellScreen() {
   const typeOptions = TYPE_OPTIONS.map(o => ({ key: o.key, label: isFr ? o.fr : o.en }));
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.safe} edges={[]}>
       <AppHeader />
       <ScrollView
         style={styles.scroll}
