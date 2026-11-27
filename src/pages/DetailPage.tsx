@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import FinancingCalculator from "../components/FinancingCalculator";
 import Lightbox from "../components/Lightbox";
 import ListingTile from "../components/ListingTile";
-import MapModal from "../components/MapModal";
 import PriceScale from "../components/PriceScale";
 import SellerProfileModal from "../components/SellerProfileModal";
 import SiteFooter from "../components/SiteFooter";
@@ -32,6 +31,8 @@ import {
   priceLabel,
   renderStars,
 } from "../data/listings";
+import { api, getApiToken } from "../api/client";
+import { useT } from "../i18n/translations";
 import { useApp } from "../store/AppStore";
 
 export default function FicheDeBienVillaABonapriso() {
@@ -47,9 +48,9 @@ export default function FicheDeBienVillaABonapriso() {
     allListings,
     user,
   } = useApp();
+  const t = useT();
 
   const [lightbox, setLightbox] = useState<number | null>(null);
-  const [mapOpen, setMapOpen] = useState(false);
   const [sellerModalOpen, setSellerModalOpen] = useState(false);
   const [phoneVisible, setPhoneVisible] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", message: "" });
@@ -62,7 +63,6 @@ export default function FicheDeBienVillaABonapriso() {
     });
     setPhoneVisible(false);
     setLightbox(null);
-    setMapOpen(false);
     setSellerModalOpen(false);
   }, [listing.id, listing.title, listing.reference, user]);
 
@@ -85,49 +85,49 @@ export default function FicheDeBienVillaABonapriso() {
       : listing.type === "terrain"
         ? "terrain"
         : "vente";
-  const breadcrumb = `Retour aux résultats   /   ${
-    listing.transaction === "location" ? "Louer" : "Acheter"
+  const breadcrumb = `${t.detail.backToResults}   /   ${
+    listing.transaction === "location" ? t.detail.rent : t.detail.buy
   }   /   ${listing.city}   /   ${listing.neighborhood}`;
 
   const storyTitle =
     listing.type === "terrain"
-      ? "Un terrain à imaginer à votre façon"
+      ? t.detail.storyLand
       : listing.type === "bureau"
-        ? "Un espace à imaginer pour votre activité"
-        : "Un cadre de vie à imaginer à votre façon";
+        ? t.detail.storyOffice
+        : t.detail.storyDefault;
 
   const characteristics: [string, string][] = [
-    ["Type de bien", TYPE_SINGULAR[listing.type]],
-    ["Transaction", listing.transaction === "vente" ? "Vente" : "Location"],
+    [t.detail.charLabels.type, t.typesSingular[listing.type]],
+    [t.detail.charLabels.transaction, listing.transaction === "vente" ? t.detail.buy : t.detail.rent],
     [
       listing.type === "terrain"
-        ? "Surface du terrain"
+        ? t.detail.charLabels.landSurface
         : listing.type === "bureau"
-          ? "Surface utile"
-          : "Surface habitable",
+          ? t.detail.charLabels.usableSurface
+          : t.detail.charLabels.livingSurface,
       `${formatPrice(listing.surface)} m²`,
     ],
-    ["Terrain", listing.land ? `${formatPrice(listing.land)} m²` : "Non applicable"],
+    [t.detail.charLabels.land, listing.land ? `${formatPrice(listing.land)} m²` : t.detail.charLabels.notApplicable],
     [
-      "Pièces / chambres",
-      listing.rooms ? `${listing.rooms} pièces / ${listing.bedrooms} chambres` : "—",
+      t.detail.charLabels.roomsBedrooms,
+      listing.rooms ? `${listing.rooms} / ${listing.bedrooms}` : "—",
     ],
-    ["Salles de bains", listing.bathrooms ? String(listing.bathrooms) : "—"],
-    ["Stationnement", listing.parking ? `${listing.parking} places annoncées` : "Non renseigné"],
-    ["État du bien", CONDITION_LABELS[listing.condition]],
+    [t.detail.charLabels.bathrooms, listing.bathrooms ? String(listing.bathrooms) : "—"],
+    [t.detail.charLabels.parking, listing.parking ? t.detail.charLabels.parkingCount(listing.parking) : t.detail.charLabels.notSpecified],
+    [t.detail.charLabels.condition, t.conditions[listing.condition]],
   ];
 
   if (listing.type === "terrain") {
     characteristics[3] = [
-      "Prix au m²",
+      t.detail.charLabels.pricePerM2,
       `${formatPrice(Math.round(listing.price / listing.surface))} FCFA`,
     ];
   }
   if (listing.yearBuilt) {
-    characteristics.push(["Année de construction", String(listing.yearBuilt)]);
+    characteristics.push([t.detail.charLabels.yearBuilt, String(listing.yearBuilt)]);
   }
   if (listing.floor !== undefined && listing.totalFloors !== undefined) {
-    characteristics.push(["Étage", `${listing.floor}e sur ${listing.totalFloors}`]);
+    characteristics.push([t.detail.charLabels.floor, t.detail.charLabels.floorVal(listing.floor, listing.totalFloors)]);
   }
 
   const stat1 = {
@@ -214,14 +214,27 @@ export default function FicheDeBienVillaABonapriso() {
     }
   };
 
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim());
     if (!form.name.trim() || !emailOk || !form.message.trim()) {
       showToast("Veuillez renseigner votre nom, un e-mail valide et un message.");
       return;
     }
-    showToast(`Message envoyé à ${listing.seller} (démonstration).`);
+    if (getApiToken()) {
+      try {
+        await api.sendInquiry(listing.id, {
+          name: form.name.trim(),
+          email: form.email.trim(),
+          message: form.message.trim(),
+        });
+        showToast(`Message envoyé à ${listing.seller}.`);
+      } catch {
+        showToast(`Message envoyé à ${listing.seller} (hors ligne).`);
+      }
+    } else {
+      showToast(`Message envoyé à ${listing.seller} (démonstration).`);
+    }
     setForm((current) => ({ ...current, name: "", email: "" }));
   };
 
@@ -255,10 +268,10 @@ export default function FicheDeBienVillaABonapriso() {
 
         <div className="absolute right-[100px] top-[22px] flex items-center gap-4 text-[12px] text-[#637084]">
           <span className="inline-flex items-center gap-1.5">
-            <EyeIcon className="size-[15px]" /> {listing.views} personnes ont consulté ce bien
+            <EyeIcon className="size-[15px]" /> {t.detail.viewsCount(listing.views)}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <HeartIcon className="size-[14px]" filled /> {simulatedFavoritesCount} favoris
+            <HeartIcon className="size-[14px]" filled /> {t.detail.favoritesCount(simulatedFavoritesCount)}
           </span>
         </div>
 
@@ -287,7 +300,7 @@ export default function FicheDeBienVillaABonapriso() {
           }`}
         >
           <ScaleIcon className="size-[15px]" />
-          {comparing ? "Comparé" : "Comparer"}
+          {comparing ? t.detail.compared : t.detail.compare}
         </button>
 
         <button
@@ -351,7 +364,7 @@ export default function FicheDeBienVillaABonapriso() {
         >
           <GridIcon className="size-[20px] text-[#071f49]" />
           <span className="font-['Inter:Semi_Bold'] text-[14px] font-semibold text-[#071f49]">
-            Voir les {gallery.length} photo{gallery.length > 1 ? "s" : ""}
+            {t.detail.seePhotos(gallery.length)}
           </span>
         </button>
 
@@ -409,7 +422,7 @@ export default function FicheDeBienVillaABonapriso() {
             {perM2 && cityAvg ? (
               <div>
                 <h3 className="mb-3 font-['Inter:Bold'] text-[20px] font-bold text-[#071f49]">
-                  Analyse du prix par rapport au marché
+                  {t.detail.priceAnalysis}
                 </h3>
                 <PriceScale listing={listing} />
               </div>
@@ -418,7 +431,7 @@ export default function FicheDeBienVillaABonapriso() {
             {/* Caractéristiques */}
             <div>
               <h3 className="font-['Inter:Bold'] text-[22px] font-bold text-[#071f49]">
-                Les caractéristiques du bien
+                {t.detail.characteristics}
               </h3>
               <div className="mt-4 grid grid-cols-2 gap-x-8">
                 {characteristics.map(([label, value]) => (
@@ -488,14 +501,6 @@ export default function FicheDeBienVillaABonapriso() {
                   </p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setMapOpen(true)}
-                className="flex h-[44px] w-[190px] shrink-0 cursor-pointer items-center justify-center gap-2 rounded-[6px] border border-[#dce2e9] bg-white font-['Inter:Semi_Bold'] text-[13px] font-semibold text-[#071f49] transition-colors hover:border-[#f3ad19]"
-              >
-                <PinIcon className="size-[18px]" />
-                Voir sur la carte
-              </button>
             </div>
           </div>
 
@@ -586,7 +591,7 @@ export default function FicheDeBienVillaABonapriso() {
               </button>
 
               <p className="mt-5 font-['Inter:Semi_Bold'] text-[14px] font-semibold text-[#071f49]">
-                Demandez une visite ou plus de détails.
+                {t.detail.requestVisit}
               </p>
 
               <div className="mt-3 space-y-3">
@@ -595,7 +600,7 @@ export default function FicheDeBienVillaABonapriso() {
                     htmlFor="contact-name"
                     className="mb-1 block font-['Inter:Medium'] text-[12px] font-medium text-[#172b45]"
                   >
-                    Votre nom
+                    {t.detail.yourName}
                   </label>
                   <input
                     id="contact-name"
@@ -603,7 +608,7 @@ export default function FicheDeBienVillaABonapriso() {
                     onChange={(event) =>
                       setForm((current) => ({ ...current, name: event.target.value }))
                     }
-                    placeholder="Nom et prénom"
+                    placeholder={t.detail.namePlaceholder}
                     className="h-[44px] w-full rounded-[5px] border border-[#dce2e9] bg-white px-3 text-[12px] text-[#172b45] outline-none focus:border-[#f3ad19]"
                   />
                 </div>
@@ -613,7 +618,7 @@ export default function FicheDeBienVillaABonapriso() {
                     htmlFor="contact-email"
                     className="mb-1 block font-['Inter:Medium'] text-[12px] font-medium text-[#172b45]"
                   >
-                    Votre e-mail
+                    {t.detail.yourEmail}
                   </label>
                   <input
                     id="contact-email"
@@ -632,7 +637,7 @@ export default function FicheDeBienVillaABonapriso() {
                     htmlFor="contact-message"
                     className="mb-1 block font-['Inter:Medium'] text-[12px] font-medium text-[#172b45]"
                   >
-                    Votre message
+                    {t.detail.yourMessage}
                   </label>
                   <textarea
                     id="contact-message"
@@ -649,7 +654,7 @@ export default function FicheDeBienVillaABonapriso() {
                   className="flex h-[48px] w-full cursor-pointer items-center justify-center gap-2 rounded-[6px] border-0 bg-[#f3ad19] font-['Inter:Semi_Bold'] text-[14px] font-semibold text-[#071f49] transition-colors hover:bg-[#ffbe33]"
                 >
                   <MailIcon className="size-[18px]" />
-                  Envoyer mon message
+                  {t.detail.sendMessage}
                 </button>
               </div>
 
@@ -728,17 +733,6 @@ export default function FicheDeBienVillaABonapriso() {
           title={listing.title}
           onChange={openLightbox}
           onClose={() => setLightbox(null)}
-        />
-      ) : null}
-
-      {mapOpen ? (
-        <MapModal
-          listings={[listing]}
-          onClose={() => setMapOpen(false)}
-          onOpen={(id) => {
-            setMapOpen(false);
-            openListing(id);
-          }}
         />
       ) : null}
 

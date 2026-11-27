@@ -5,12 +5,9 @@ import SiteFooter from "../components/SiteFooter";
 import SiteNav from "../components/SiteNav";
 import { ArrowIcon, ChevronIcon, PinIcon, SearchIcon, ShieldIcon } from "../components/icons";
 import {
-  ARTICLES,
   CITY_OPTIONS,
   DEFAULT_FILTERS,
-  FAQS,
   MARKET_AVERAGE,
-  PLATFORM_STATS,
   TYPE_LABELS,
   filterListings,
   formatPrice,
@@ -22,7 +19,6 @@ import {
   BUDGET_LOCATION,
   BUDGET_VENTE,
   CATEGORIES,
-  HERO_SLIDES,
   HERO_TABS,
   LOCATION_SUGGESTIONS,
   POPULAR_SEARCHES,
@@ -30,6 +26,7 @@ import {
   SURFACE_OPTIONS,
   type HomeTab,
 } from "../data/homeContent";
+import { useT } from "../i18n/translations";
 import { useApp } from "../store/AppStore";
 
 const asset = (file: string) => `/assets/${file}`;
@@ -55,7 +52,8 @@ function PlusIcon({ className = "" }: { className?: string }) {
 }
 
 export default function AccueilImmoDuLetch() {
-  const { searchWith, browseAll, openDeposit, openListing, recentlyViewed, allListings } = useApp();
+  const { searchWith, browseAll, openDeposit, openListing, recentlyViewed, allListings, articles, faqs, heroSlides, platformStats, siteSettings } = useApp();
+  const t = useT();
   const [tab, setTab] = useState<HomeTab>("vente");
   const [city, setCity] = useState("");
   const [query, setQuery] = useState("");
@@ -71,10 +69,10 @@ export default function AccueilImmoDuLetch() {
 
   useEffect(() => {
     const timer = window.setInterval(() => {
-      setSlideIndex((i) => (i + 1) % HERO_SLIDES.length);
+      setSlideIndex((i) => (i + 1) % heroSlides.length);
     }, 4500);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [heroSlides.length]);
 
   // Estimateur de bien
   const [estCity, setEstCity] = useState("Douala");
@@ -84,14 +82,33 @@ export default function AccueilImmoDuLetch() {
   const isRent = tab === "location" || tab === "meuble";
   const budgetOptions = isRent ? BUDGET_LOCATION : BUDGET_VENTE;
 
-  const featured = [
-    "villa-bonapriso",
-    "appartement-meuble-bastos",
-    "terrain-kribi",
-    "villa-akwa-douala",
-  ]
-    .map((id) => allListings.find((listing) => listing.id === id))
-    .filter((listing): listing is NonNullable<typeof listing> => Boolean(listing));
+  const [featuredIndex, setFeaturedIndex] = useState(0);
+
+  const carouselListings = useMemo(() => {
+    const priority = [
+      "villa-bonapriso",
+      "appartement-meuble-bastos",
+      "terrain-kribi",
+      "villa-akwa-douala",
+    ];
+    const ordered = priority
+      .map((id) => allListings.find((listing) => listing.id === id))
+      .filter((listing): listing is NonNullable<typeof listing> => Boolean(listing));
+    const seen = new Set(ordered.map((listing) => listing.id));
+    for (const listing of allListings) {
+      if (!seen.has(listing.id)) {
+        ordered.push(listing);
+        seen.add(listing.id);
+      }
+    }
+    return ordered.slice(0, 9);
+  }, [allListings]);
+
+  const maxFeaturedIndex = Math.max(0, carouselListings.length - 3);
+
+  useEffect(() => {
+    setFeaturedIndex((index) => Math.min(index, maxFeaturedIndex));
+  }, [maxFeaturedIndex]);
 
   const recentListings = useMemo(
     () =>
@@ -178,14 +195,13 @@ export default function AccueilImmoDuLetch() {
           <div className="flex w-[610px] shrink-0 flex-col justify-between">
             <div>
               <span className="inline-flex items-center gap-2 rounded-full bg-[#fff6df] px-3 py-1 font-['Inter:Bold'] text-[10px] font-bold tracking-[0.06em] text-[#996300]">
-                IMMOBILIER AU CAMEROUN · DOUALA · YAOUNDÉ · KRIBI
+                {t.home.heroBadge}
               </span>
               <h1 className="mt-2.5 font-['Inter:Bold'] text-[33px] font-bold leading-[1.18] tracking-[-0.02em] text-[#071f49]">
-                Trouvez le bien qui vous ressemble.
+                {t.home.heroTitle}
               </h1>
               <p className="mt-1.5 font-['Inter:Regular'] text-[15px] leading-[1.5] text-[#4a5a70]">
-                Acheter, louer ou investir en toute confiance. Comparez les prix du marché en temps
-                réel.
+                {t.home.heroSubtitle}
               </p>
             </div>
 
@@ -210,7 +226,7 @@ export default function AccueilImmoDuLetch() {
                           : "font-medium text-[#637084] hover:text-[#071f49]"
                       }`}
                     >
-                      {item.label}
+                      {t.home.tabs[item.id]}
                       <span
                         className={`absolute bottom-0 left-0 h-[3px] w-full rounded-full bg-[#f3ad19] transition-all duration-300 ${
                           isActive ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0"
@@ -225,15 +241,15 @@ export default function AccueilImmoDuLetch() {
               <div className="mt-4 grid grid-cols-12 gap-2.5">
                 <div className="col-span-3">
                   <label className="mb-1 block font-['Inter:Semi_Bold'] text-[10px] font-semibold uppercase tracking-wider text-[#637084]">
-                    Ville
+                    {t.home.city}
                   </label>
                   <select
-                    aria-label="Ville"
+                    aria-label={t.home.city}
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                     className="h-[42px] w-full cursor-pointer rounded-[8px] border border-[#dce2e9] bg-[#f8fafc] px-2.5 font-['Inter:Medium'] text-[13px] font-medium text-[#071f49] outline-none transition-colors focus:border-[#f3ad19] focus:bg-white"
                   >
-                    <option value="">Toutes</option>
+                    <option value="">{t.home.allCities}</option>
                     {CITY_OPTIONS.map((name) => (
                       <option key={name} value={name}>
                         {name}
@@ -244,11 +260,11 @@ export default function AccueilImmoDuLetch() {
 
                 <div className="relative col-span-5">
                   <label className="mb-1 block font-['Inter:Semi_Bold'] text-[10px] font-semibold uppercase tracking-wider text-[#637084]">
-                    Quartier ou mot-clé
+                    {t.home.keywordLabel}
                   </label>
                   <input
                     type="text"
-                    aria-label="Quartier ou mot-clé"
+                    aria-label={t.home.keywordLabel}
                     value={query}
                     onFocus={() => setShowSuggestions(true)}
                     onBlur={() => setTimeout(() => setShowSuggestions(false), 160)}
@@ -256,7 +272,7 @@ export default function AccueilImmoDuLetch() {
                       setQuery(e.target.value);
                       setShowSuggestions(true);
                     }}
-                    placeholder="Bonapriso, Bastos, piscine…"
+                    placeholder={t.home.keywordPlaceholder}
                     className="h-[42px] w-full rounded-[8px] border border-[#dce2e9] bg-[#f8fafc] px-3 font-['Inter:Medium'] text-[13px] text-[#071f49] outline-none transition-colors placeholder:text-[#8a95a5] focus:border-[#f3ad19] focus:bg-white"
                   />
                   {showSuggestions && filteredSuggestions.length > 0 ? (
@@ -283,18 +299,18 @@ export default function AccueilImmoDuLetch() {
 
                 <div className="col-span-4">
                   <label className="mb-1 block font-['Inter:Semi_Bold'] text-[10px] font-semibold uppercase tracking-wider text-[#637084]">
-                    Type de bien
+                    {t.home.propertyType}
                   </label>
                   <select
-                    aria-label="Type de bien"
+                    aria-label={t.home.propertyType}
                     value={type}
                     onChange={(e) => setType(e.target.value as PropertyType | "")}
                     className="h-[42px] w-full cursor-pointer rounded-[8px] border border-[#dce2e9] bg-[#f8fafc] px-2.5 font-['Inter:Medium'] text-[13px] font-medium text-[#071f49] outline-none transition-colors focus:border-[#f3ad19] focus:bg-white"
                   >
-                    <option value="">Tous les types</option>
-                    {Object.entries(TYPE_LABELS).map(([value, label]) => (
+                    <option value="">{t.home.allTypes}</option>
+                    {(Object.keys(TYPE_LABELS) as PropertyType[]).map((value) => (
                       <option key={value} value={value}>
-                        {label}
+                        {t.types[value]}
                       </option>
                     ))}
                   </select>
@@ -305,17 +321,17 @@ export default function AccueilImmoDuLetch() {
               <div className="mt-3.5 grid grid-cols-4 gap-2.5">
                 <div>
                   <label className="mb-1 block font-['Inter:Semi_Bold'] text-[10px] font-semibold uppercase tracking-wider text-[#637084]">
-                    Budget min.
+                    {t.home.budgetMin}
                   </label>
                   <select
-                    aria-label="Budget minimum"
+                    aria-label={t.home.budgetMin}
                     value={budgetMin}
                     onChange={(e) => setBudgetMin(e.target.value)}
                     className="h-[42px] w-full cursor-pointer rounded-[8px] border border-[#dce2e9] bg-[#f8fafc] px-2.5 font-['Inter:Medium'] text-[13px] font-medium text-[#071f49] outline-none transition-colors focus:border-[#f3ad19] focus:bg-white"
                   >
                     {budgetOptions.map((o) => (
                       <option key={o.value} value={o.value}>
-                        {o.label}
+                        {o.value === "" ? t.home.any : o.label}
                       </option>
                     ))}
                   </select>
@@ -323,17 +339,17 @@ export default function AccueilImmoDuLetch() {
 
                 <div>
                   <label className="mb-1 block font-['Inter:Semi_Bold'] text-[10px] font-semibold uppercase tracking-wider text-[#637084]">
-                    Budget max.
+                    {t.home.budgetMax}
                   </label>
                   <select
-                    aria-label="Budget maximum"
+                    aria-label={t.home.budgetMax}
                     value={budgetMax}
                     onChange={(e) => setBudgetMax(e.target.value)}
                     className="h-[42px] w-full cursor-pointer rounded-[8px] border border-[#dce2e9] bg-[#f8fafc] px-2.5 font-['Inter:Medium'] text-[13px] font-medium text-[#071f49] outline-none transition-colors focus:border-[#f3ad19] focus:bg-white"
                   >
                     {budgetOptions.map((o) => (
                       <option key={o.value} value={o.value}>
-                        {o.label}
+                        {o.value === "" ? t.home.any : o.label}
                       </option>
                     ))}
                   </select>
@@ -341,17 +357,17 @@ export default function AccueilImmoDuLetch() {
 
                 <div>
                   <label className="mb-1 block font-['Inter:Semi_Bold'] text-[10px] font-semibold uppercase tracking-wider text-[#637084]">
-                    Surface min.
+                    {t.home.surfaceMin}
                   </label>
                   <select
-                    aria-label="Surface minimum"
+                    aria-label={t.home.surfaceMin}
                     value={surfaceMin}
                     onChange={(e) => setSurfaceMin(e.target.value)}
                     className="h-[42px] w-full cursor-pointer rounded-[8px] border border-[#dce2e9] bg-[#f8fafc] px-2.5 font-['Inter:Medium'] text-[13px] font-medium text-[#071f49] outline-none transition-colors focus:border-[#f3ad19] focus:bg-white"
                   >
                     {SURFACE_OPTIONS.map((o) => (
                       <option key={o.value} value={o.value}>
-                        {o.label}
+                        {o.value === "" ? t.home.any : o.label}
                       </option>
                     ))}
                   </select>
@@ -359,17 +375,17 @@ export default function AccueilImmoDuLetch() {
 
                 <div>
                   <label className="mb-1 block font-['Inter:Semi_Bold'] text-[10px] font-semibold uppercase tracking-wider text-[#637084]">
-                    Chambres
+                    {t.home.rooms}
                   </label>
                   <select
-                    aria-label="Nombre de chambres minimum"
+                    aria-label={t.home.rooms}
                     value={roomsMin}
                     onChange={(e) => setRoomsMin(e.target.value)}
                     className="h-[42px] w-full cursor-pointer rounded-[8px] border border-[#dce2e9] bg-[#f8fafc] px-2.5 font-['Inter:Medium'] text-[13px] font-medium text-[#071f49] outline-none transition-colors focus:border-[#f3ad19] focus:bg-white"
                   >
                     {ROOM_OPTIONS.map((o) => (
                       <option key={o.value} value={o.value}>
-                        {o.label}
+                        {o.value === "" ? t.home.any : o.label}
                       </option>
                     ))}
                   </select>
@@ -384,10 +400,10 @@ export default function AccueilImmoDuLetch() {
                   className="cursor-pointer border-0 bg-transparent p-0 text-left"
                 >
                   <span className="block font-['Inter:Semi_Bold'] text-[12px] font-semibold text-[#071f49] hover:text-[#a26b00]">
-                    + Plus de critères avancés
+                    {t.home.moreCriteria}
                   </span>
                   <span className="block text-[11px] text-[#637084]">
-                    Titre foncier, équipements, état du bien…
+                    {t.home.moreCriteriaSub}
                   </span>
                 </button>
 
@@ -398,9 +414,7 @@ export default function AccueilImmoDuLetch() {
                   data-name="Rechercher un bien"
                 >
                   <SearchIcon className="size-[18px]" />
-                  <span>
-                    Rechercher ({liveMatchCount} bien{liveMatchCount > 1 ? "s" : ""})
-                  </span>
+                  <span>{t.home.searchCount(liveMatchCount)}</span>
                 </button>
               </div>
             </div>
@@ -411,7 +425,7 @@ export default function AccueilImmoDuLetch() {
             className="relative h-[534px] flex-1 overflow-hidden rounded-[16px] bg-[#071f49] shadow-[0_24px_60px_rgb(7_31_73/18%)]"
             data-name="Vitrine immobilière animée"
           >
-            {HERO_SLIDES.map((slide, index) => {
+            {heroSlides.map((slide, index) => {
               const activeSlide = index === slideIndex;
               return (
                 <img
@@ -434,7 +448,7 @@ export default function AccueilImmoDuLetch() {
                 type="button"
                 aria-label="Image précédente"
                 onClick={() =>
-                  setSlideIndex((i) => (i - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)
+                  setSlideIndex((i) => (i - 1 + heroSlides.length) % heroSlides.length)
                 }
                 className="flex size-[36px] cursor-pointer items-center justify-center rounded-full border border-white/30 bg-white/20 text-white backdrop-blur-md transition-colors hover:bg-white/35"
               >
@@ -443,7 +457,7 @@ export default function AccueilImmoDuLetch() {
               <button
                 type="button"
                 aria-label="Image suivante"
-                onClick={() => setSlideIndex((i) => (i + 1) % HERO_SLIDES.length)}
+                onClick={() => setSlideIndex((i) => (i + 1) % heroSlides.length)}
                 className="flex size-[36px] cursor-pointer items-center justify-center rounded-full border border-white/30 bg-white/20 text-white backdrop-blur-md transition-colors hover:bg-white/35"
               >
                 <ChevronIcon className="size-[16px]" />
@@ -453,30 +467,30 @@ export default function AccueilImmoDuLetch() {
             {/* Légende dynamique du bien affiché */}
             <div className="absolute inset-x-4 bottom-3.5 z-10">
               <div
-                key={HERO_SLIDES[slideIndex].id}
+                key={heroSlides[slideIndex]?.id}
                 className="animate-fade-in mx-auto max-w-[360px] rounded-[10px] border border-white/20 bg-white/95 px-3.5 py-2.5 backdrop-blur-md shadow-lg"
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="rounded-full bg-[#fff6df] px-2 py-0.5 font-['Inter:Bold'] text-[9px] font-bold tracking-wider text-[#996300]">
-                    {HERO_SLIDES[slideIndex].tag}
+                    {heroSlides[slideIndex]?.tag}
                   </span>
                   <span className="font-['Inter:Bold'] text-[13px] font-bold text-[#071f49]">
-                    {HERO_SLIDES[slideIndex].price}
+                    {heroSlides[slideIndex]?.price}
                   </span>
                 </div>
 
                 <p className="mt-1 truncate font-['Inter:Bold'] text-[13px] font-bold text-[#071f49]">
-                  {HERO_SLIDES[slideIndex].title}
+                  {heroSlides[slideIndex]?.title}
                 </p>
 
                 <div className="mt-1.5 flex items-center justify-between">
                   <span className="flex items-center gap-1 text-[11px] text-[#637084]">
                     <PinIcon className="size-[11px]" />
-                    {HERO_SLIDES[slideIndex].location}
+                    {heroSlides[slideIndex]?.location}
                   </span>
                   <button
                     type="button"
-                    onClick={() => openListing(HERO_SLIDES[slideIndex].id)}
+                    onClick={() => openListing(heroSlides[slideIndex]?.id ?? "")}
                     className="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 font-['Inter:Semi_Bold'] text-[11px] font-semibold text-[#071f49] hover:text-[#a26b00]"
                   >
                     Voir le bien <ArrowIcon className="size-[12px]" />
@@ -486,7 +500,7 @@ export default function AccueilImmoDuLetch() {
 
               {/* Indicateurs (dots) */}
               <div className="mt-2 flex items-center justify-center gap-2">
-                {HERO_SLIDES.map((slide, index) => (
+                {heroSlides.map((slide, index) => (
                   <button
                     key={slide.id}
                     type="button"
@@ -507,23 +521,19 @@ export default function AccueilImmoDuLetch() {
       <div className="w-full border-y border-[#dce2e9] bg-[#f8fafc] px-[100px] py-[28px]">
         <div className="flex items-center justify-between gap-6">
           <div className="flex items-center gap-12">
-            {PLATFORM_STATS.map((stat) => (
+            {platformStats.map((stat, idx) => (
               <div key={stat.label}>
                 <p className="font-['Inter:Bold'] text-[28px] font-bold leading-tight text-[#071f49]">
                   {stat.value}
                   {stat.suffix}
                 </p>
-                <p className="mt-0.5 text-[12px] text-[#637084]">{stat.label}</p>
+                <p className="mt-0.5 text-[12px] text-[#637084]">{t.home.statsLabels[idx]}</p>
               </div>
             ))}
           </div>
 
           <div className="flex items-center gap-4">
-            {[
-              "Titre foncier & documents contrôlés",
-              "Annonceurs identifiés & notés",
-              "Évaluation prix du marché",
-            ].map((badge) => (
+            {t.home.trustBadges.map((badge) => (
               <div
                 key={badge}
                 className="flex items-center gap-2 rounded-full border border-[#dce2e9] bg-white px-4 py-2 text-[12px] font-medium text-[#172b45]"
@@ -542,10 +552,10 @@ export default function AccueilImmoDuLetch() {
         data-name="Catégories de biens"
       >
         <p className="absolute font-['Inter:Bold'] font-bold leading-[1.45] left-[100px] text-[#071f49] text-[26px] top-[35px] whitespace-nowrap">
-          Quel bien recherchez-vous ?
+          {t.home.categoriesTitle}
         </p>
         <p className="absolute font-['Inter:Regular'] font-normal leading-[1.45] left-[100px] text-[#637084] text-[15px] top-[80px] whitespace-nowrap">
-          Du premier appartement au prochain investissement.
+          {t.home.categoriesSub}
         </p>
 
         {CATEGORIES.map((category, index) => {
@@ -562,27 +572,27 @@ export default function AccueilImmoDuLetch() {
                 <img alt="" className="absolute inset-0 max-w-none size-full" src={category.icon} />
               </span>
               <span className="-translate-x-1/2 absolute font-['Inter:Semi_Bold'] font-semibold leading-[1.45] left-[96.5px] text-[#172b45] text-[13px] text-center top-[62px] w-[179px]">
-                {category.label}
+                {t.home.categories[category.label] ?? category.label}
               </span>
               <span className="-translate-x-1/2 absolute font-['Inter:Regular'] font-normal leading-[1.45] left-[96.5px] text-[#637084] text-[11px] text-center top-[86px] w-[179px]">
-                {count} annonce{count > 1 ? "s" : ""}
+                {t.home.listingCount(count)}
               </span>
             </button>
           );
         })}
 
         <p className="absolute font-['Inter:Semi_Bold'] font-semibold leading-[1.45] left-[100px] text-[#071f49] text-[14px] top-[262px] whitespace-nowrap">
-          Recherches populaires
+          {t.home.popularSearches}
         </p>
         <div className="absolute left-[100px] top-[292px] flex w-[1240px] flex-wrap gap-[10px]">
-          {POPULAR_SEARCHES.map((preset) => (
+          {POPULAR_SEARCHES.map((preset, idx) => (
             <button
               key={preset.label}
               type="button"
               onClick={() => searchWith(preset.filter)}
               className="h-[34px] cursor-pointer rounded-full border border-[#dce2e9] bg-white px-[14px] font-['Inter:Medium'] text-[12px] font-medium text-[#172b45] transition-colors hover:border-[#f3ad19] hover:bg-[#fffaf0]"
             >
-              {preset.label}
+              {t.home.popularPresets[idx] ?? preset.label}
             </button>
           ))}
         </div>
@@ -596,10 +606,10 @@ export default function AccueilImmoDuLetch() {
         <div className="flex items-end justify-between">
           <div>
             <p className="font-['Inter:Bold'] text-[28px] font-bold leading-[1.3] text-[#071f49]">
-              Des biens pour vos envies
+              {t.home.featuredTitle}
             </p>
             <p className="mt-1 font-['Inter:Regular'] text-[15px] text-[#637084]">
-              Une sélection pour habiter, louer ou investir au Cameroun.
+              {t.home.featuredSub}
             </p>
           </div>
           <button
@@ -607,48 +617,56 @@ export default function AccueilImmoDuLetch() {
             onClick={browseAll}
             className="flex h-[40px] cursor-pointer items-center gap-2 border-0 bg-transparent p-0 font-['Inter:Semi_Bold'] text-[14px] font-semibold text-[#071f49] hover:text-[#a26b00]"
           >
-            Voir toutes les annonces ({allListings.length})
+            {t.home.seeAllListings(allListings.length)}
             <ArrowIcon className="size-[18px]" />
           </button>
         </div>
 
-        <div className="mt-7 grid grid-cols-3 gap-[20px]">
-          {featured.slice(0, 3).map((listing) => (
-            <div key={listing.id} className="relative h-[428px]">
-              <ListingTile listing={listing} left={0} top={0} />
+        <div className="relative mt-7">
+          <button
+            type="button"
+            aria-label="Afficher les biens précédents"
+            onClick={() => setFeaturedIndex((index) => Math.max(0, index - 1))}
+            disabled={featuredIndex === 0}
+            className="absolute -left-[22px] top-1/2 z-10 flex size-[46px] -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[#dce2e9] bg-white text-[#071f49] shadow-[0_8px_22px_rgb(7_31_73/16%)] transition-colors hover:border-[#f3ad19] disabled:cursor-not-allowed disabled:opacity-35"
+          >
+            <ChevronIcon className="size-[18px] rotate-180" />
+          </button>
+
+          <div className="overflow-hidden px-[2px]">
+            <div className="grid grid-cols-3 gap-[20px]">
+              {carouselListings.slice(featuredIndex, featuredIndex + 3).map((listing) => (
+                <div key={listing.id} className="relative h-[428px]">
+                  <ListingTile listing={listing} left={0} top={0} />
+                </div>
+              ))}
             </div>
+          </div>
+
+          <button
+            type="button"
+            aria-label="Afficher les biens suivants"
+            onClick={() => setFeaturedIndex((index) => Math.min(maxFeaturedIndex, index + 1))}
+            disabled={featuredIndex >= maxFeaturedIndex}
+            className="absolute -right-[22px] top-1/2 z-10 flex size-[46px] -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[#dce2e9] bg-white text-[#071f49] shadow-[0_8px_22px_rgb(7_31_73/16%)] transition-colors hover:border-[#f3ad19] disabled:cursor-not-allowed disabled:opacity-35"
+          >
+            <ChevronIcon className="size-[18px]" />
+          </button>
+        </div>
+
+        <div className="mt-4 flex items-center justify-center gap-2">
+          {carouselListings.map((listing, index) => (
+            <button
+              key={listing.id}
+              type="button"
+              aria-label={`Afficher le bien ${index + 1}`}
+              onClick={() => setFeaturedIndex(Math.min(index, maxFeaturedIndex))}
+              className={`h-[6px] cursor-pointer rounded-full border-0 transition-all ${
+                index === featuredIndex ? "w-[24px] bg-[#f3ad19]" : "w-[8px] bg-[#dce2e9]"
+              }`}
+            />
           ))}
         </div>
-        {featured[3] ? (
-          <div className="mt-5 flex items-center justify-between rounded-[8px] border border-[#dce2e9] bg-white p-4">
-            <div className="flex items-center gap-4">
-              <img
-                src={featured[3].image}
-                alt={featured[3].title}
-                className="h-[72px] w-[108px] rounded-[6px] object-cover"
-              />
-              <div>
-                <span className="rounded-[4px] bg-[#e7f6ec] px-2 py-0.5 text-[10px] font-semibold text-[#1f7a3d]">
-                  Coup de cœur
-                </span>
-                <p className="mt-1 font-['Inter:Bold'] text-[16px] font-bold text-[#071f49]">
-                  {featured[3].title} — {featured[3].neighborhood}, {featured[3].city}
-                </p>
-                <p className="text-[13px] text-[#637084]">
-                  {formatPrice(featured[3].price)} FCFA · {featured[3].surface} m² ·{" "}
-                  {featured[3].rooms} pièces
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => searchWith({ transaction: "vente", city: "Douala" })}
-              className="h-[40px] cursor-pointer rounded-[6px] border-0 bg-[#071f49] px-5 font-['Inter:Semi_Bold'] text-[13px] font-semibold text-white hover:bg-[#0d2d66]"
-            >
-              Découvrir
-            </button>
-          </div>
-        ) : null}
       </div>
 
       {/* CTA Vendre ou louer */}
@@ -658,14 +676,14 @@ export default function AccueilImmoDuLetch() {
           data-name="Votre bien mérite sa place ici"
         >
           <p className="absolute font-['Inter:Bold'] font-bold leading-[1.45] left-[36px] text-[30px] text-white top-[30px] w-[740px]">
-            Vous vendez ou louez un bien ?
+            {t.home.ctaTitle}
           </p>
           <div className="absolute font-['Inter:Regular'] font-normal leading-[0] left-[36px] text-[#dce4f0] text-[16px] top-[88px] w-[740px]">
             <p className="leading-[1.45] mb-0">
-              Donnez de la visibilité à votre annonce et présentez votre bien
+              {t.home.ctaDesc1}
             </p>
             <p className="leading-[1.45]">
-              aux personnes qui le recherchent. Photos, détails, prix : à vous de jouer.
+              {t.home.ctaDesc2}
             </p>
           </div>
           <button
@@ -674,7 +692,7 @@ export default function AccueilImmoDuLetch() {
             className="absolute bg-[#f3ad19] h-[48px] left-[36px] cursor-pointer overflow-clip rounded-[6px] top-[178px] w-[240px] border-0 transition-colors hover:bg-[#ffbe33]"
           >
             <span className="absolute font-['Inter:Semi_Bold'] font-semibold leading-[1.45] left-[43.5px] text-[#071f49] text-[14px] top-[14px] whitespace-nowrap">
-              Déposer mon annonce
+              {t.home.ctaBtn}
             </span>
           </button>
           <div
@@ -695,20 +713,19 @@ export default function AccueilImmoDuLetch() {
         <div className="flex items-center justify-between gap-8 rounded-[10px] border border-[#dce2e9] bg-white p-7">
           <div className="max-w-[420px]">
             <span className="rounded-full bg-[#fff6df] px-3 py-1 text-[11px] font-bold text-[#996300]">
-              ESTIMATION GRATUITE
+              {t.home.estBadge}
             </span>
             <p className="mt-3 font-['Inter:Bold'] text-[24px] font-bold leading-snug text-[#071f49]">
-              Estimez la valeur de votre bien au Cameroun
+              {t.home.estTitle}
             </p>
             <p className="mt-2 text-[14px] leading-relaxed text-[#637084]">
-              Obtenez une fourchette indicative basée sur les prix moyens au m² à Douala, Yaoundé et
-              Kribi.
+              {t.home.estDesc}
             </p>
           </div>
 
           <div className="flex flex-1 items-end gap-4">
             <div className="flex-1">
-              <label className="mb-1.5 block text-[12px] font-semibold text-[#172b45]">Ville</label>
+              <label className="mb-1.5 block text-[12px] font-semibold text-[#172b45]">{t.home.city}</label>
               <select
                 value={estCity}
                 onChange={(e) => setEstCity(e.target.value)}
@@ -723,23 +740,23 @@ export default function AccueilImmoDuLetch() {
             </div>
             <div className="flex-1">
               <label className="mb-1.5 block text-[12px] font-semibold text-[#172b45]">
-                Type de bien
+                {t.home.propertyType}
               </label>
               <select
                 value={estType}
                 onChange={(e) => setEstType(e.target.value as PropertyType)}
                 className="h-[46px] w-full rounded-[6px] border border-[#dce2e9] bg-white px-3 text-[13px] text-[#172b45]"
               >
-                {(Object.entries(TYPE_LABELS) as [PropertyType, string][]).map(([val, lbl]) => (
+                {(Object.keys(TYPE_LABELS) as PropertyType[]).map((val) => (
                   <option key={val} value={val}>
-                    {lbl}
+                    {t.types[val]}
                   </option>
                 ))}
               </select>
             </div>
             <div className="w-[130px]">
               <label className="mb-1.5 block text-[12px] font-semibold text-[#172b45]">
-                Surface (m²)
+                {t.home.estSurface}
               </label>
               <input
                 type="number"
@@ -750,7 +767,7 @@ export default function AccueilImmoDuLetch() {
               />
             </div>
             <div className="rounded-[8px] bg-[#eaf0f8] px-5 py-2.5 text-right">
-              <p className="text-[11px] font-medium text-[#637084]">Estimation indicative</p>
+              <p className="text-[11px] font-medium text-[#637084]">{t.home.estResultLabel}</p>
               <p className="font-['Inter:Bold'] text-[18px] font-bold text-[#071f49] whitespace-nowrap">
                 {formatPrice(estimationRange.min)} – {formatPrice(estimationRange.max)} FCFA
               </p>
@@ -765,18 +782,18 @@ export default function AccueilImmoDuLetch() {
         data-name="Explorer le Cameroun"
       >
         <p className="absolute font-['Inter:Bold'] font-bold leading-[1.45] left-[100px] text-[#071f49] text-[28px] top-[28px] whitespace-nowrap">
-          Votre projet, votre ville
+          {t.home.citiesTitle}
         </p>
         <p className="absolute font-['Inter:Regular'] font-normal leading-[1.45] left-[100px] text-[#637084] text-[15px] top-[75px] whitespace-nowrap">
-          Découvrez les biens dans les villes qui vous attirent.
+          {t.home.citiesSub}
         </p>
 
         {[
-          { name: "Douala", tagline: "Vivre au cœur du littoral", image: imgDouala },
-          { name: "Yaoundé", tagline: "Trouver votre place dans la capitale", image: imgYaounde },
+          { name: "Douala", tagline: t.home.cityTaglines.Douala, image: imgDouala },
+          { name: "Yaoundé", tagline: t.home.cityTaglines["Yaoundé"], image: imgYaounde },
           {
             name: "Kribi",
-            tagline: "Habiter ou investir côté océan",
+            tagline: t.home.cityTaglines.Kribi,
             image: imgTerrainResidentielDe500M,
           },
         ].map((cityCard, index) => (
@@ -807,69 +824,112 @@ export default function AccueilImmoDuLetch() {
         ))}
       </div>
 
-      {/* Accompagnement */}
+      {/* Qui sommes-nous & accompagnement */}
       <div
-        className="bg-[#f1f4f8] h-[300px] overflow-clip relative shrink-0 w-full"
-        data-name="Accompagnement"
+        className="w-full bg-[#f1f4f8] px-[100px] py-[44px]"
+        data-name="Qui sommes-nous et accompagnement"
       >
-        <p className="absolute font-['Inter:Bold'] font-bold leading-[1.45] left-[100px] text-[#071f49] text-[28px] top-[34px] whitespace-nowrap">
-          Un projet immobilier, des étapes plus simples.
-        </p>
-        {[
-          {
-            number: "01",
-            title: "Trouvez le bon bien",
-            body: ["Affinez votre recherche par ville, budget,", "surface et caractéristiques."],
-          },
-          {
-            number: "02",
-            title: "Échangez en direct",
-            body: ["Posez vos questions à l'annonceur", "et organisez une visite du bien."],
-          },
-          {
-            number: "03",
-            title: "Avancez en confiance",
-            body: ["Vérifiez les documents et faites-vous", "accompagner avant de vous engager."],
-          },
-        ].map((step, index) => (
-          <div key={step.number}>
-            <p
-              className="absolute font-['Inter:Bold'] font-bold leading-[1.45] text-[#a26b00] text-[32px] top-[106px] whitespace-nowrap"
-              style={{ left: 100 + index * 420 }}
-            >
-              {step.number}
+        <h2 className="font-['Inter:Bold'] text-[34px] font-bold leading-[1.2] text-[#071f49]">
+          Qui sommes-nous
+        </h2>
+
+        <div className="mt-6 flex items-start justify-between gap-[44px]">
+          <div className="max-w-[700px]">
+            <p className="font-['Inter:Regular'] text-[14px] leading-[1.7] text-[#4a5a70]">
+              Depuis plus de {siteSettings?.yearsExperience ?? "5"} ans, IMMO DU LETCH accompagne les
+              particuliers et les professionnels dans l'achat, la vente et la location de biens
+              immobiliers à Douala, Yaoundé et Kribi. Notre mission : rendre chaque projet immobilier
+              plus simple, plus transparent et plus sûr.
             </p>
-            <p
-              className="absolute font-['Inter:Semi_Bold'] font-semibold leading-[1.45] text-[#071f49] text-[18px] top-[112px] whitespace-nowrap"
-              style={{ left: 164 + index * 420 }}
-            >
-              {step.title}
+            <p className="mt-2 font-['Inter:Regular'] text-[14px] leading-[1.7] text-[#4a5a70]">
+              Nous sélectionnons des annonces vérifiées, favorisons la mise en relation directe avec
+              les annonceurs et vous accompagnons à chaque étape, de la recherche du bien à la
+              signature des documents.
             </p>
-            <div
-              className="absolute font-['Inter:Regular'] font-normal leading-[0] text-[#637084] text-[14px] top-[151px] w-[328px]"
-              style={{ left: 164 + index * 420 }}
-            >
-              {step.body.map((line) => (
-                <p key={line} className="leading-[1.45]">
-                  {line}
-                </p>
-              ))}
+            <div className="mt-5 flex flex-wrap gap-3">
+              {["Annonces vérifiées", "Conseils personnalisés", "Accompagnement de A à Z"].map(
+                (value) => (
+                  <span
+                    key={value}
+                    className="inline-flex items-center gap-2 rounded-full border border-[#dce2e9] bg-white px-3.5 py-1.5 text-[12px] font-semibold text-[#172b45]"
+                  >
+                    <ShieldIcon className="size-[14px] text-[#1f7a3d]" />
+                    {value}
+                  </span>
+                ),
+              )}
             </div>
           </div>
-        ))}
+          <div className="relative h-[220px] w-[380px] shrink-0 overflow-hidden rounded-[12px]">
+            <img
+              alt="Équipe IMMO DU LETCH"
+              className="absolute inset-0 size-full object-cover"
+              src={imgVillaContemporaineAvecJardin}
+            />
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#071f49]/85 to-transparent p-4">
+              <p className="font-['Inter:Semi_Bold'] text-[13px] font-semibold text-white">
+                {siteSettings?.contactPhone ?? "+237 6 55 00 00 00"}
+              </p>
+              <p className="text-[11px] text-[#ccd6e5]">
+                {siteSettings?.contactEmail ?? "contact@immoduletch.cm"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-10 border-t border-[#dce2e9] pt-8">
+          <h3 className="font-['Inter:Bold'] text-[26px] font-bold leading-[1.3] text-[#071f49]">
+            Un projet immobilier, des étapes plus simples.
+          </h3>
+          <div className="mt-6 grid grid-cols-3 gap-[20px]">
+          {[
+            {
+              number: "01",
+              title: "Trouvez le bon bien",
+              body: ["Affinez votre recherche par ville, budget,", "surface et caractéristiques."],
+            },
+            {
+              number: "02",
+              title: "Échangez en direct",
+              body: ["Posez vos questions à l'annonceur", "et organisez une visite du bien."],
+            },
+            {
+              number: "03",
+              title: "Avancez en confiance",
+              body: ["Vérifiez les documents et faites-vous", "accompagner avant de vous engager."],
+            },
+          ].map((step) => (
+            <div key={step.number} className="flex items-start gap-[16px]">
+              <p className="font-['Inter:Bold'] text-[32px] font-bold leading-[1.2] text-[#a26b00]">
+                {step.number}
+              </p>
+              <div>
+                <p className="font-['Inter:Semi_Bold'] text-[18px] font-semibold leading-[1.45] text-[#071f49]">
+                  {step.title}
+                </p>
+                <div className="mt-1 font-['Inter:Regular'] text-[14px] leading-[1.45] text-[#637084]">
+                  {step.body.map((line) => (
+                    <p key={line}>{line}</p>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+          </div>
+        </div>
       </div>
 
       {/* Conseils immobiliers (6 articles) */}
       <div id="conseils" className="w-full px-[100px] py-[44px]" data-name="Conseils immobiliers">
         <p className="font-['Inter:Bold'] text-[28px] font-bold leading-[1.3] text-[#071f49]">
-          Les clés d'un projet bien préparé
+          {t.home.adviceTitle}
         </p>
         <p className="mt-1 font-['Inter:Regular'] text-[15px] text-[#637084]">
-          Des repères concrets pour vos démarches immobilières au Cameroun.
+          {t.home.adviceSub}
         </p>
 
         <div className="mt-7 grid grid-cols-3 gap-[20px]">
-          {ARTICLES.map((article, index) => (
+          {articles.map((article, index) => (
             <button
               key={article.title}
               type="button"
@@ -905,7 +965,7 @@ export default function AccueilImmoDuLetch() {
       {recentListings.length > 0 ? (
         <div className="w-full bg-[#f8fafc] px-[100px] py-[44px] border-t border-[#dce2e9]">
           <p className="font-['Inter:Bold'] text-[26px] font-bold text-[#071f49]">
-            Consultés récemment
+            {t.home.recentTitle}
           </p>
           <p className="mt-1 text-[14px] text-[#637084]">
             Reprenez votre recherche là où vous l'avez laissée.
@@ -928,7 +988,7 @@ export default function AccueilImmoDuLetch() {
         <div className="flex items-start justify-between gap-12">
           <div className="w-[380px] shrink-0">
             <p className="font-['Inter:Bold'] text-[28px] font-bold leading-[1.3] text-[#071f49]">
-              Vous avez des questions ?
+              {t.home.faqTitle}
             </p>
             <p className="mt-3 text-[15px] leading-[1.5] text-[#637084]">
               Quelques réponses pour bien démarrer votre recherche avec IMMO DU LETCH.
@@ -936,7 +996,7 @@ export default function AccueilImmoDuLetch() {
           </div>
 
           <div className="grid flex-1 grid-cols-1 gap-3">
-            {FAQS.map((faq, index) => (
+            {faqs.map((faq, index) => (
               <button
                 key={faq.q}
                 type="button"
@@ -958,22 +1018,25 @@ export default function AccueilImmoDuLetch() {
       {articleIndex !== null ? (
         <Modal
           onClose={() => setArticleIndex(null)}
-          label={ARTICLES[articleIndex].title}
+          label={articles[articleIndex].title}
           panelClassName="w-[560px] max-w-[92vw]"
         >
           <img
             alt=""
-            src={ARTICLES[articleIndex].image}
+            src={articles[articleIndex].image}
             className="h-[230px] w-full object-cover"
           />
           <div className="p-7">
             <p className="font-['Inter:Bold'] text-[10px] font-bold tracking-[0.08em] text-[#996300]">
-              {ARTICLES[articleIndex].tag}
+              {articles[articleIndex].tag}
             </p>
             <p className="mt-2 font-['Inter:Bold'] text-[22px] font-bold leading-[1.3] text-[#071f49]">
-              {ARTICLES[articleIndex].title}
+              {articles[articleIndex].title}
             </p>
-            {ARTICLES[articleIndex].body.map((paragraph) => (
+            {(typeof articles[articleIndex].body === "string"
+              ? [articles[articleIndex].body as string]
+              : (articles[articleIndex].body as unknown as string[])
+            ).map((paragraph) => (
               <p key={paragraph} className="mt-4 text-[13px] leading-[1.6] text-[#4a5a70]">
                 {paragraph}
               </p>
@@ -995,14 +1058,14 @@ export default function AccueilImmoDuLetch() {
       {faqIndex !== null ? (
         <Modal
           onClose={() => setFaqIndex(null)}
-          label={FAQS[faqIndex].q}
+          label={faqs[faqIndex].q}
           panelClassName="w-[560px] max-w-[92vw]"
         >
           <div className="p-8 pr-16">
             <p className="font-['Inter:Bold'] text-[20px] font-bold leading-[1.35] text-[#071f49]">
-              {FAQS[faqIndex].q}
+              {faqs[faqIndex].q}
             </p>
-            <p className="mt-4 text-[14px] leading-[1.65] text-[#4a5a70]">{FAQS[faqIndex].a}</p>
+            <p className="mt-4 text-[14px] leading-[1.65] text-[#4a5a70]">{faqs[faqIndex].a}</p>
             <button
               type="button"
               onClick={() => setFaqIndex(null)}

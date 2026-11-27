@@ -1,7 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
+import ImageUploader from "../components/ImageUploader";
 import MobileFooter from "../components/MobileFooter";
 import MobileNav from "../components/MobileNav";
-import { CheckIcon, CloseIcon, PinIcon, ShieldIcon } from "../components/icons";
+import { PinIcon, ShieldIcon } from "../components/icons";
 import {
   CITY_OPTIONS,
   FEATURE_OPTIONS,
@@ -11,6 +12,7 @@ import {
   type PropertyType,
   type Transaction,
 } from "../data/listings";
+import { useT } from "../i18n/translations";
 import { useApp, type ListingStatus } from "../store/AppStore";
 
 type ProfileTab = "listings" | "deposit" | "info";
@@ -32,10 +34,10 @@ export default function MobileProfilePage() {
     userListings,
     addUserListing,
     deleteUserListing,
-    moderateUserListing,
     showToast,
     openListing,
   } = useApp();
+  const t = useT();
 
   const [tab, setTab] = useState<ProfileTab>("listings");
   const [statusFilter, setStatusFilter] = useState<"all" | ListingStatus>("all");
@@ -55,6 +57,7 @@ export default function MobileProfilePage() {
   const [surface, setSurface] = useState("");
   const [rooms, setRooms] = useState("4");
   const [features, setFeatures] = useState<string[]>([]);
+  const [images, setImages] = useState<string[]>([]);
   const [description, setDescription] = useState("");
 
   useEffect(() => {
@@ -153,6 +156,7 @@ export default function MobileProfilePage() {
       surface: Number(surface),
       rooms: Number(rooms) || 0,
       features,
+      images,
       description:
         description.trim() ||
         `${TYPE_SINGULAR[type]} ${transaction === "location" ? "à louer" : "à vendre"} situé à ${neighborhood.trim()}, ${city}.`,
@@ -162,6 +166,7 @@ export default function MobileProfilePage() {
     setPrice("");
     setSurface("");
     setFeatures([]);
+    setImages([]);
     setDescription("");
     setTab("listings");
     setStatusFilter("all");
@@ -187,7 +192,7 @@ export default function MobileProfilePage() {
               <p className="truncate text-[11px] text-[#637084]">{user.email}</p>
               <div className="mt-1 flex flex-wrap gap-1">
                 <span className="rounded-full bg-[#eaf0f8] px-2 py-0.5 text-[9px] font-semibold text-[#071f49]">
-                  {user.accountType === "professionnel" ? "Professionnel" : "Particulier"}
+                  {user.accountType === "professionnel" ? t.nav.proAccount : t.nav.particulierAccount}
                 </span>
                 {user.provider === "google" ? (
                   <span className="rounded-full bg-[#eff6ff] px-2 py-0.5 text-[9px] font-semibold text-[#2563eb]">
@@ -195,7 +200,7 @@ export default function MobileProfilePage() {
                   </span>
                 ) : null}
                 <span className="rounded-full bg-[#f4f6f8] px-2 py-0.5 text-[9px] text-[#637084]">
-                  Membre depuis {memberSince}
+                  {t.profile.memberSince(memberSince)}
                 </span>
               </div>
             </div>
@@ -204,15 +209,15 @@ export default function MobileProfilePage() {
           <div className="mt-3 grid grid-cols-3 gap-2 border-t border-[#eef2f6] pt-3 text-center">
             <div>
               <p className="text-[16px] font-bold text-[#071f49]">{myListings.length}</p>
-              <p className="text-[10px] text-[#637084]">Annonces</p>
+              <p className="text-[10px] text-[#637084]">{t.profile.listingsStat}</p>
             </div>
             <div>
               <p className="text-[16px] font-bold text-[#071f49]">{favorites.length}</p>
-              <p className="text-[10px] text-[#637084]">Favoris</p>
+              <p className="text-[10px] text-[#637084]">{t.profile.favoritesStat}</p>
             </div>
             <div>
               <p className="text-[16px] font-bold text-[#071f49]">{savedSearches.length}</p>
-              <p className="text-[10px] text-[#637084]">Alertes</p>
+              <p className="text-[10px] text-[#637084]">{t.profile.alertsStat}</p>
             </div>
           </div>
 
@@ -221,7 +226,7 @@ export default function MobileProfilePage() {
             onClick={logout}
             className="mt-3 h-[38px] w-full cursor-pointer rounded-[8px] border border-[#fecdd3] bg-white text-[12px] font-semibold text-[#dc2626]"
           >
-            Se déconnecter
+            {t.profile.logout}
           </button>
         </div>
 
@@ -229,9 +234,9 @@ export default function MobileProfilePage() {
         <div className="mt-3 flex gap-1.5 overflow-x-auto">
           {(
             [
-              ["listings", `Mes annonces (${myListings.length})`],
-              ["deposit", "Déposer"],
-              ["info", "Mon profil"],
+              ["listings", t.profile.tabListings(myListings.length)],
+              ["deposit", t.profile.tabDepositShort],
+              ["info", t.profile.tabInfoShort],
             ] as const
           ).map(([key, label]) => (
             <button
@@ -313,6 +318,14 @@ export default function MobileProfilePage() {
                         </span>
                       </div>
 
+                      {item.images && item.images.length > 0 ? (
+                        <img
+                          src={item.images[0]}
+                          alt={item.title}
+                          className="mt-2 h-[120px] w-full rounded-[8px] border border-[#dce2e9] object-cover"
+                        />
+                      ) : null}
+
                       <h3 className="mt-1.5 text-[14px] font-bold leading-snug text-[#071f49]">
                         {item.title}
                       </h3>
@@ -328,6 +341,12 @@ export default function MobileProfilePage() {
                         {TYPE_SINGULAR[item.type]} ·{" "}
                         {item.transaction === "location" ? "Location" : "Vente"}
                       </p>
+
+                      {item.status === "pending" ? (
+                        <p className="mt-2 text-[11px] text-[#637084]">
+                          En attente de validation par un administrateur.
+                        </p>
+                      ) : null}
 
                       {item.status === "rejected" && item.rejectionReason ? (
                         <p className="mt-2 rounded-[6px] bg-[#fef2f2] px-2.5 py-1.5 text-[11px] text-[#dc2626]">
@@ -351,44 +370,6 @@ export default function MobileProfilePage() {
                           className="h-[34px] flex-1 cursor-pointer rounded-[7px] border border-[#dce2e9] bg-white text-[11px] font-semibold text-[#637084]"
                         >
                           Supprimer
-                        </button>
-                      </div>
-
-                      <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-[#eef2f6] pt-2">
-                        <span className="mr-auto text-[9px] text-[#8a95a5]">Admin (démo) :</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            moderateUserListing(item.id, "approved");
-                            showToast("Annonce marquée comme Validée.");
-                          }}
-                          className="inline-flex h-[26px] cursor-pointer items-center gap-1 rounded-[4px] border border-[#bbf7d0] bg-[#e7f6ec] px-2 text-[10px] font-semibold text-[#1f7a3d]"
-                        >
-                          <CheckIcon className="size-[10px]" /> Valider
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            moderateUserListing(
-                              item.id,
-                              "rejected",
-                              "Photos ou justificatif de titre foncier à compléter.",
-                            );
-                            showToast("Annonce marquée comme Refusée.");
-                          }}
-                          className="inline-flex h-[26px] cursor-pointer items-center gap-1 rounded-[4px] border border-[#fecaca] bg-[#fef2f2] px-2 text-[10px] font-semibold text-[#dc2626]"
-                        >
-                          <CloseIcon className="size-[10px]" /> Refuser
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            moderateUserListing(item.id, "pending");
-                            showToast("Annonce remise en attente.");
-                          }}
-                          className="h-[26px] cursor-pointer rounded-[4px] border border-[#fde68a] bg-[#fff6df] px-2 text-[10px] font-semibold text-[#996300]"
-                        >
-                          Attente
                         </button>
                       </div>
                     </div>
@@ -527,6 +508,10 @@ export default function MobileProfilePage() {
                   {feature}
                 </button>
               ))}
+            </div>
+
+            <div className="mt-3">
+              <ImageUploader images={images} onChange={setImages} compact />
             </div>
 
             <label className="mt-3 block">

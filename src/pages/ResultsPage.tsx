@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import ListingRow from "../components/ListingRow";
 import ListingTile from "../components/ListingTile";
-import MapModal from "../components/MapModal";
 import SiteFooter from "../components/SiteFooter";
 import SiteNav from "../components/SiteNav";
 import { CheckOption, NumberField } from "../components/fields";
@@ -11,7 +10,6 @@ import {
   CloseIcon,
   GridIcon,
   ListIcon,
-  MapIcon,
   SearchIcon,
 } from "../components/icons";
 import {
@@ -27,6 +25,7 @@ import {
   type SellerType,
   type SortKey,
 } from "../data/listings";
+import { useT } from "../i18n/translations";
 import { useApp } from "../store/AppStore";
 
 type PanelOption = { value: string; label: string };
@@ -124,8 +123,8 @@ export default function ResultatsVillasADouala() {
     showToast,
     openListing,
   } = useApp();
+  const t = useT();
   const [page, setPage] = useState(1);
-  const [mapOpen, setMapOpen] = useState(false);
 
   useEffect(() => {
     setPage(1);
@@ -138,13 +137,13 @@ export default function ResultatsVillasADouala() {
   const start = results.length ? (currentPage - 1) * pageSize + 1 : 0;
   const end = Math.min(currentPage * pageSize, results.length);
 
-  const typeLabel = filters.type ? TYPE_LABELS[filters.type] : "Biens";
-  const title = `${typeLabel} ${filters.transaction === "location" ? "à louer" : "à vendre"}${
-    filters.city ? ` à ${filters.city}` : ""
+  const typeLabel = filters.type ? t.types[filters.type] : t.results.properties;
+  const title = `${typeLabel} ${filters.transaction === "location" ? t.results.forRent : t.results.forSale}${
+    filters.city ? ` ${t.results.inCity(filters.city)}` : ""
   }`;
-  const breadcrumb = `Accueil   /   ${TRANSACTION_LABELS[filters.transaction]}   /   ${
+  const breadcrumb = `${t.results.home}   /   ${t.transactions[filters.transaction]}   /   ${
     filters.city || "Cameroun"
-  }   /   ${filters.type ? TYPE_LABELS[filters.type] : "Tous les biens"}`;
+  }   /   ${filters.type ? t.types[filters.type] : t.results.all}`;
 
   type Chip = { key: string; label: string; clear: () => void };
   const chips: Chip[] = [];
@@ -285,8 +284,8 @@ export default function ResultatsVillasADouala() {
         data-name="Recherche rapide"
       >
         <QuickSelect
-          label="Transaction"
-          ariaLabel="Transaction"
+          label={t.results.transaction}
+          ariaLabel={t.results.transaction}
           value={filters.transaction}
           onChange={(value) =>
             updateFilters({
@@ -296,30 +295,33 @@ export default function ResultatsVillasADouala() {
             })
           }
           options={[
-            { value: "vente", label: "Acheter" },
-            { value: "location", label: "Louer" },
+            { value: "vente", label: t.transactions.vente },
+            { value: "location", label: t.transactions.location },
           ]}
           className="h-[64px] w-[190px]"
         />
         <QuickSelect
-          label="Localisation"
-          ariaLabel="Localisation"
+          label={t.results.city}
+          ariaLabel={t.results.city}
           value={filters.city}
           onChange={(value) => updateFilters({ city: value })}
           options={[
-            { value: "", label: "Tout le Cameroun" },
+            { value: "", label: t.home.allCities },
             ...["Douala", "Yaoundé", "Kribi"].map((city) => ({ value: city, label: city })),
           ]}
           className="h-[64px] w-[300px]"
         />
         <QuickSelect
-          label="Type de bien"
-          ariaLabel="Type de bien"
+          label={t.results.propertyType}
+          ariaLabel={t.results.propertyType}
           value={filters.type}
           onChange={(value) => updateFilters({ type: value as PropertyType | "" })}
           options={[
-            { value: "", label: "Tous les types" },
-            ...Object.entries(TYPE_LABELS).map(([value, label]) => ({ value, label })),
+            { value: "", label: t.home.allTypes },
+            ...(Object.keys(TYPE_LABELS) as PropertyType[]).map((value) => ({
+              value,
+              label: t.types[value],
+            })),
           ]}
           className="h-[64px] w-[310px]"
         />
@@ -358,7 +360,7 @@ export default function ResultatsVillasADouala() {
           >
             <div className="flex items-start justify-between">
               <p className="font-['Inter:Bold'] text-[20px] font-bold leading-[1.45] text-[#071f49]">
-                Affiner la recherche
+                {t.results.filters}
               </p>
               <button
                 type="button"
@@ -368,7 +370,7 @@ export default function ResultatsVillasADouala() {
                 }}
                 className="mt-[6px] cursor-pointer border-0 bg-transparent p-0 font-['Inter:Semi_Bold'] text-[12px] font-semibold text-[#637084] underline-offset-2 hover:text-[#071f49] hover:underline"
               >
-                Réinitialiser
+                {t.results.reset}
               </button>
             </div>
             <div className="mt-[14px] h-px w-full bg-[#dce2e9]" />
@@ -581,18 +583,6 @@ export default function ResultatsVillasADouala() {
                   de démonstration
                 </p>
               </div>
-
-              <button
-                type="button"
-                onClick={() => setMapOpen(true)}
-                className="flex h-[46px] w-[196px] shrink-0 cursor-pointer items-center justify-center gap-[8px] rounded-[6px] border border-[#dce2e9] bg-white transition-colors hover:border-[#f3ad19]"
-                data-name="Voir sur la carte"
-              >
-                <MapIcon className="size-[20px] text-[#071f49]" />
-                <span className="font-['Inter:Semi_Bold'] text-[14px] font-semibold text-[#071f49]">
-                  Voir sur la carte
-                </span>
-              </button>
             </div>
 
             {/* Chips + Toggle Vue + Tri */}
@@ -778,16 +768,6 @@ export default function ResultatsVillasADouala() {
 
       <SiteFooter />
 
-      {mapOpen ? (
-        <MapModal
-          listings={results}
-          onClose={() => setMapOpen(false)}
-          onOpen={(id) => {
-            setMapOpen(false);
-            openListing(id);
-          }}
-        />
-      ) : null}
     </div>
   );
 }

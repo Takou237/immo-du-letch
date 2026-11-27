@@ -6,6 +6,7 @@ import {
   PRICE_RATING_CONFIG,
   priceLabel,
 } from "../data/listings";
+import { useT } from "../i18n/translations";
 import { useApp } from "../store/AppStore";
 import Modal from "./Modal";
 import { CloseIcon, PinIcon } from "./icons";
@@ -20,6 +21,7 @@ export default function CompareModal() {
     clearCompare,
     openListing,
   } = useApp();
+  const t = useT();
 
   if (!compareOpen) return null;
 
@@ -43,10 +45,10 @@ export default function CompareModal() {
         <div className="flex flex-wrap items-center justify-between gap-3 pr-10">
           <div>
             <p className="font-['Inter:Bold'] text-[22px] font-bold text-[#071f49]">
-              Comparateur côte à côte
+              {t.compare.title}
             </p>
             <p className="mt-1 text-[13px] text-[#637084]">
-              Comparez jusqu'à 3 biens pour faire le meilleur choix.
+              {t.compare.subtitle}
             </p>
           </div>
           <button
@@ -54,7 +56,7 @@ export default function CompareModal() {
             onClick={clearCompare}
             className="cursor-pointer rounded-[6px] border border-[#dce2e9] bg-white px-3 py-2 font-['Inter:Semi_Bold'] text-[12px] font-semibold text-[#637084] hover:border-[#071f49] hover:text-[#071f49]"
           >
-            Vider la comparaison
+            {t.compare.clearAll}
           </button>
         </div>
 
@@ -63,7 +65,7 @@ export default function CompareModal() {
             <thead>
               <tr className="border-b border-[#dce2e9]">
                 <th className="w-[170px] py-3 pr-4 align-top font-['Inter:Semi_Bold'] text-[12px] font-semibold text-[#637084]">
-                  Critères
+                  {t.compare.criteria}
                 </th>
                 {items.map((item) => (
                   <th key={item.id} className="w-[240px] px-3 pb-4 align-top">

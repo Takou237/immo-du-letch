@@ -6,13 +6,15 @@ import {
   type PropertyType,
   type Transaction,
 } from "../data/listings";
+import { useT } from "../i18n/translations";
 import { useApp } from "../store/AppStore";
+import ImageUploader from "./ImageUploader";
 import Modal from "./Modal";
-
-const STEPS = ["Projet", "Localisation", "Détails", "Contact"];
 
 export default function DepositModal() {
   const { depositOpen, closeDeposit, showToast, user, addUserListing, navigate } = useApp();
+  const t = useT();
+  const STEPS = t.deposit.steps;
   const [step, setStep] = useState(0);
   const [transaction, setTransaction] = useState<Transaction>("vente");
   const [type, setType] = useState<PropertyType>("villa");
@@ -22,6 +24,7 @@ export default function DepositModal() {
   const [surface, setSurface] = useState("");
   const [rooms, setRooms] = useState("3");
   const [features, setFeatures] = useState<string[]>([]);
+  const [images, setImages] = useState<string[]>([]);
   const [sellerName, setSellerName] = useState("");
   const [sellerPhone, setSellerPhone] = useState("");
   const [sellerEmail, setSellerEmail] = useState("");
@@ -44,6 +47,7 @@ export default function DepositModal() {
 
   const resetAndClose = () => {
     setStep(0);
+    setImages([]);
     closeDeposit();
   };
 
@@ -67,6 +71,7 @@ export default function DepositModal() {
       surface: Number(surface),
       rooms: Number(rooms) || 0,
       features,
+      images,
       description: `Annonce déposée par ${sellerName.trim()} (${sellerPhone.trim()}).`,
       sellerName: sellerName.trim(),
       sellerPhone: sellerPhone.trim(),
@@ -78,15 +83,15 @@ export default function DepositModal() {
   return (
     <Modal
       onClose={resetAndClose}
-      label="Déposer une annonce immobilière"
+      label={t.deposit.modalLabel}
       panelClassName="w-[580px] max-w-[94vw]"
     >
       <form onSubmit={handleSubmit} className="p-6 md:p-8">
         <p className="font-['Inter:Bold'] text-[22px] font-bold text-[#071f49]">
-          Déposer une annonce
+          {t.deposit.title}
         </p>
         <p className="mt-1 text-[13px] text-[#637084]">
-          Étape {step + 1} sur {STEPS.length} — {STEPS[step]}
+          {t.deposit.stepOf(step + 1, STEPS.length, STEPS[step])}
         </p>
 
         {/* Barre de progression */}
@@ -114,13 +119,13 @@ export default function DepositModal() {
             <div className="flex flex-col gap-4">
               <div>
                 <p className="mb-2 font-['Inter:Semi_Bold'] text-[13px] font-semibold text-[#172b45]">
-                  Type de transaction
+                  {t.deposit.transactionType}
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   {(
                     [
-                      ["vente", "Vendre un bien"],
-                      ["location", "Mettre en location"],
+                      ["vente", t.deposit.sellProperty],
+                      ["location", t.deposit.rentOut],
                     ] as const
                   ).map(([val, lbl]) => (
                     <button
@@ -141,10 +146,10 @@ export default function DepositModal() {
 
               <div>
                 <p className="mb-2 font-['Inter:Semi_Bold'] text-[13px] font-semibold text-[#172b45]">
-                  Catégorie du bien
+                  {t.deposit.propertyCategory}
                 </p>
                 <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-                  {(Object.entries(TYPE_LABELS) as [PropertyType, string][]).map(([val, lbl]) => (
+                  {(Object.keys(TYPE_LABELS) as PropertyType[]).map((val) => (
                     <button
                       key={val}
                       type="button"
@@ -155,7 +160,7 @@ export default function DepositModal() {
                           : "border-[#dce2e9] bg-white text-[#172b45] hover:border-[#f3ad19]"
                       }`}
                     >
-                      {lbl}
+                      {t.types[val]}
                     </button>
                   ))}
                 </div>
@@ -262,6 +267,8 @@ export default function DepositModal() {
                   })}
                 </div>
               </div>
+
+              <ImageUploader images={images} onChange={setImages} compact />
             </div>
           ) : null}
 
@@ -312,7 +319,7 @@ export default function DepositModal() {
             onClick={() => setStep((s) => Math.max(0, s - 1))}
             className="h-[42px] cursor-pointer rounded-[6px] border border-[#dce2e9] bg-white px-4 font-['Inter:Semi_Bold'] text-[13px] font-semibold text-[#071f49] disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Précédent
+            {t.deposit.prev}
           </button>
 
           {step < STEPS.length - 1 ? (
@@ -321,14 +328,14 @@ export default function DepositModal() {
               onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
               className="h-[42px] cursor-pointer rounded-[6px] border-0 bg-[#f3ad19] px-6 font-['Inter:Semi_Bold'] text-[13px] font-semibold text-[#071f49] hover:bg-[#ffbe33]"
             >
-              Suivant
+              {t.deposit.next}
             </button>
           ) : (
             <button
               type="submit"
               className="h-[42px] cursor-pointer rounded-[6px] border-0 bg-[#071f49] px-6 font-['Inter:Semi_Bold'] text-[13px] font-semibold text-white hover:bg-[#0d2d66]"
             >
-              Publier l'annonce
+              {t.deposit.publish}
             </button>
           )}
         </div>

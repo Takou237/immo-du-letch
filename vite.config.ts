@@ -36,9 +36,19 @@ react(),
       host: process.env.FIGMA_DEV_SERVER_HOST || '0.0.0.0',
       port: parseInt(process.env.PORT || '8443'),
       strictPort: true,
+      proxy: {
+        '/api': {
+          target: 'http://127.0.0.1:8000',
+          changeOrigin: true,
+        },
+        '/storage': {
+          target: 'http://127.0.0.1:8000',
+          changeOrigin: true,
+        },
+      },
       // Tool files are separate from application source and must not trigger preview updates.
       watch: {
-        ignored: ['**/.figma/**'],
+        ignored: ['**/.figma/**', '**/backend/**'],
       },
     },
     preview: {
