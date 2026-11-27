@@ -7,23 +7,20 @@ import {
   BUDGET_LOCATION,
   BUDGET_VENTE,
   CATEGORIES,
-  HERO_SLIDES,
   HERO_TABS,
   LOCATION_SUGGESTIONS,
   POPULAR_SEARCHES,
   type HomeTab,
 } from "../data/homeContent";
 import {
-  ARTICLES,
   CITY_OPTIONS,
   DEFAULT_FILTERS,
-  FAQS,
-  PLATFORM_STATS,
   TYPE_LABELS,
   filterListings,
   type Filters,
   type PropertyType,
 } from "../data/listings";
+import { useT } from "../i18n/translations";
 import { useApp } from "../store/AppStore";
 
 const FEATURED_IDS = [
@@ -34,7 +31,8 @@ const FEATURED_IDS = [
 ];
 
 export default function MobileHomePage() {
-  const { allListings, searchWith, browseAll, openDeposit, openListing, recentlyViewed } = useApp();
+  const { allListings, searchWith, browseAll, openDeposit, openListing, recentlyViewed, articles, faqs, heroSlides, platformStats, siteSettings, searchHistory, applySearchHistory, clearSearchHistory } = useApp();
+  const t = useT();
 
   const [tab, setTab] = useState<HomeTab>("vente");
   const [city, setCity] = useState("");
@@ -42,10 +40,11 @@ export default function MobileHomePage() {
   const [type, setType] = useState<PropertyType | "">("");
   const [budgetMax, setBudgetMax] = useState("");
   const [slideIndex, setSlideIndex] = useState(0);
+  const [featuredIndex, setFeaturedIndex] = useState(0);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
-      setSlideIndex((index) => (index + 1) % HERO_SLIDES.length);
+      setSlideIndex((index) => (index + 1) % heroSlides.length);
     }, 4500);
     return () => window.clearInterval(timer);
   }, []);
@@ -86,7 +85,7 @@ export default function MobileHomePage() {
     .map((id) => allListings.find((listing) => listing.id === id))
     .filter((listing): listing is NonNullable<typeof listing> => Boolean(listing));
 
-  const slide = HERO_SLIDES[slideIndex];
+  const slide = heroSlides[slideIndex] ?? heroSlides[0];
 
   return (
     <div className="min-h-dvh bg-white pb-7 font-['Inter:Regular'] text-[#071f49]">
@@ -111,7 +110,7 @@ export default function MobileHomePage() {
               {slide.tag}
             </p>
             <h1 className="mt-2 text-[26px] font-bold leading-[1.15] text-white">
-              Trouvez le bien qui vous ressemble.
+              {t.home.heroTitle}
             </h1>
             <p className="mt-2 flex items-center gap-1 text-[12px] text-[#ccd6e5]">
               <PinIcon className="size-[12px]" /> {slide.title} · {slide.location}
@@ -120,7 +119,7 @@ export default function MobileHomePage() {
           </button>
 
           <div className="mt-3 flex gap-1.5">
-            {HERO_SLIDES.map((item, index) => (
+            {heroSlides.map((item, index) => (
               <button
                 key={item.id}
                 type="button"
@@ -146,7 +145,7 @@ export default function MobileHomePage() {
                       : "border-[#dce2e9] bg-white text-[#637084]"
                   }`}
                 >
-                  {item.label}
+                  {t.home.tabs[item.id]}
                 </button>
               ))}
             </div>
@@ -229,7 +228,7 @@ export default function MobileHomePage() {
               className="mt-3 flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-[8px] border-0 bg-[#f3ad19] text-[14px] font-semibold text-[#071f49] active:bg-[#ffbe33]"
             >
               <SearchIcon className="size-[16px]" />
-              Rechercher ({matchCount} bien{matchCount > 1 ? "s" : ""})
+              {t.home.searchCount(matchCount)}
             </button>
           </form>
 
@@ -248,9 +247,38 @@ export default function MobileHomePage() {
         </div>
       </section>
 
+      {/* Historique des recherches */}
+      {searchHistory.length > 0 ? (
+        <section className="px-4 pt-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-[14px] font-bold text-[#071f49]">Recherches récentes</h2>
+            <button
+              type="button"
+              onClick={clearSearchHistory}
+              className="cursor-pointer border-0 bg-transparent text-[11px] font-semibold text-[#637084]"
+            >
+              Effacer
+            </button>
+          </div>
+          <div className="mt-2 flex flex-col gap-1.5">
+            {searchHistory.slice(0, 5).map((entry) => (
+              <button
+                key={entry.id}
+                type="button"
+                onClick={() => applySearchHistory(entry)}
+                className="flex w-full cursor-pointer items-center gap-2 rounded-[8px] border border-[#dce2e9] bg-white px-3 py-2 text-left text-[12px] text-[#172b45]"
+              >
+                <SearchIcon className="size-[13px] shrink-0 text-[#8a95a5]" />
+                <span className="truncate">{entry.label}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {/* Statistiques */}
       <section className="grid grid-cols-2 gap-2 px-4 py-4">
-        {PLATFORM_STATS.map((stat) => (
+        {platformStats.map((stat, idx) => (
           <div
             key={stat.label}
             className="rounded-[10px] border border-[#dce2e9] bg-[#f8fafc] px-3 py-2.5"
@@ -259,14 +287,14 @@ export default function MobileHomePage() {
               {stat.value}
               {stat.suffix}
             </p>
-            <p className="text-[11px] text-[#637084]">{stat.label}</p>
+            <p className="text-[11px] text-[#637084]">{t.home.statsLabels[idx]}</p>
           </div>
         ))}
       </section>
 
       {/* Catégories */}
       <section className="px-4">
-        <h2 className="text-[16px] font-bold text-[#071f49]">Explorer par type de bien</h2>
+        <h2 className="text-[16px] font-bold text-[#071f49]">{t.home.categoriesTitle}</h2>
         <div className="mt-2 grid grid-cols-2 gap-2">
           {CATEGORIES.map((category) => (
             <button
@@ -277,28 +305,88 @@ export default function MobileHomePage() {
             >
               <img src={category.icon} alt="" className="size-[22px] shrink-0 object-contain" />
               <span className="text-[12px] font-semibold leading-tight text-[#071f49]">
-                {category.label}
+                {t.home.categories[category.label] ?? category.label}
               </span>
             </button>
           ))}
         </div>
       </section>
 
+      {/* Qui sommes-nous */}
+      <section className="px-4 pt-6">
+        <div className="rounded-[12px] border border-[#dce2e9] bg-[#f8fafc] p-4">
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#a26b00]">
+            Qui sommes-nous
+          </p>
+          <h2 className="mt-1.5 text-[17px] font-bold leading-[1.3] text-[#071f49]">
+            IMMO DU LETCH, votre partenaire immobilier au Cameroun
+          </h2>
+          <p className="mt-2 text-[12px] leading-relaxed text-[#4a5a70]">
+            Depuis plus de {siteSettings?.yearsExperience ?? "5"} ans, nous accompagnons particuliers
+            et professionnels dans l'achat, la vente et la location de biens à Douala, Yaoundé et
+            Kribi. Des annonces vérifiées, une mise en relation directe et un accompagnement de A à Z.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {["Annonces vérifiées", "Conseils", "Accompagnement"].map((value) => (
+              <span
+                key={value}
+                className="rounded-full border border-[#dce2e9] bg-white px-2.5 py-1 text-[10px] font-semibold text-[#172b45]"
+              >
+                {value}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Annonces à découvrir */}
       <section className="px-4 pt-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-[16px] font-bold text-[#071f49]">Annonces à découvrir</h2>
+          <h2 className="text-[16px] font-bold text-[#071f49]">{t.home.featuredTitle}</h2>
           <button
             type="button"
             onClick={browseAll}
             className="flex cursor-pointer items-center gap-1 border-0 bg-transparent text-[12px] font-semibold text-[#a26b00]"
           >
-            Voir tout <ArrowIcon className="size-[12px]" />
+            {t.home.discover} <ArrowIcon className="size-[12px]" />
           </button>
         </div>
-        <div className="mt-2 flex flex-col gap-2">
-          {featured.map((listing) => (
-            <MobileListingCard key={listing.id} listing={listing} />
+        <div className="relative mt-2">
+          <button
+            type="button"
+            aria-label="Bien précédent"
+            onClick={() => setFeaturedIndex((index) => Math.max(0, index - 1))}
+            disabled={featuredIndex === 0}
+            className="absolute -left-1 top-1/2 z-10 flex size-[34px] -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[#dce2e9] bg-white/95 text-[#071f49] shadow-md disabled:cursor-not-allowed disabled:opacity-35"
+          >
+            <ChevronIcon className="size-[15px] rotate-180" />
+          </button>
+          <div className="overflow-hidden">
+            {featured[featuredIndex] ? (
+              <MobileListingCard key={featured[featuredIndex].id} listing={featured[featuredIndex]} />
+            ) : null}
+          </div>
+          <button
+            type="button"
+            aria-label="Bien suivant"
+            onClick={() => setFeaturedIndex((index) => Math.min(featured.length - 1, index + 1))}
+            disabled={featuredIndex >= featured.length - 1}
+            className="absolute -right-1 top-1/2 z-10 flex size-[34px] -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-[#dce2e9] bg-white/95 text-[#071f49] shadow-md disabled:cursor-not-allowed disabled:opacity-35"
+          >
+            <ChevronIcon className="size-[15px]" />
+          </button>
+        </div>
+        <div className="mt-2 flex items-center justify-center gap-1.5">
+          {featured.map((listing, index) => (
+            <button
+              key={listing.id}
+              type="button"
+              aria-label={`Afficher le bien ${index + 1}`}
+              onClick={() => setFeaturedIndex(index)}
+              className={`h-[5px] cursor-pointer rounded-full border-0 transition-all ${
+                index === featuredIndex ? "w-[20px] bg-[#f3ad19]" : "w-[7px] bg-[#dce2e9]"
+              }`}
+            />
           ))}
         </div>
       </section>
@@ -345,7 +433,7 @@ export default function MobileHomePage() {
       <section className="px-4 pt-7">
         <h2 className="text-[16px] font-bold text-[#071f49]">Conseils immobiliers</h2>
         <div className="mt-2 flex flex-col gap-2">
-          {ARTICLES.slice(0, 3).map((article) => (
+          {articles.slice(0, 3).map((article) => (
             <details
               key={article.title}
               className="group rounded-[10px] border border-[#dce2e9] bg-white px-3 py-2.5"
@@ -360,7 +448,7 @@ export default function MobileHomePage() {
                 <ChevronIcon className="mt-0.5 size-[13px] shrink-0 text-[#8a95a5] transition-transform group-open:rotate-180" />
               </summary>
               <div className="mt-2 space-y-2 border-t border-[#eef2f6] pt-2 text-[12px] leading-relaxed text-[#4a5a70]">
-                {article.body.map((paragraph) => (
+                {(typeof article.body === "string" ? [article.body] : (article.body as unknown as string[])).map((paragraph) => (
                   <p key={paragraph.slice(0, 24)}>{paragraph}</p>
                 ))}
               </div>
@@ -373,7 +461,7 @@ export default function MobileHomePage() {
       <section className="px-4 pt-7">
         <h2 className="text-[16px] font-bold text-[#071f49]">Questions fréquentes</h2>
         <div className="mt-2 flex flex-col gap-2">
-          {FAQS.map((faq) => (
+          {faqs.map((faq) => (
             <details
               key={faq.q}
               className="group rounded-[10px] border border-[#dce2e9] bg-white px-3 py-2.5"

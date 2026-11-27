@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { formatPrice } from "../data/listings";
+import { useT } from "../i18n/translations";
 
 type Props = {
   price: number;
@@ -9,6 +10,7 @@ const DURATIONS = [12, 24, 36, 60];
 const ANNUAL_RATE = 0.09; // 9% taux indicatif simulé
 
 export default function FinancingCalculator({ price }: Props) {
+  const t = useT();
   const [downPercent, setDownPercent] = useState(20);
   const [months, setMonths] = useState(36);
 
@@ -28,16 +30,16 @@ export default function FinancingCalculator({ price }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h3 className="font-['Inter:Bold'] text-[18px] font-bold text-[#071f49]">
-            Simulateur de financement
+            {t.financing.title}
           </h3>
           <p className="mt-0.5 text-[12px] text-[#637084]">
-            Estimez votre mensualité de crédit immobilier (taux indicatif 9 % / an).
+            {t.financing.subtitle}
           </p>
         </div>
         <div className="rounded-[6px] bg-[#eaf0f8] px-4 py-2 text-right">
-          <p className="text-[11px] font-medium text-[#637084]">Mensualité estimée</p>
+          <p className="text-[11px] font-medium text-[#637084]">{t.financing.estimatedMonthly}</p>
           <p className="font-['Inter:Bold'] text-[20px] font-bold text-[#071f49]">
-            {formatPrice(monthlyPayment)} FCFA / mois
+            {formatPrice(monthlyPayment)} {t.financing.perMonth}
           </p>
         </div>
       </div>
@@ -46,7 +48,7 @@ export default function FinancingCalculator({ price }: Props) {
         <div>
           <div className="flex items-center justify-between text-[13px]">
             <span className="font-['Inter:Semi_Bold'] font-semibold text-[#172b45]">
-              Apport initial ({downPercent} %)
+              {t.financing.downPayment(downPercent)}
             </span>
             <span className="font-['Inter:Bold'] font-bold text-[#071f49]">
               {formatPrice(downPayment)} FCFA
@@ -54,7 +56,7 @@ export default function FinancingCalculator({ price }: Props) {
           </div>
           <input
             type="range"
-            aria-label="Pourcentage d'apport initial"
+            aria-label={t.financing.downPayment(downPercent)}
             min={10}
             max={50}
             step={5}
@@ -71,7 +73,7 @@ export default function FinancingCalculator({ price }: Props) {
 
         <div>
           <p className="font-['Inter:Semi_Bold'] text-[13px] font-semibold text-[#172b45]">
-            Durée du remboursement
+            {t.financing.duration}
           </p>
           <div className="mt-2 grid grid-cols-4 gap-2">
             {DURATIONS.map((d) => (
@@ -85,7 +87,7 @@ export default function FinancingCalculator({ price }: Props) {
                     : "border-[#dce2e9] bg-white text-[#172b45] hover:border-[#f3ad19]"
                 }`}
               >
-                {d} mois
+                {d} {t.financing.monthsUnit}
               </button>
             ))}
           </div>
@@ -93,9 +95,7 @@ export default function FinancingCalculator({ price }: Props) {
       </div>
 
       <p className="mt-4 text-[11px] leading-relaxed text-[#637084]">
-        Montant emprunté : {formatPrice(principal)} FCFA · Simulation indicative uniquement, hors frais
-        de dossier et assurance. Rapprochez-vous de votre établissement bancaire pour une offre
-        personnalisée.
+        {t.financing.disclaimer(formatPrice(principal))}
       </p>
     </div>
   );

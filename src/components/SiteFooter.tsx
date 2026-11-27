@@ -1,3 +1,4 @@
+import { useT } from "../i18n/translations";
 import { useApp } from "../store/AppStore";
 
 type FooterLinkProps = {
@@ -21,7 +22,8 @@ function FooterLink({ left, top, children, onClick }: FooterLinkProps) {
 }
 
 export default function SiteFooter() {
-  const { searchWith, browseAll, scrollToSection, showToast, openDeposit } = useApp();
+  const { searchWith, browseAll, scrollToSection, showToast, openDeposit, siteSettings } = useApp();
+  const t = useT();
 
   return (
     <div
@@ -32,91 +34,95 @@ export default function SiteFooter() {
         IMMO DU LETCH
       </p>
       <p className="absolute font-['Inter:Medium'] font-medium leading-[1.45] left-[100px] text-[#f3ad19] text-[14px] top-[82px] whitespace-nowrap">
-        Votre partenaire immobilier
+        {t.footer.tagline}
       </p>
       <div className="absolute font-['Inter:Regular'] font-normal leading-[0] left-[100px] text-[#ccd6e5] text-[13px] top-[118px] w-[340px]">
-        <p className="leading-[1.45] mb-0">Acheter, louer et investir au Cameroun.</p>
-        <p className="leading-[1.45]">À chaque projet, une nouvelle adresse.</p>
+        <p className="leading-[1.45] mb-0">{t.footer.desc1}</p>
+        <p className="leading-[1.45]">{t.footer.desc2}</p>
       </div>
 
       <p className="absolute font-['Inter:Semi_Bold'] font-semibold leading-[1.45] left-[530px] text-[15px] text-white top-[42px] whitespace-nowrap">
-        Rechercher
+        {t.footer.searchTitle}
       </p>
       <FooterLink left={530} top={82} onClick={() => searchWith({ transaction: "vente" })}>
-        Acheter un bien
+        {t.footer.buyProperty}
       </FooterLink>
       <FooterLink left={530} top={112} onClick={() => searchWith({ transaction: "location" })}>
-        Louer un logement
+        {t.footer.rentHome}
       </FooterLink>
       <FooterLink
         left={530}
         top={142}
         onClick={() => searchWith({ transaction: "vente", type: "terrain" })}
       >
-        Terrains à vendre
+        {t.footer.landForSale}
       </FooterLink>
       <FooterLink
         left={530}
         top={172}
         onClick={() => searchWith({ transaction: "location", type: "bureau" })}
       >
-        Bureaux & commerces
+        {t.footer.officesCommerce}
       </FooterLink>
 
       <p className="absolute font-['Inter:Semi_Bold'] font-semibold leading-[1.45] left-[810px] text-[15px] text-white top-[42px] whitespace-nowrap">
-        Vous accompagner
+        {t.footer.supportTitle}
       </p>
       <FooterLink
         left={810}
         top={82}
         onClick={openDeposit}
       >
-        Déposer une annonce
+        {t.footer.postListing}
       </FooterLink>
       <FooterLink left={810} top={112} onClick={() => scrollToSection("conseils")}>
-        Conseils immobiliers
+        {t.footer.realEstateAdvice}
       </FooterLink>
       <FooterLink
         left={810}
         top={142}
-        onClick={() => showToast("Aide & contact : contact@immoduletch.cm (démo).")}
+        onClick={() =>
+          showToast(
+            `Aide & contact : ${siteSettings?.contactEmail ?? "contact@immoduletch.cm"} — ${siteSettings?.contactPhone ?? "+237 6 55 00 00 00"}`,
+          )
+        }
       >
-        Aide & contact
+        {t.footer.helpContact}
       </FooterLink>
       <FooterLink
         left={810}
         top={172}
         onClick={() => showToast("Ne versez jamais d’acompte sans visite ni vérification.")}
       >
-        Sécurité des transactions
+        {t.footer.transactionSafety}
       </FooterLink>
 
       <p className="absolute font-['Inter:Semi_Bold'] font-semibold leading-[1.45] left-[1090px] text-[15px] text-white top-[42px] whitespace-nowrap">
-        Explorer le Cameroun
+        {t.footer.exploreTitle}
       </p>
       <FooterLink
         left={1090}
         top={82}
         onClick={() => searchWith({ transaction: "vente", city: "Douala" })}
       >
-        Immobilier à Douala
+        {t.footer.inDouala}
       </FooterLink>
       <FooterLink
         left={1090}
         top={112}
         onClick={() => searchWith({ transaction: "vente", city: "Yaoundé" })}
       >
-        Immobilier à Yaoundé
+        {t.footer.inYaounde}
       </FooterLink>
       <FooterLink
         left={1090}
         top={142}
         onClick={() => searchWith({ transaction: "vente", city: "Kribi" })}
       >
-        Immobilier à Kribi
+        {t.footer.inKribi}
       </FooterLink>
       <FooterLink left={1090} top={172} onClick={browseAll}>
-        Toutes les villes
+        {t.footer.allCities}
       </FooterLink>
 
       <div
@@ -124,14 +130,13 @@ export default function SiteFooter() {
         data-name="Séparateur"
       />
       <p className="absolute font-['Inter:Regular'] font-normal leading-[1.45] left-[100px] text-[#ccd6e5] text-[12px] top-[254px] whitespace-pre">
-        © IMMO DU LETCH • Mentions légales • Confidentialité • Cookies
+        {t.footer.legal}
       </p>
       <p className="absolute font-['Inter:Regular'] font-normal leading-[1.45] left-[1110px] text-[#ccd6e5] text-[12px] top-[254px] whitespace-pre">
-        Français · Cameroun · FCFA
+        {t.footer.langRegion}
       </p>
       <p className="absolute font-['Inter:Regular'] font-normal leading-[1.45] left-[100px] text-[#adbbd0] text-[11px] top-[292px] w-[1240px]">
-        Maquette de démonstration : annonces, prix et visuels illustratifs. Disponibilité et
-        documents à confirmer auprès de l’annonceur.
+        {t.footer.disclaimer}
       </p>
     </div>
   );

@@ -1,4 +1,5 @@
 import { priceLabel } from "../data/listings";
+import { useT } from "../i18n/translations";
 import { useApp } from "../store/AppStore";
 import Modal from "./Modal";
 import { CloseIcon, HeartIcon, PinIcon, SearchIcon, TrendDownIcon } from "./icons";
@@ -17,6 +18,7 @@ export default function FavoritesPanel() {
     recentlyViewed,
     browseAll,
   } = useApp();
+  const t = useT();
 
   if (!favoritesOpen) return null;
 
@@ -33,10 +35,11 @@ export default function FavoritesPanel() {
     <Modal onClose={closeFavorites} label="Mes favoris et recherches" align="drawer">
       <div className="flex h-full flex-col">
         <div className="border-b border-[#dce2e9] px-6 py-6 pr-16">
-          <p className="font-['Inter:Bold'] text-[22px] font-bold text-[#071f49]">Mes favoris</p>
+          <p className="font-['Inter:Bold'] text-[22px] font-bold text-[#071f49]">
+            {t.modals.favoritesTitle}
+          </p>
           <p className="mt-1 text-[13px] text-[#637084]">
-            {savedListings.length} bien{savedListings.length > 1 ? "s" : ""} enregistré
-            {savedListings.length > 1 ? "s" : ""} sur cet appareil.
+            {t.modals.favoritesCountText(savedListings.length)}
           </p>
         </div>
 
@@ -45,10 +48,10 @@ export default function FavoritesPanel() {
             <div className="rounded-[8px] border border-dashed border-[#dce2e9] px-5 py-8 text-center">
               <HeartIcon className="mx-auto size-[26px]" />
               <p className="mt-3 font-['Inter:Semi_Bold'] text-[14px] font-semibold text-[#071f49]">
-                Aucun favori pour le moment
+                {t.modals.noFavoritesTitle}
               </p>
               <p className="mt-1 text-[12px] leading-[1.5] text-[#637084]">
-                Cliquez sur le cœur d’une annonce pour la retrouver ici.
+                {t.modals.noFavoritesDesc}
               </p>
               <button
                 type="button"
@@ -58,7 +61,7 @@ export default function FavoritesPanel() {
                 }}
                 className="mt-4 inline-flex h-[38px] cursor-pointer items-center gap-2 rounded-[6px] bg-[#f3ad19] px-4 font-['Inter:Semi_Bold'] text-[13px] font-semibold text-[#071f49]"
               >
-                <SearchIcon className="size-[16px]" /> Découvrir les annonces
+                <SearchIcon className="size-[16px]" /> {t.modals.discoverListings}
               </button>
             </div>
           ) : (
@@ -116,11 +119,11 @@ export default function FavoritesPanel() {
 
           <div className="mt-8 border-t border-[#dce2e9] pt-6">
             <p className="font-['Inter:Bold'] text-[16px] font-bold text-[#071f49]">
-              Mes recherches enregistrées
+              {t.modals.savedSearchesTitle}
             </p>
             {savedSearches.length === 0 ? (
               <p className="mt-2 text-[12px] leading-[1.5] text-[#637084]">
-                Créez une alerte depuis la page de résultats pour retrouver vos critères ici.
+                {t.modals.noSavedSearches}
               </p>
             ) : (
               <ul className="mt-3 flex flex-col gap-2">

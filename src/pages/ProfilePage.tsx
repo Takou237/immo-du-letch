@@ -1,7 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
+import ImageUploader from "../components/ImageUploader";
 import SiteFooter from "../components/SiteFooter";
 import SiteNav from "../components/SiteNav";
-import { CheckIcon, CloseIcon, PinIcon, ShieldIcon } from "../components/icons";
+import { PinIcon, ShieldIcon } from "../components/icons";
 import {
   CITY_OPTIONS,
   FEATURE_OPTIONS,
@@ -11,6 +12,7 @@ import {
   type PropertyType,
   type Transaction,
 } from "../data/listings";
+import { useT } from "../i18n/translations";
 import { useApp, type ListingStatus } from "../store/AppStore";
 
 type ProfileTab = "info" | "deposit" | "listings";
@@ -44,10 +46,10 @@ export default function ProfilePage() {
     userListings,
     addUserListing,
     deleteUserListing,
-    moderateUserListing,
     showToast,
     openListing,
   } = useApp();
+  const t = useT();
 
   const [tab, setTab] = useState<ProfileTab>("listings");
   const [statusFilter, setStatusFilter] = useState<"all" | ListingStatus>("all");
@@ -77,6 +79,7 @@ export default function ProfilePage() {
   const [surface, setSurface] = useState("");
   const [rooms, setRooms] = useState("4");
   const [features, setFeatures] = useState<string[]>([]);
+  const [images, setImages] = useState<string[]>([]);
   const [description, setDescription] = useState("");
 
   if (!user) {
@@ -166,6 +169,7 @@ export default function ProfilePage() {
       surface: Number(surface),
       rooms: Number(rooms) || 0,
       features,
+      images,
       description:
         description.trim() ||
         `${TYPE_SINGULAR[type]} ${transaction === "location" ? "à louer" : "à vendre"} situé à ${neighborhood.trim()}, ${city}.`,
@@ -175,6 +179,7 @@ export default function ProfilePage() {
     setPrice("");
     setSurface("");
     setFeatures([]);
+    setImages([]);
     setDescription("");
     setTab("listings");
     setStatusFilter("all");
@@ -201,7 +206,7 @@ export default function ProfilePage() {
                   {user.name}
                 </h1>
                 <span className="rounded-full bg-[#eaf0f8] px-3 py-0.5 text-[11px] font-semibold text-[#071f49]">
-                  {user.accountType === "professionnel" ? "Professionnel" : "Particulier"}
+                  {user.accountType === "professionnel" ? t.nav.proAccount : t.nav.particulierAccount}
                 </span>
                 {user.provider === "google" ? (
                   <span className="rounded-full bg-[#eff6ff] px-3 py-0.5 text-[11px] font-semibold text-[#2563eb]">
@@ -211,7 +216,7 @@ export default function ProfilePage() {
               </div>
               <p className="mt-1 text-[13px] text-[#637084]">
                 {user.email}
-                {user.phone ? ` · ${user.phone}` : ""} · Membre depuis {memberSince}
+                {user.phone ? ` · ${user.phone}` : ""} · {t.profile.memberSince(memberSince)}
               </p>
             </div>
           </div>
@@ -222,19 +227,19 @@ export default function ProfilePage() {
                 <p className="font-['Inter:Bold'] text-[20px] font-bold text-[#071f49]">
                   {myListings.length}
                 </p>
-                <p className="text-[11px] text-[#637084]">Annonces</p>
+                <p className="text-[11px] text-[#637084]">{t.profile.listingsStat}</p>
               </div>
               <div>
                 <p className="font-['Inter:Bold'] text-[20px] font-bold text-[#071f49]">
                   {favorites.length}
                 </p>
-                <p className="text-[11px] text-[#637084]">Favoris</p>
+                <p className="text-[11px] text-[#637084]">{t.profile.favoritesStat}</p>
               </div>
               <div>
                 <p className="font-['Inter:Bold'] text-[20px] font-bold text-[#071f49]">
                   {savedSearches.length}
                 </p>
-                <p className="text-[11px] text-[#637084]">Alertes</p>
+                <p className="text-[11px] text-[#637084]">{t.profile.alertsStat}</p>
               </div>
             </div>
 
@@ -243,7 +248,7 @@ export default function ProfilePage() {
               onClick={logout}
               className="h-[40px] cursor-pointer rounded-[6px] border border-[#dce2e9] bg-white px-4 font-['Inter:Semi_Bold'] text-[13px] font-semibold text-[#dc2626] transition-colors hover:border-[#dc2626] hover:bg-[#fef2f2]"
             >
-              Se déconnecter
+              {t.profile.logout}
             </button>
           </div>
         </div>
@@ -252,9 +257,9 @@ export default function ProfilePage() {
         <div className="mt-6 flex items-center gap-3">
           {(
             [
-              ["listings", `Mes annonces (${myListings.length})`],
-              ["deposit", "+ Déposer une annonce"],
-              ["info", "Informations du profil"],
+              ["listings", t.profile.tabListings(myListings.length)],
+              ["deposit", t.profile.tabDeposit],
+              ["info", t.profile.tabInfo],
             ] as const
           ).map(([key, label]) => (
             <button
@@ -531,6 +536,10 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="col-span-2">
+                  <ImageUploader images={images} onChange={setImages} />
+                </div>
+
+                <div className="col-span-2">
                   <label className="mb-1.5 block text-[13px] font-semibold text-[#172b45]">
                     Description
                   </label>
@@ -617,41 +626,56 @@ export default function ProfilePage() {
                         className="rounded-[10px] border border-[#dce2e9] bg-white p-5"
                       >
                         <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <div className="flex items-center gap-2.5">
-                              <span
-                                style={{ backgroundColor: badge.bg, color: badge.color }}
-                                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold"
-                              >
-                                {badge.label}
-                              </span>
-                              <span className="text-[12px] text-[#637084]">
-                                {TYPE_SINGULAR[item.type]} ·{" "}
-                                {item.transaction === "location" ? "Location" : "Vente"}
-                              </span>
-                              <span className="text-[12px] text-[#8a95a5]">
-                                · Déposée le{" "}
-                                {new Date(item.createdAt).toLocaleDateString("fr-FR")}
-                              </span>
-                            </div>
-
-                            <h3 className="mt-2 font-['Inter:Bold'] text-[18px] font-bold text-[#071f49]">
-                              {item.title}
-                            </h3>
-                            <p className="mt-1 flex items-center gap-1.5 text-[13px] text-[#637084]">
-                              <PinIcon className="size-[14px]" /> {item.neighborhood}, {item.city} ·{" "}
-                              {item.surface} m² · {item.rooms} pièces
-                            </p>
-                            <p className="mt-2 font-['Inter:Bold'] text-[20px] font-bold text-[#071f49]">
-                              {formatPrice(item.price)} FCFA
-                              {item.transaction === "location" ? " / mois" : ""}
-                            </p>
-
-                            {item.status === "rejected" && item.rejectionReason ? (
-                              <p className="mt-2 rounded-[6px] bg-[#fef2f2] px-3 py-2 text-[12px] text-[#dc2626]">
-                                <strong>Motif du refus :</strong> {item.rejectionReason}
-                              </p>
+                          <div className="flex items-start gap-4">
+                            {item.images && item.images.length > 0 ? (
+                              <img
+                                src={item.images[0]}
+                                alt={item.title}
+                                className="h-[88px] w-[116px] shrink-0 rounded-[8px] border border-[#dce2e9] object-cover"
+                              />
                             ) : null}
+                            <div>
+                              <div className="flex items-center gap-2.5">
+                                <span
+                                  style={{ backgroundColor: badge.bg, color: badge.color }}
+                                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold"
+                                >
+                                  {badge.label}
+                                </span>
+                                <span className="text-[12px] text-[#637084]">
+                                  {TYPE_SINGULAR[item.type]} ·{" "}
+                                  {item.transaction === "location" ? "Location" : "Vente"}
+                                </span>
+                                <span className="text-[12px] text-[#8a95a5]">
+                                  · Déposée le{" "}
+                                  {new Date(item.createdAt).toLocaleDateString("fr-FR")}
+                                </span>
+                              </div>
+
+                              <h3 className="mt-2 font-['Inter:Bold'] text-[18px] font-bold text-[#071f49]">
+                                {item.title}
+                              </h3>
+                              <p className="mt-1 flex items-center gap-1.5 text-[13px] text-[#637084]">
+                                <PinIcon className="size-[14px]" /> {item.neighborhood}, {item.city}{" "}
+                                · {item.surface} m² · {item.rooms} pièces
+                              </p>
+                              <p className="mt-2 font-['Inter:Bold'] text-[20px] font-bold text-[#071f49]">
+                                {formatPrice(item.price)} FCFA
+                                {item.transaction === "location" ? " / mois" : ""}
+                              </p>
+
+                              {item.status === "pending" ? (
+                                <p className="mt-2 text-[12px] text-[#637084]">
+                                  En attente de validation par un administrateur avant publication.
+                                </p>
+                              ) : null}
+
+                              {item.status === "rejected" && item.rejectionReason ? (
+                                <p className="mt-2 rounded-[6px] bg-[#fef2f2] px-3 py-2 text-[12px] text-[#dc2626]">
+                                  <strong>Motif du refus :</strong> {item.rejectionReason}
+                                </p>
+                              ) : null}
+                            </div>
                           </div>
 
                           <div className="flex shrink-0 items-center gap-2">
@@ -670,47 +694,6 @@ export default function ProfilePage() {
                               className="cursor-pointer rounded-[6px] border border-[#dce2e9] bg-white px-3 py-1.5 text-[12px] font-semibold text-[#637084] hover:border-[#dc2626] hover:text-[#dc2626]"
                             >
                               Supprimer
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Barre de simulation admin (pour tester les statuts en démo) */}
-                        <div className="mt-4 flex items-center justify-between border-t border-[#eef2f6] pt-3 text-[11px] text-[#637084]">
-                          <span>Simulation décision admin (démo) :</span>
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                moderateUserListing(item.id, "approved");
-                                showToast("Annonce marquée comme Validée.");
-                              }}
-                              className="inline-flex cursor-pointer items-center gap-1 rounded-[4px] border border-[#bbf7d0] bg-[#e7f6ec] px-2.5 py-1 font-semibold text-[#1f7a3d]"
-                            >
-                              <CheckIcon className="size-[11px]" /> Valider
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                moderateUserListing(
-                                  item.id,
-                                  "rejected",
-                                  "Photos ou justificatif de titre foncier à compléter.",
-                                );
-                                showToast("Annonce marquée comme Refusée.");
-                              }}
-                              className="inline-flex cursor-pointer items-center gap-1 rounded-[4px] border border-[#fecaca] bg-[#fef2f2] px-2.5 py-1 font-semibold text-[#dc2626]"
-                            >
-                              <CloseIcon className="size-[11px]" /> Refuser
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                moderateUserListing(item.id, "pending");
-                                showToast("Annonce remise en attente de validation.");
-                              }}
-                              className="cursor-pointer rounded-[4px] border border-[#fde68a] bg-[#fff6df] px-2.5 py-1 font-semibold text-[#996300]"
-                            >
-                              En attente
                             </button>
                           </div>
                         </div>

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import FinancingCalculator from "../components/FinancingCalculator";
 import Lightbox from "../components/Lightbox";
-import MapModal from "../components/MapModal";
 import MobileFooter from "../components/MobileFooter";
 import MobileListingCard from "../components/MobileListingCard";
 import MobileNav from "../components/MobileNav";
@@ -30,6 +29,8 @@ import {
   priceLabel,
   renderStars,
 } from "../data/listings";
+import { api, getApiToken } from "../api/client";
+import { useT } from "../i18n/translations";
 import { useApp } from "../store/AppStore";
 
 export default function MobileDetailPage() {
@@ -45,9 +46,9 @@ export default function MobileDetailPage() {
     allListings,
     user,
   } = useApp();
+  const t = useT();
 
   const [lightbox, setLightbox] = useState<number | null>(null);
-  const [mapOpen, setMapOpen] = useState(false);
   const [sellerModalOpen, setSellerModalOpen] = useState(false);
   const [phoneVisible, setPhoneVisible] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", message: "" });
@@ -60,7 +61,6 @@ export default function MobileDetailPage() {
     });
     setPhoneVisible(false);
     setLightbox(null);
-    setMapOpen(false);
     setSellerModalOpen(false);
     window.scrollTo({ top: 0 });
   }, [listing.id, listing.title, listing.reference, user]);
@@ -176,14 +176,27 @@ export default function MobileDetailPage() {
     }
   };
 
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim());
     if (!form.name.trim() || !emailOk || !form.message.trim()) {
       showToast("Veuillez renseigner votre nom, un e-mail valide et un message.");
       return;
     }
-    showToast(`Message envoyé à ${listing.seller} (démonstration).`);
+    if (getApiToken()) {
+      try {
+        await api.sendInquiry(listing.id, {
+          name: form.name.trim(),
+          email: form.email.trim(),
+          message: form.message.trim(),
+        });
+        showToast(`Message envoyé à ${listing.seller}.`);
+      } catch {
+        showToast(`Message envoyé à ${listing.seller} (hors ligne).`);
+      }
+    } else {
+      showToast(`Message envoyé à ${listing.seller} (démonstration).`);
+    }
     setForm((current) => ({ ...current, name: "", email: "" }));
   };
 
@@ -205,7 +218,7 @@ export default function MobileDetailPage() {
             onClick={() => navigate("results")}
             className="inline-flex cursor-pointer items-center gap-1.5 border-0 bg-transparent p-0 text-[12px] font-semibold text-[#637084]"
           >
-            <ArrowIcon className="size-[14px] rotate-180" /> Retour aux résultats
+            <ArrowIcon className="size-[14px] rotate-180" /> {t.detail.backToResults}
           </button>
           <span className="text-[10px] text-[#8a95a5]">Réf. {listing.reference}</span>
         </div>
@@ -432,13 +445,6 @@ export default function MobileDetailPage() {
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setMapOpen(true)}
-            className="mt-3 flex h-[40px] w-full cursor-pointer items-center justify-center gap-2 rounded-[7px] border border-[#dce2e9] bg-white text-[12px] font-semibold text-[#071f49]"
-          >
-            <PinIcon className="size-[15px]" /> Voir sur la carte
-          </button>
         </section>
 
         {/* Contact */}
@@ -482,7 +488,7 @@ export default function MobileDetailPage() {
           </button>
 
           <p className="mt-4 text-[13px] font-semibold text-[#071f49]">
-            Demandez une visite ou plus de détails.
+            {t.detail.requestVisit}
           </p>
           <form onSubmit={handleSubmit} className="mt-2">
             <label htmlFor="m-contact-name" className="block text-[11px] font-medium text-[#172b45]">
@@ -531,7 +537,7 @@ export default function MobileDetailPage() {
               type="submit"
               className="mt-3 flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-[7px] border-0 bg-[#f3ad19] text-[13px] font-semibold text-[#071f49]"
             >
-              <MailIcon className="size-[16px]" /> Envoyer mon message
+              <MailIcon className="size-[16px]" /> {t.detail.sendMessage}
             </button>
             <p className="mt-2 text-[10px] leading-relaxed text-[#637084]">
               Vos coordonnées sont transmises à l'annonceur pour répondre à votre demande.
@@ -571,17 +577,6 @@ export default function MobileDetailPage() {
           title={listing.title}
           onChange={openLightbox}
           onClose={() => setLightbox(null)}
-        />
-      ) : null}
-
-      {mapOpen ? (
-        <MapModal
-          listings={[listing]}
-          onClose={() => setMapOpen(false)}
-          onOpen={(id) => {
-            setMapOpen(false);
-            openListing(id);
-          }}
         />
       ) : null}
 

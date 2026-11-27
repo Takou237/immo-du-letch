@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useT } from "../i18n/translations";
 import { useApp } from "../store/AppStore";
 import { ChevronIcon, CloseIcon, HeartIcon, MenuIcon } from "./icons";
 
@@ -13,7 +14,10 @@ export default function MobileNav() {
     openAuth,
     logout,
     scrollToSection,
+    language,
+    setLanguage,
   } = useApp();
+  const t = useT();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const initials = user
@@ -29,11 +33,11 @@ export default function MobileNav() {
   const close = () => setMenuOpen(false);
 
   const links: { label: string; onClick: () => void }[] = [
-    { label: "Acheter", onClick: () => searchWith({ transaction: "vente" }) },
-    { label: "Louer", onClick: () => searchWith({ transaction: "location" }) },
-    { label: "Terrains", onClick: () => searchWith({ transaction: "vente", type: "terrain" }) },
-    { label: "Bureaux & commerces", onClick: () => searchWith({ transaction: "location", type: "bureau" }) },
-    { label: "Locations meublées", onClick: () => searchWith({ transaction: "location", features: ["Meublé"] }) },
+    { label: t.nav.buy, onClick: () => searchWith({ transaction: "vente" }) },
+    { label: t.nav.rent, onClick: () => searchWith({ transaction: "location" }) },
+    { label: t.nav.land, onClick: () => searchWith({ transaction: "vente", type: "terrain" }) },
+    { label: t.nav.offices, onClick: () => searchWith({ transaction: "location", type: "bureau" }) },
+    { label: t.nav.furnished, onClick: () => searchWith({ transaction: "location", features: ["Meublé"] }) },
   ];
 
   return (
@@ -82,14 +86,23 @@ export default function MobileNav() {
             </span>
           </button>
         ) : (
-          <button
+            <button
             type="button"
             onClick={() => openAuth("login")}
             className="h-[38px] cursor-pointer rounded-full border border-[#dce2e9] bg-white px-3 text-[12px] font-semibold text-[#071f49]"
           >
-            Connexion
+            {t.nav.loginShort}
           </button>
         )}
+
+        <button
+          type="button"
+          onClick={() => setLanguage(language === "fr" ? "en" : "fr")}
+          aria-label="Changer de langue"
+          className="flex h-[38px] cursor-pointer items-center justify-center rounded-full border border-[#dce2e9] bg-[#f8fafc] px-2.5 text-[11px] font-bold uppercase text-[#071f49]"
+        >
+          {language}
+        </button>
 
         <button
           type="button"
@@ -146,7 +159,7 @@ export default function MobileNav() {
                 }}
                 className="flex cursor-pointer items-center justify-between border-b border-[#eef2f6] py-3 text-left text-[14px] font-medium text-[#172b45]"
               >
-                Nos conseils
+                {t.nav.ourAdvice}
                 <ChevronIcon className="size-[14px] text-[#8a95a5]" />
               </button>
             </nav>
@@ -159,7 +172,7 @@ export default function MobileNav() {
               }}
               className="mt-4 h-[44px] w-full cursor-pointer rounded-[8px] border-0 bg-[#f3ad19] text-[14px] font-semibold text-[#071f49]"
             >
-              Déposer une annonce
+              {t.nav.postListing}
             </button>
 
             <div className="mt-3 flex gap-2">
@@ -171,7 +184,7 @@ export default function MobileNav() {
                 }}
                 className="h-[40px] flex-1 cursor-pointer rounded-[8px] border border-[#dce2e9] bg-white text-[12px] font-semibold text-[#071f49]"
               >
-                Mes favoris
+                {t.nav.favorites}
               </button>
               {user ? (
                 <>
@@ -183,7 +196,7 @@ export default function MobileNav() {
                     }}
                     className="h-[40px] flex-1 cursor-pointer rounded-[8px] border border-[#dce2e9] bg-white text-[12px] font-semibold text-[#071f49]"
                   >
-                    Mon profil
+                    {t.nav.myProfile.split(" ")[0]}
                   </button>
                   <button
                     type="button"
@@ -193,7 +206,7 @@ export default function MobileNav() {
                     }}
                     className="h-[40px] cursor-pointer rounded-[8px] border border-[#fecdd3] bg-white px-3 text-[12px] font-semibold text-[#dc2626]"
                   >
-                    Quitter
+                    {t.nav.logout}
                   </button>
                 </>
               ) : (
@@ -205,7 +218,7 @@ export default function MobileNav() {
                   }}
                   className="h-[40px] flex-1 cursor-pointer rounded-[8px] border border-[#dce2e9] bg-white text-[12px] font-semibold text-[#071f49]"
                 >
-                  Se connecter
+                  {t.nav.signIn}
                 </button>
               )}
             </div>

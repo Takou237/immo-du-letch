@@ -8,9 +8,13 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { api, getApiToken, setApiToken } from "../api/client";
 import {
+  ARTICLES,
   DEFAULT_FILTERS,
+  FAQS,
   LISTINGS,
+  PLATFORM_STATS,
   describeFilters,
   filterListings,
   sortListings,
@@ -19,11 +23,19 @@ import {
   type PropertyType,
   type SortKey,
 } from "../data/listings";
+import { HERO_SLIDES } from "../data/homeContent";
+
+export type SiteArticle = { id: number; tag: string; title: string; image: string; body: string };
+export type SiteFaq = { id: number; q: string; a: string };
+export type SiteHeroSlide = { id: string; image: string; tag: string; title: string; location: string; price: string };
+export type SiteStat = { value: string; label: string; suffix: string };
+export type SiteSettings = { yearsExperience: string; contactPhone: string; contactEmail: string };
 
 export type Page = "home" | "results" | "detail" | "profile";
 export type ViewMode = "list" | "grid";
 export type AuthMode = "login" | "register";
 export type ListingStatus = "pending" | "approved" | "rejected";
+export type Language = "fr" | "en";
 
 export type UserListing = {
   id: string;
@@ -37,6 +49,7 @@ export type UserListing = {
   surface: number;
   rooms: number;
   features: string[];
+  images?: string[];
   description: string;
   status: ListingStatus;
   rejectionReason?: string;
@@ -75,7 +88,9 @@ function toPublicListing(item: UserListing, account?: StoredAccount): Listing {
   const sellerName = item.sellerName ?? account?.name ?? "Annonceur IMMO DU LETCH";
   const sellerPhone = item.sellerPhone ?? account?.phone;
   const sellerType = account?.accountType === "professionnel" ? "professionnel" : "particulier";
-  const image = USER_LISTING_IMAGES[item.type];
+  const fallbackImage = USER_LISTING_IMAGES[item.type];
+  const gallery = item.images && item.images.length > 0 ? item.images : [fallbackImage];
+  const image = gallery[0];
   const createdAt = account?.createdAt ?? item.createdAt;
   const bedrooms =
     item.type === "studio"
@@ -100,7 +115,7 @@ function toPublicListing(item: UserListing, account?: StoredAccount): Listing {
     surface: item.surface,
     parking: 0,
     image,
-    gallery: [image],
+    gallery,
     description: item.description,
     description2:
       "Annonce publiée par un membre d'IMMO DU LETCH. Contactez l'annonceur pour organiser une visite et vérifier les documents du bien.",
@@ -122,6 +137,13 @@ function toPublicListing(item: UserListing, account?: StoredAccount): Listing {
 }
 
 export type SavedSearch = {
+  id: string;
+  label: string;
+  filters: Filters;
+  createdAt: number;
+};
+
+export type SearchHistoryEntry = {
   id: string;
   label: string;
   filters: Filters;
@@ -196,8 +218,25 @@ type AppContextValue = {
   saveCurrentSearch: () => void;
   applySavedSearch: (search: SavedSearch) => void;
   deleteSavedSearch: (searchId: string) => void;
+  searchHistory: SearchHistoryEntry[];
+  applySearchHistory: (entry: SearchHistoryEntry) => void;
+  clearSearchHistory: () => void;
+  sellerRatings: Record<string, number>;
+  rateSeller: (seller: string, rating: number) => void;
+  getSellerRating: (
+    seller: string,
+    baseRating: number,
+    baseReviews: number,
+  ) => { rating: number; reviews: number; userRating?: number };
+  language: Language;
+  setLanguage: (lang: Language) => void;
   toast: string | null;
   showToast: (message: string) => void;
+  articles: SiteArticle[];
+  faqs: SiteFaq[];
+  heroSlides: SiteHeroSlide[];
+  platformStats: SiteStat[];
+  siteSettings: SiteSettings | null;
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -253,6 +292,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>(() =>
     readStored<SavedSearch[]>("immo:searches", []),
   );
+  const [searchHistory, setSearchHistory] = useState<SearchHistoryEntry[]>(() =>
+    readStored<SearchHistoryEntry[]>("immo:search_history", []),
+  );
+  const [sellerRatings, setSellerRatings] = useState<Record<string, number>>(() =>
+    readStored<Record<string, number>>("immo:seller_ratings", {}),
+  );
   const [favoritesOpen, setFavoritesOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
   const [depositOpen, setDepositOpen] = useState(false);
@@ -265,12 +310,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [userListings, setUserListings] = useState<UserListing[]>(() =>
     readStored<UserListing[]>("immo:user_listings", []),
   );
+  const [backendListings, setBackendListings] = useState<Listing[]>([]);
+  const [backendOnline, setBackendOnline] = useState(false);
+  const [language, setLanguageState] = useState<Language>(() =>
+    readStored<Language>("immo:lang", "fr"),
+  );
+  const [articles, setArticles] = useState<SiteArticle[]>(
+    ARTICLES.map((a, i) => ({ id: i + 1, tag: a.tag, title: a.title, image: a.image, body: Array.isArray(a.body) ? a.body.join(" ") : (a.body as string) })),
+  );
+  const [faqs, setFaqs] = useState<SiteFaq[]>(
+    FAQS.map((f, i) => ({ id: i + 1, q: f.q, a: f.a })),
+  );
+  const [heroSlides, setHeroSlides] = useState<SiteHeroSlide[]>(HERO_SLIDES);
+  const [platformStats, setPlatformStats] = useState<SiteStat[]>(PLATFORM_STATS);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
   const allListings = useMemo(() => {
-    const approved = userListings
-      .filter((item) => item.status === "approved")
-      .map((item) => toPublicListing(item, accounts.find((acc) => acc.id === item.userId)));
-    return [...approved, ...LISTINGS];
-  }, [accounts, userListings]);
+    const map = new Map<string, Listing>();
+    if (!backendOnline) {
+      for (const item of LISTINGS) {
+        map.set(item.id, item);
+      }
+    }
+    for (const item of backendListings) {
+      map.set(item.id, item);
+    }
+    for (const item of userListings) {
+      if (item.status === "approved" && !map.has(item.id)) {
+        map.set(
+          item.id,
+          toPublicListing(item, accounts.find((acc) => acc.id === item.userId)),
+        );
+      }
+    }
+    return Array.from(map.values());
+  }, [accounts, backendListings, backendOnline, userListings]);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<number | undefined>(undefined);
 
@@ -295,6 +368,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [savedSearches]);
 
   useEffect(() => {
+    writeStored("immo:search_history", searchHistory);
+  }, [searchHistory]);
+
+  useEffect(() => {
+    writeStored("immo:seller_ratings", sellerRatings);
+  }, [sellerRatings]);
+
+  useEffect(() => {
     writeStored("immo:recent", recentlyViewed);
   }, [recentlyViewed]);
 
@@ -305,6 +386,58 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     writeStored("immo:viewmode", viewMode);
   }, [viewMode]);
+
+  useEffect(() => {
+    writeStored("immo:lang", language);
+    document.documentElement.lang = language;
+  }, [language]);
+
+  const hydrateUserSession = useCallback(async () => {
+    if (!getApiToken()) return;
+    try {
+      const [meRes, myListingsRes, favRes, searchRes] = await Promise.all([
+        api.me(),
+        api.getMyListings(),
+        api.getFavorites(),
+        api.getSavedSearches(),
+      ]);
+      setUser(meRes.user);
+      setUserListings(myListingsRes.listings);
+      setFavorites(favRes.favorites);
+      setSavedSearches(searchRes.savedSearches);
+    } catch (err) {
+      const status = (err as { status?: number }).status;
+      if (status === 401 || status === 403) {
+        setApiToken(null);
+        setUser(null);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    api
+      .getListings()
+      .then((res) => {
+        setBackendListings(res.listings);
+        setBackendOnline(true);
+      })
+      .catch(() => {
+        /* backend hors ligne : utilisation du catalogue local */
+      });
+    api
+      .getSiteContent()
+      .then((res) => {
+        if (res.articles?.length) setArticles(res.articles);
+        if (res.faqs?.length) setFaqs(res.faqs);
+        if (res.heroSlides?.length) setHeroSlides(res.heroSlides);
+        if (res.stats?.length) setPlatformStats(res.stats);
+        if (res.settings) setSiteSettings(res.settings);
+      })
+      .catch(() => {
+        /* backend hors ligne : utilisation du contenu local */
+      });
+    void hydrateUserSession();
+  }, [hydrateUserSession]);
 
   useEffect(() => {
     const onHashChange = () => {
@@ -327,6 +460,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (toastTimer.current) window.clearTimeout(toastTimer.current);
     toastTimer.current = window.setTimeout(() => setToast(null), 3200);
   }, []);
+
+  const setLanguage = useCallback(
+    (lang: Language) => {
+      setLanguageState(lang);
+      showToast(lang === "fr" ? "Langue : Français" : "Language: English");
+    },
+    [showToast],
+  );
 
   const setViewMode = useCallback((mode: ViewMode) => {
     setViewModeState(mode);
@@ -392,11 +533,58 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const searchWith = useCallback(
     (partial: Partial<Filters>) => {
-      setFilters({ ...DEFAULT_FILTERS, ...partial });
+      const nextFilters = { ...DEFAULT_FILTERS, ...partial };
+      setFilters(nextFilters);
       setSort("pertinence");
       navigate("results");
+      const label = describeFilters(nextFilters);
+      if (label && label !== describeFilters(DEFAULT_FILTERS)) {
+        setSearchHistory((current) => [
+          { id: `sh-${Date.now()}`, label, filters: nextFilters, createdAt: Date.now() },
+          ...current.filter((entry) => entry.label !== label),
+        ].slice(0, 8));
+      }
     },
     [navigate],
+  );
+
+  const applySearchHistory = useCallback(
+    (entry: SearchHistoryEntry) => {
+      setFilters(entry.filters);
+      setSort("pertinence");
+      navigate("results");
+      setSearchHistory((current) => [
+        entry,
+        ...current.filter((item) => item.label !== entry.label),
+      ].slice(0, 8));
+    },
+    [navigate],
+  );
+
+  const clearSearchHistory = useCallback(() => {
+    setSearchHistory([]);
+  }, []);
+
+  const rateSeller = useCallback(
+    (seller: string, rating: number) => {
+      const clamped = Math.max(1, Math.min(5, Math.round(rating)));
+      setSellerRatings((current) => ({ ...current, [seller]: clamped }));
+      showToast(`Merci ! Vous avez noté ${seller} ${clamped}/5.`);
+    },
+    [showToast],
+  );
+
+  const getSellerRating = useCallback(
+    (seller: string, baseRating: number, baseReviews: number) => {
+      const userRating = sellerRatings[seller];
+      if (!userRating) {
+        return { rating: baseRating, reviews: baseReviews, userRating: undefined };
+      }
+      const reviews = baseReviews + 1;
+      const rating = (baseRating * baseReviews + userRating) / reviews;
+      return { rating, reviews, userRating };
+    },
+    [sellerRatings],
   );
 
   const browseAll = useCallback(() => {
@@ -417,6 +605,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         showToast("Bien ajouté à vos favoris.");
         return [...current, listingId];
       });
+      if (getApiToken()) {
+        void api.toggleFavorite(listingId).catch(() => {
+          /* ignore si hors ligne */
+        });
+      }
     },
     [showToast],
   );
@@ -484,24 +677,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const loginWithEmail = useCallback(
     (email: string, password: string) => {
       const normalized = email.trim().toLowerCase();
-      const found = accounts.find(
-        (acc) => acc.email.toLowerCase() === normalized && acc.provider === "email",
-      );
-      if (!found) {
-        showToast("Aucun compte trouvé avec cet e-mail. Créez un compte ou utilisez Gmail.");
-        return false;
-      }
-      if (found.password !== password) {
-        showToast("Mot de passe incorrect.");
-        return false;
-      }
-      const { password: _pw, ...safeUser } = found;
-      setUser(safeUser);
-      setAuthOpen(false);
-      showToast(`Ravi de vous revoir, ${safeUser.name} !`);
+      void api
+        .login(normalized, password)
+        .then((res) => {
+          setApiToken(res.token);
+          setUser(res.user);
+          setAuthOpen(false);
+          showToast(`Ravi de vous revoir, ${res.user.name} !`);
+          void hydrateUserSession();
+        })
+        .catch((err) => {
+          const status = (err as { status?: number }).status;
+          if (status === 401 || status === 403 || status === 422) {
+            showToast((err as Error).message);
+            return;
+          }
+          // Repli localStorage si backend Laravel non démarré
+          const found = accounts.find(
+            (acc) => acc.email.toLowerCase() === normalized && acc.provider === "email",
+          );
+          if (!found) {
+            showToast("Aucun compte trouvé avec cet e-mail. Créez un compte ou utilisez Gmail.");
+            return;
+          }
+          if (found.password !== password) {
+            showToast("Mot de passe incorrect.");
+            return;
+          }
+          const { password: _pw, ...safeUser } = found;
+          setUser(safeUser);
+          setAuthOpen(false);
+          showToast(`Ravi de vous revoir, ${safeUser.name} !`);
+        });
       return true;
     },
-    [accounts, showToast],
+    [accounts, hydrateUserSession, showToast],
   );
 
   const registerWithEmail = useCallback(
@@ -513,64 +723,95 @@ export function AppProvider({ children }: { children: ReactNode }) {
       accountType: "particulier" | "professionnel";
     }) => {
       const normalized = payload.email.trim().toLowerCase();
-      const exists = accounts.some((acc) => acc.email.toLowerCase() === normalized);
-      if (exists) {
-        showToast("Un compte existe déjà avec cet e-mail. Connectez-vous.");
-        return false;
-      }
-      const newUser: StoredAccount = {
-        id: `usr-${Date.now()}`,
-        name: payload.name.trim(),
-        email: normalized,
-        phone: payload.phone?.trim() || undefined,
-        accountType: payload.accountType,
-        provider: "email",
-        password: payload.password,
-        createdAt: Date.now(),
-      };
-      setAccounts((current) => [...current, newUser]);
-      const { password: _pw, ...safeUser } = newUser;
-      setUser(safeUser);
-      setAuthOpen(false);
-      showToast(`Bienvenue sur IMMO DU LETCH, ${safeUser.name} !`);
+      void api
+        .register({ ...payload, email: normalized })
+        .then((res) => {
+          setApiToken(res.token);
+          setUser(res.user);
+          setAuthOpen(false);
+          showToast(`Bienvenue sur IMMO DU LETCH, ${res.user.name} !`);
+          void hydrateUserSession();
+        })
+        .catch((err) => {
+          const status = (err as { status?: number }).status;
+          if (status === 422) {
+            showToast((err as Error).message || "Cet e-mail est déjà utilisé.");
+            return;
+          }
+          const exists = accounts.some((acc) => acc.email.toLowerCase() === normalized);
+          if (exists) {
+            showToast("Un compte existe déjà avec cet e-mail. Connectez-vous.");
+            return;
+          }
+          const newUser: StoredAccount = {
+            id: `usr-${Date.now()}`,
+            name: payload.name.trim(),
+            email: normalized,
+            phone: payload.phone?.trim() || undefined,
+            accountType: payload.accountType,
+            provider: "email",
+            password: payload.password,
+            createdAt: Date.now(),
+          };
+          setAccounts((current) => [...current, newUser]);
+          const { password: _pw, ...safeUser } = newUser;
+          setUser(safeUser);
+          setAuthOpen(false);
+          showToast(`Bienvenue sur IMMO DU LETCH, ${safeUser.name} !`);
+        });
       return true;
     },
-    [accounts, showToast],
+    [accounts, hydrateUserSession, showToast],
   );
 
   const loginWithGoogle = useCallback(
     (name: string, email: string) => {
       const normalized = email.trim().toLowerCase();
-      const existing = accounts.find((acc) => acc.email.toLowerCase() === normalized);
-      const googleUser: User = existing
-        ? {
-            id: existing.id,
-            name: existing.name,
-            email: existing.email,
-            phone: existing.phone,
-            accountType: existing.accountType,
-            provider: "google",
-            createdAt: existing.createdAt,
+      void api
+        .googleLogin(name.trim(), normalized)
+        .then((res) => {
+          setApiToken(res.token);
+          setUser(res.user);
+          setAuthOpen(false);
+          showToast(`Connecté avec Google (${res.user.email}).`);
+          void hydrateUserSession();
+        })
+        .catch(() => {
+          const existing = accounts.find((acc) => acc.email.toLowerCase() === normalized);
+          const googleUser: User = existing
+            ? {
+                id: existing.id,
+                name: existing.name,
+                email: existing.email,
+                phone: existing.phone,
+                accountType: existing.accountType,
+                provider: "google",
+                createdAt: existing.createdAt,
+              }
+            : {
+                id: `google-${Date.now()}`,
+                name: name.trim(),
+                email: normalized,
+                accountType: "particulier",
+                provider: "google",
+                createdAt: Date.now(),
+              };
+          if (!existing) {
+            setAccounts((current) => [...current, googleUser]);
           }
-        : {
-            id: `google-${Date.now()}`,
-            name: name.trim(),
-            email: normalized,
-            accountType: "particulier",
-            provider: "google",
-            createdAt: Date.now(),
-          };
-      if (!existing) {
-        setAccounts((current) => [...current, googleUser]);
-      }
-      setUser(googleUser);
-      setAuthOpen(false);
-      showToast(`Connecté avec Google (${googleUser.email}).`);
+          setUser(googleUser);
+          setAuthOpen(false);
+          showToast(`Connecté avec Google (${googleUser.email}).`);
+        });
     },
-    [accounts, showToast],
+    [accounts, hydrateUserSession, showToast],
   );
 
   const logout = useCallback(() => {
+    if (getApiToken()) {
+      void api.logout().catch(() => {});
+      setApiToken(null);
+    }
     setUser(null);
     showToast("Vous êtes déconnecté.");
   }, [showToast]);
@@ -601,6 +842,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
             : acc,
         ),
       );
+      if (getApiToken()) {
+        void api
+          .updateProfile(payload)
+          .then((res) => setUser(res.user))
+          .catch(() => {});
+      }
       showToast("Profil mis à jour avec succès.");
     },
     [showToast, user],
@@ -622,7 +869,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         showToast("Vous devez être connecté pour publier une annonce.");
         return null;
       }
-      const created: UserListing = {
+      const optimistic: UserListing = {
         ...payload,
         id: `ul-${Date.now()}`,
         userId: user.id,
@@ -631,9 +878,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
         sellerPhone: payload.sellerPhone ?? user.phone,
         createdAt: Date.now(),
       };
-      setUserListings((current) => [created, ...current]);
+      if (getApiToken()) {
+        void api
+          .createListing(payload)
+          .then((res) => {
+            setUserListings((current) => [
+              res.listing,
+              ...current.filter((item) => item.id !== optimistic.id),
+            ]);
+          })
+          .catch(() => {
+            setUserListings((current) => [optimistic, ...current]);
+          });
+      } else {
+        setUserListings((current) => [optimistic, ...current]);
+      }
       showToast("Annonce envoyée ! Elle est en attente de validation par l'administrateur.");
-      return created;
+      return optimistic;
     },
     [showToast, user],
   );
@@ -641,6 +902,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const deleteUserListing = useCallback(
     (id: string) => {
       setUserListings((current) => current.filter((item) => item.id !== id));
+      if (getApiToken()) {
+        void api.deleteListing(id).catch(() => {});
+      }
       showToast("Annonce supprimée.");
     },
     [showToast],
@@ -665,12 +929,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const saveCurrentSearch = useCallback(() => {
     const label = describeFilters(filters);
-    setSavedSearches((current) =>
-      [{ id: `search-${Date.now()}`, label, filters, createdAt: Date.now() }, ...current].slice(
-        0,
-        8,
-      ),
-    );
+    if (getApiToken()) {
+      void api
+        .createSavedSearch(label, filters)
+        .then((res) => {
+          setSavedSearches((current) => [res.savedSearch, ...current].slice(0, 8));
+        })
+        .catch(() => {
+          setSavedSearches((current) =>
+            [{ id: `search-${Date.now()}`, label, filters, createdAt: Date.now() }, ...current].slice(
+              0,
+              8,
+            ),
+          );
+        });
+    } else {
+      setSavedSearches((current) =>
+        [{ id: `search-${Date.now()}`, label, filters, createdAt: Date.now() }, ...current].slice(
+          0,
+          8,
+        ),
+      );
+    }
     showToast(`Alerte créée : ${label}`);
   }, [filters, showToast]);
 
@@ -686,6 +966,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const deleteSavedSearch = useCallback((searchId: string) => {
     setSavedSearches((current) => current.filter((search) => search.id !== searchId));
+    if (getApiToken()) {
+      void api.deleteSavedSearch(searchId).catch(() => {});
+    }
   }, []);
 
   const results = useMemo(
@@ -750,8 +1033,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
       saveCurrentSearch,
       applySavedSearch,
       deleteSavedSearch,
+      searchHistory,
+      applySearchHistory,
+      clearSearchHistory,
+      sellerRatings,
+      rateSeller,
+      getSellerRating,
+      language,
+      setLanguage,
       toast,
       showToast,
+      articles,
+      faqs,
+      heroSlides,
+      platformStats,
+      siteSettings,
     }),
     [
       page,
@@ -802,8 +1098,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
       saveCurrentSearch,
       applySavedSearch,
       deleteSavedSearch,
+      searchHistory,
+      applySearchHistory,
+      clearSearchHistory,
+      sellerRatings,
+      rateSeller,
+      getSellerRating,
+      language,
+      setLanguage,
       toast,
       showToast,
+      articles,
+      faqs,
+      heroSlides,
+      platformStats,
+      siteSettings,
     ],
   );
 

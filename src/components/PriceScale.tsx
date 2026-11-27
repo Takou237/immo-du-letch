@@ -7,6 +7,7 @@ import {
   type Listing,
   type PriceRating,
 } from "../data/listings";
+import { useT } from "../i18n/translations";
 
 const LEVELS: PriceRating[] = ["excellent", "tres_bon", "bon", "marche", "eleve"];
 
@@ -16,10 +17,12 @@ type Props = {
 };
 
 export default function PriceScale({ listing, compact = false }: Props) {
+  const t = useT();
   const rating = getPriceRating(listing);
   if (!rating) return null;
 
   const config = PRICE_RATING_CONFIG[rating];
+  const ratingText = t.priceRatings[rating];
   const perM2 = marketPricePerM2(listing);
   const average = MARKET_AVERAGE[listing.city];
 
@@ -33,7 +36,7 @@ export default function PriceScale({ listing, compact = false }: Props) {
           style={{ backgroundColor: config.color }}
           className="inline-block size-[6px] rounded-full"
         />
-        {config.label}
+        {ratingText.label}
       </span>
     );
   }
@@ -49,11 +52,11 @@ export default function PriceScale({ listing, compact = false }: Props) {
             style={{ backgroundColor: config.color }}
             className="inline-block size-[7px] rounded-full"
           />
-          {config.label}
+          {ratingText.label}
         </span>
         {perM2 && average ? (
           <span className="font-['Inter:Regular'] text-[11px] text-[#637084]">
-            {formatPrice(perM2)} FCFA/m² (moy. {listing.city} : {formatPrice(average)} FCFA/m²)
+            {formatPrice(perM2)} FCFA/m² ({listing.city} : {formatPrice(average)} FCFA/m²)
           </span>
         ) : null}
       </div>
@@ -61,6 +64,7 @@ export default function PriceScale({ listing, compact = false }: Props) {
       <div className="mt-3 grid grid-cols-5 gap-1">
         {LEVELS.map((level) => {
           const item = PRICE_RATING_CONFIG[level];
+          const itemText = t.priceRatings[level];
           const isCurrent = level === rating;
           return (
             <div key={level} className="flex flex-col items-center gap-1">
@@ -77,7 +81,7 @@ export default function PriceScale({ listing, compact = false }: Props) {
                   isCurrent ? "font-['Inter:Bold'] font-bold text-[#071f49]" : "text-[#8a95a5]"
                 }`}
               >
-                {item.short}
+                {itemText.short}
               </span>
             </div>
           );

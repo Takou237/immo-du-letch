@@ -12,12 +12,14 @@ import {
   type PropertyType,
   type SortKey,
 } from "../data/listings";
+import { useT } from "../i18n/translations";
 import { useApp } from "../store/AppStore";
 
 const PAGE_SIZE = 6;
 
 export default function MobileResultsPage() {
   const { filters, updateFilters, resetFilters, results, sort, setSort, saveCurrentSearch } = useApp();
+  const t = useT();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [page, setPage] = useState(1);
 
@@ -36,9 +38,9 @@ export default function MobileResultsPage() {
   const currentPage = Math.min(page, pageCount);
   const visible = results.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  const title = `${filters.type ? TYPE_LABELS[filters.type] : "Biens"} ${
-    filters.transaction === "location" ? "à louer" : "à vendre"
-  }${filters.city ? ` à ${filters.city}` : ""}`;
+  const title = `${filters.type ? t.types[filters.type] : t.results.properties} ${
+    filters.transaction === "location" ? t.results.forRent : t.results.forSale
+  }${filters.city ? ` ${t.results.inCity(filters.city)}` : ""}`;
 
   const activeCount =
     (filters.city ? 1 : 0) +

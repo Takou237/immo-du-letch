@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { formatRating, priceLabel, renderStars, type Listing } from "../data/listings";
+import { useT } from "../i18n/translations";
 import { useApp } from "../store/AppStore";
 import Modal from "./Modal";
 import { PhoneIcon, PinIcon, ShieldIcon } from "./icons";
@@ -9,7 +11,14 @@ type Props = {
 };
 
 export default function SellerProfileModal({ listing, onClose }: Props) {
-  const { openListing, showToast, allListings } = useApp();
+  const { openListing, showToast, allListings, getSellerRating, rateSeller } = useApp();
+  const t = useT();
+  const [hoverRating, setHoverRating] = useState(0);
+  const sellerRating = getSellerRating(
+    listing.seller,
+    listing.sellerRating,
+    listing.sellerReviews,
+  );
   const otherListings = allListings.filter(
     (item) => item.seller === listing.seller && item.id !== listing.id,
   );
@@ -52,18 +61,18 @@ export default function SellerProfileModal({ listing, onClose }: Props) {
               <span className="inline-flex items-center gap-1 rounded-full bg-[#e7f6ec] px-2.5 py-0.5 text-[11px] font-semibold text-[#1f7a3d]">
                 <ShieldIcon className="size-[12px]" />
                 {listing.sellerType === "professionnel"
-                  ? "Professionnel certifié"
-                  : "Particulier vérifié"}
+                  ? t.seller.certifiedPro
+                  : t.seller.verifiedIndiv}
               </span>
             </div>
 
             <div className="mt-1.5 flex flex-wrap items-center gap-3 text-[13px]">
               <span className="font-semibold text-[#a26b00]">
-                {renderStars(listing.sellerRating)} {formatRating(listing.sellerRating)}/5
+                {renderStars(sellerRating.rating)} {formatRating(sellerRating.rating)}/5
               </span>
-              <span className="text-[#637084]">({listing.sellerReviews} avis)</span>
+              <span className="text-[#637084]">{t.seller.reviews(sellerRating.reviews)}</span>
               {listing.sellerSince ? (
-                <span className="text-[#637084]">· Membre depuis {listing.sellerSince}</span>
+                <span className="text-[#637084]">{t.seller.memberSince(listing.sellerSince)}</span>
               ) : null}
             </div>
           </div>
@@ -101,17 +110,53 @@ export default function SellerProfileModal({ listing, onClose }: Props) {
             }}
             className="inline-flex h-[42px] cursor-pointer items-center rounded-[6px] border-0 bg-[#f3ad19] px-5 font-['Inter:Semi_Bold'] text-[13px] font-semibold text-[#071f49] hover:bg-[#ffbe33]"
           >
-            Contacter l'annonceur
+            {t.seller.contactAdvertiser}
           </button>
+        </div>
+
+        <div className="mt-4 rounded-[8px] border border-[#dce2e9] bg-white p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="font-['Inter:Bold'] text-[13px] font-bold text-[#071f49]">
+              Noter cet annonceur
+            </p>
+            {sellerRating.userRating ? (
+              <span className="text-[11px] font-semibold text-[#1f7a3d]">
+                Votre note : {sellerRating.userRating}/5
+              </span>
+            ) : (
+              <span className="text-[11px] text-[#637084]">Cliquez sur une étoile</span>
+            )}
+          </div>
+          <div
+            className="mt-2 flex items-center gap-1"
+            onMouseLeave={() => setHoverRating(0)}
+          >
+            {[1, 2, 3, 4, 5].map((value) => {
+              const active = (hoverRating || sellerRating.userRating || 0) >= value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  aria-label={`Donner ${value} étoile${value > 1 ? "s" : ""}`}
+                  onMouseEnter={() => setHoverRating(value)}
+                  onClick={() => rateSeller(listing.seller, value)}
+                  className="cursor-pointer border-0 bg-transparent p-0 text-[26px] leading-none transition-transform hover:scale-110"
+                  style={{ color: active ? "#f3ad19" : "#dce2e9" }}
+                >
+                  ★
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div className="mt-6 border-t border-[#dce2e9] pt-5">
           <p className="font-['Inter:Bold'] text-[15px] font-bold text-[#071f49]">
-            Autres annonces de {listing.seller} ({otherListings.length})
+            {t.seller.otherListings(listing.seller, otherListings.length)}
           </p>
           {otherListings.length === 0 ? (
             <p className="mt-2 text-[12px] text-[#637084]">
-              Aucune autre annonce active pour cet annonceur.
+              {t.seller.noOtherListings}
             </p>
           ) : (
             <ul className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2">

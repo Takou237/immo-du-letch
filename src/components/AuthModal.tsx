@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { useT } from "../i18n/translations";
 import { useApp } from "../store/AppStore";
 import Modal from "./Modal";
 import { ArrowIcon, EyeIcon } from "./icons";
@@ -42,6 +43,7 @@ export default function AuthModal() {
     loginWithGoogle,
     showToast,
   } = useApp();
+  const t = useT();
 
   const [googleStep, setGoogleStep] = useState(false);
   const [googleName, setGoogleName] = useState("");
@@ -139,18 +141,17 @@ export default function AuthModal() {
               onClick={() => setGoogleStep(false)}
               className="mb-4 inline-flex cursor-pointer items-center gap-1.5 border-0 bg-transparent p-0 font-['Inter:Semi_Bold'] text-[12px] font-semibold text-[#637084] hover:text-[#071f49]"
             >
-              <ArrowIcon className="size-[14px] rotate-180" /> Retour
+              <ArrowIcon className="size-[14px] rotate-180" /> {t.modals.back}
             </button>
 
             <div className="flex items-center gap-2.5">
               <GoogleLogo />
               <p className="font-['Inter:Bold'] text-[19px] font-bold text-[#071f49]">
-                Connexion avec Google
+                {t.modals.googleTitle}
               </p>
             </div>
             <p className="mt-1 text-[13px] text-[#637084]">
-              Sélectionnez un compte Gmail ou saisissez votre adresse Gmail pour continuer sur IMMO
-              DU LETCH.
+              {t.modals.googleSubtitle}
             </p>
 
             <div className="mt-4 flex flex-col gap-2">
@@ -217,10 +218,10 @@ export default function AuthModal() {
         ) : (
           <div>
             <p className="font-['Inter:Bold'] text-[22px] font-bold text-[#071f49]">
-              {authMode === "login" ? "Se connecter" : "Créer un compte"}
+              {authMode === "login" ? t.modals.loginTitle : t.modals.registerTitle}
             </p>
             <p className="mt-1 text-[13px] text-[#637084]">
-              Retrouvez vos favoris, alertes et annonces sur IMMO DU LETCH.
+              {t.modals.authSubtitle}
             </p>
 
             {/* Onglets Connexion / Inscription */}
@@ -234,7 +235,7 @@ export default function AuthModal() {
                     : "bg-transparent text-[#637084] hover:text-[#071f49]"
                 }`}
               >
-                Connexion
+                {t.modals.loginTab}
               </button>
               <button
                 type="button"
@@ -245,7 +246,7 @@ export default function AuthModal() {
                     : "bg-transparent text-[#637084] hover:text-[#071f49]"
                 }`}
               >
-                Inscription
+                {t.modals.registerTab}
               </button>
             </div>
 
@@ -256,12 +257,12 @@ export default function AuthModal() {
               className="mt-5 flex h-[44px] w-full cursor-pointer items-center justify-center gap-2.5 rounded-[6px] border border-[#dce2e9] bg-white font-['Inter:Semi_Bold'] text-[13px] font-semibold text-[#172b45] transition-colors hover:border-[#4285F4] hover:bg-[#f8faff]"
             >
               <GoogleLogo />
-              Continuer avec Google (Gmail)
+              {t.modals.continueGoogle}
             </button>
 
             <div className="my-4 flex items-center gap-3">
               <div className="h-px flex-1 bg-[#dce2e9]" />
-              <span className="text-[11px] font-medium text-[#8a95a5]">OU PAR E-MAIL</span>
+              <span className="text-[11px] font-medium text-[#8a95a5]">{t.modals.orByEmail}</span>
               <div className="h-px flex-1 bg-[#dce2e9]" />
             </div>
 
@@ -269,7 +270,7 @@ export default function AuthModal() {
               <form onSubmit={handleLogin} className="space-y-3.5">
                 <div>
                   <label className="mb-1 block text-[12px] font-semibold text-[#172b45]">
-                    Adresse e-mail
+                    {t.modals.emailLabel}
                   </label>
                   <input
                     type="email"
@@ -283,7 +284,7 @@ export default function AuthModal() {
                 <div>
                   <div className="mb-1 flex items-center justify-between">
                     <label className="text-[12px] font-semibold text-[#172b45]">
-                      Mot de passe
+                      {t.modals.passwordLabel}
                     </label>
                     <button
                       type="button"
@@ -294,7 +295,7 @@ export default function AuthModal() {
                       }
                       className="cursor-pointer border-0 bg-transparent p-0 text-[11px] font-medium text-[#637084] hover:text-[#071f49] hover:underline"
                     >
-                      Mot de passe oublié ?
+                      {t.modals.forgotPassword}
                     </button>
                   </div>
                   <div className="relative">
@@ -320,14 +321,14 @@ export default function AuthModal() {
                   type="submit"
                   className="mt-2 h-[44px] w-full cursor-pointer rounded-[6px] border-0 bg-[#f3ad19] font-['Inter:Semi_Bold'] text-[14px] font-semibold text-[#071f49] transition-colors hover:bg-[#ffbe33]"
                 >
-                  Se connecter
+                  {t.modals.signInBtn}
                 </button>
               </form>
             ) : (
               <form onSubmit={handleRegister} className="space-y-3">
                 <div>
                   <label className="mb-1 block text-[12px] font-semibold text-[#172b45]">
-                    Nom complet ou agence *
+                    {t.modals.fullNameLabel}
                   </label>
                   <input
                     type="text"
@@ -421,7 +422,7 @@ export default function AuthModal() {
                   type="submit"
                   className="mt-2 h-[44px] w-full cursor-pointer rounded-[6px] border-0 bg-[#f3ad19] font-['Inter:Semi_Bold'] text-[14px] font-semibold text-[#071f49] transition-colors hover:bg-[#ffbe33]"
                 >
-                  Créer mon compte
+                  {t.modals.createAccountBtn}
                 </button>
               </form>
             )}

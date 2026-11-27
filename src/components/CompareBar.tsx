@@ -1,9 +1,11 @@
 import { compactPrice } from "../data/listings";
+import { useT } from "../i18n/translations";
 import { useApp } from "../store/AppStore";
 import { CloseIcon, ScaleIcon } from "./icons";
 
 export default function CompareBar() {
   const { compareList, allListings, removeFromCompare, clearCompare, openCompare } = useApp();
+  const t = useT();
 
   if (compareList.length === 0) return null;
 
@@ -21,7 +23,7 @@ export default function CompareBar() {
         <div className="flex shrink-0 items-center gap-2 text-[#071f49]">
           <ScaleIcon className="size-[18px] text-[#f3ad19]" />
           <span className="font-['Inter:Bold'] text-[13px] font-bold whitespace-nowrap">
-            Comparateur ({items.length}/3)
+            {t.modals.comparator} ({items.length}/3)
           </span>
         </div>
 
@@ -63,7 +65,7 @@ export default function CompareBar() {
           onClick={clearCompare}
           className="cursor-pointer border-0 bg-transparent px-2 py-1 font-['Inter:Medium'] text-[12px] text-[#637084] hover:text-[#071f49]"
         >
-          Vider
+          {t.modals.clear}
         </button>
         <button
           type="button"
@@ -71,7 +73,7 @@ export default function CompareBar() {
           onClick={openCompare}
           className="h-[38px] cursor-pointer rounded-[6px] border-0 bg-[#f3ad19] px-4 font-['Inter:Semi_Bold'] text-[13px] font-semibold text-[#071f49] transition-colors hover:bg-[#ffbe33] disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Comparer ({items.length})
+          {t.modals.compareBtn(items.length)}
         </button>
       </div>
     </div>
