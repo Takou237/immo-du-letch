@@ -14,7 +14,7 @@
       "destination": "https://laravel-backend-production-7438ec96.up.railway.app/storage/$1"
     },
     {
-      "source": "/((?!assets|favicon\\.png).*)",
+      "source": "/(.*)",
       "destination": {
         "type": "service",
         "service": "frontend"
