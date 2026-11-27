@@ -2,6 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Home, Search, Star, Heart, PlusCircle } from 'lucide-react-native';
 import { useLang } from '../i18n/LangContext';
 
@@ -23,6 +24,9 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function MainTabs() {
   const { t } = useLang();
+  const insets = useSafeAreaInsets();
+  const bottomPadding = Math.max(insets.bottom, 12);
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -33,13 +37,14 @@ function MainTabs() {
           backgroundColor: colors.navy,
           borderTopColor: colors.navyLight,
           borderTopWidth: 1,
-          height: 64,
-          paddingBottom: 8,
-          paddingTop: 6,
+          height: 58 + bottomPadding,
+          paddingBottom: bottomPadding,
+          paddingTop: 8,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 11.5,
           fontWeight: '600',
+          marginTop: 2,
         },
       }}
     >

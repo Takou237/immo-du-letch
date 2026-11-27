@@ -67,7 +67,7 @@ export function AppHeader({
             activeOpacity={0.75}
             accessibilityLabel={t.header.messages}
           >
-            <MessageSquare color={colors.textOnNavy} size={22} strokeWidth={1.8} />
+            <MessageSquare color={colors.textOnNavy} size={20} strokeWidth={1.8} />
             {unreadMessages > 0 && (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>
@@ -84,7 +84,7 @@ export function AppHeader({
             activeOpacity={0.75}
             accessibilityLabel={t.header.notifications}
           >
-            <Bell color={colors.textOnNavy} size={22} strokeWidth={1.8} />
+            <Bell color={colors.textOnNavy} size={20} strokeWidth={1.8} />
             {unreadNotifications > 0 && (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>
@@ -101,7 +101,7 @@ export function AppHeader({
             activeOpacity={0.75}
             accessibilityLabel={t.header.profile}
           >
-            <User color={colors.textOnNavy} size={22} strokeWidth={1.8} />
+            <User color={colors.textOnNavy} size={20} strokeWidth={1.8} />
           </TouchableOpacity>
         </View>
       </View>
@@ -118,14 +118,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
-    paddingVertical: 12,
+    paddingVertical: 7,
     backgroundColor: colors.navy,
   },
 
   // Logo
   logo: {
-    width: 120,
-    height: 40,
+    width: 108,
+    height: 34,
   },
 
   // Icônes
@@ -135,9 +135,9 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   iconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
