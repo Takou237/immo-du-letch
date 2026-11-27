@@ -201,7 +201,7 @@ type AppContextValue = {
     phone?: string;
     accountType: "particulier" | "professionnel";
   }) => boolean;
-  loginWithGoogle: (name: string, email: string) => void;
+  loginWithGoogle: (accessToken: string) => Promise<void>;
   logout: () => void;
   updateUserProfile: (payload: {
     name: string;
@@ -765,46 +765,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 
   const loginWithGoogle = useCallback(
-    (name: string, email: string) => {
-      const normalized = email.trim().toLowerCase();
-      void api
-        .googleLogin(name.trim(), normalized)
-        .then((res) => {
-          setApiToken(res.token);
-          setUser(res.user);
-          setAuthOpen(false);
-          showToast(`Connecté avec Google (${res.user.email}).`);
-          void hydrateUserSession();
-        })
-        .catch(() => {
-          const existing = accounts.find((acc) => acc.email.toLowerCase() === normalized);
-          const googleUser: User = existing
-            ? {
-                id: existing.id,
-                name: existing.name,
-                email: existing.email,
-                phone: existing.phone,
-                accountType: existing.accountType,
-                provider: "google",
-                createdAt: existing.createdAt,
-              }
-            : {
-                id: `google-${Date.now()}`,
-                name: name.trim(),
-                email: normalized,
-                accountType: "particulier",
-                provider: "google",
-                createdAt: Date.now(),
-              };
-          if (!existing) {
-            setAccounts((current) => [...current, googleUser]);
-          }
-          setUser(googleUser);
-          setAuthOpen(false);
-          showToast(`Connecté avec Google (${googleUser.email}).`);
-        });
+    async (accessToken: string) => {
+      try {
+        const res = await api.googleLogin(accessToken);
+        setApiToken(res.token);
+        setUser(res.user);
+        setAuthOpen(false);
+        showToast(`Connecté avec Google (${res.user.email}).`);
+        void hydrateUserSession();
+      } catch (err) {
+        const msg =
+          err instanceof Error ? err.message : "Échec de la connexion avec Google.";
+        showToast(msg);
+      }
     },
-    [accounts, hydrateUserSession, showToast],
+    [hydrateUserSession, showToast],
   );
 
   const logout = useCallback(() => {

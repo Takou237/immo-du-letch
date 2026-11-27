@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useT } from "../i18n/translations";
 import { useApp } from "../store/AppStore";
+import { requestGoogleAccessToken } from "../utils/googleAuth";
 import Modal from "./Modal";
-import { ArrowIcon, EyeIcon } from "./icons";
+import { EyeIcon } from "./icons";
 
 function GoogleLogo() {
   return (
@@ -27,11 +28,6 @@ function GoogleLogo() {
   );
 }
 
-const DEMO_GMAIL_ACCOUNTS = [
-  { name: "Ken Daniel", email: "ken.daniel@gmail.com" },
-  { name: "IMMO DU LETCH Pro", email: "contact.immoduletch@gmail.com" },
-];
-
 export default function AuthModal() {
   const {
     authOpen,
@@ -45,9 +41,7 @@ export default function AuthModal() {
   } = useApp();
   const t = useT();
 
-  const [googleStep, setGoogleStep] = useState(false);
-  const [googleName, setGoogleName] = useState("");
-  const [googleEmail, setGoogleEmail] = useState("");
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -62,7 +56,7 @@ export default function AuthModal() {
 
   useEffect(() => {
     if (authOpen) {
-      setGoogleStep(false);
+      setGoogleLoading(false);
       setShowPassword(false);
     }
   }, [authOpen, authMode]);
@@ -111,20 +105,24 @@ export default function AuthModal() {
     });
   };
 
-  const handleGoogleSubmit = (event: FormEvent) => {
-    event.preventDefault();
-    const trimmedEmail = googleEmail.trim().toLowerCase();
-    if (!isEmailValid(trimmedEmail) || !trimmedEmail.endsWith("@gmail.com")) {
-      showToast("Veuillez saisir une adresse Gmail valide (ex: nom@gmail.com).");
+  const handleGoogleAuth = async () => {
+    const clientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID ?? "").trim();
+    if (!clientId) {
+      showToast("Authentification Google non configurée (VITE_GOOGLE_CLIENT_ID manquant).");
       return;
     }
-    const derivedName =
-      googleName.trim() ||
-      trimmedEmail
-        .split("@")[0]
-        .replace(/[._-]+/g, " ")
-        .replace(/\b\w/g, (c) => c.toUpperCase());
-    loginWithGoogle(derivedName, trimmedEmail);
+
+    setGoogleLoading(true);
+    try {
+      const accessToken = await requestGoogleAccessToken(clientId);
+      await loginWithGoogle(accessToken);
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Impossible de se connecter avec Google.";
+      showToast(msg);
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   return (
@@ -134,88 +132,6 @@ export default function AuthModal() {
       panelClassName="w-[460px] max-w-[94vw]"
     >
       <div className="p-6 md:p-8">
-        {googleStep ? (
-          <div>
-            <button
-              type="button"
-              onClick={() => setGoogleStep(false)}
-              className="mb-4 inline-flex cursor-pointer items-center gap-1.5 border-0 bg-transparent p-0 font-['Inter:Semi_Bold'] text-[12px] font-semibold text-[#637084] hover:text-[#071f49]"
-            >
-              <ArrowIcon className="size-[14px] rotate-180" /> {t.modals.back}
-            </button>
-
-            <div className="flex items-center gap-2.5">
-              <GoogleLogo />
-              <p className="font-['Inter:Bold'] text-[19px] font-bold text-[#071f49]">
-                {t.modals.googleTitle}
-              </p>
-            </div>
-            <p className="mt-1 text-[13px] text-[#637084]">
-              {t.modals.googleSubtitle}
-            </p>
-
-            <div className="mt-4 flex flex-col gap-2">
-              {DEMO_GMAIL_ACCOUNTS.map((acc) => (
-                <button
-                  key={acc.email}
-                  type="button"
-                  onClick={() => loginWithGoogle(acc.name, acc.email)}
-                  className="flex w-full cursor-pointer items-center gap-3 rounded-[8px] border border-[#dce2e9] bg-white p-3 text-left transition-colors hover:border-[#4285F4] hover:bg-[#f8faff]"
-                >
-                  <div className="flex size-[36px] shrink-0 items-center justify-center rounded-full bg-[#4285F4] font-['Inter:Bold'] text-[14px] font-bold text-white">
-                    {acc.name[0]}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-['Inter:Semi_Bold'] text-[13px] font-semibold text-[#071f49]">
-                      {acc.name}
-                    </p>
-                    <p className="truncate text-[12px] text-[#637084]">{acc.email}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            <div className="my-4 flex items-center gap-3">
-              <div className="h-px flex-1 bg-[#dce2e9]" />
-              <span className="text-[11px] font-medium text-[#8a95a5]">OU AUTRE COMPTE GMAIL</span>
-              <div className="h-px flex-1 bg-[#dce2e9]" />
-            </div>
-
-            <form onSubmit={handleGoogleSubmit} className="space-y-3">
-              <div>
-                <label className="mb-1 block text-[12px] font-semibold text-[#172b45]">
-                  Adresse Gmail *
-                </label>
-                <input
-                  type="email"
-                  value={googleEmail}
-                  onChange={(e) => setGoogleEmail(e.target.value)}
-                  placeholder="votre.nom@gmail.com"
-                  className="h-[42px] w-full rounded-[6px] border border-[#dce2e9] px-3 text-[13px] text-[#172b45] outline-none focus:border-[#4285F4]"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-[12px] font-semibold text-[#172b45]">
-                  Nom affiché (optionnel)
-                </label>
-                <input
-                  type="text"
-                  value={googleName}
-                  onChange={(e) => setGoogleName(e.target.value)}
-                  placeholder="Ex: Jean Dupont"
-                  className="h-[42px] w-full rounded-[6px] border border-[#dce2e9] px-3 text-[13px] text-[#172b45] outline-none focus:border-[#4285F4]"
-                />
-              </div>
-              <button
-                type="submit"
-                className="flex h-[44px] w-full cursor-pointer items-center justify-center gap-2 rounded-[6px] border-0 bg-[#071f49] font-['Inter:Semi_Bold'] text-[13px] font-semibold text-white hover:bg-[#0d2d66]"
-              >
-                <GoogleLogo />
-                Continuer avec ce compte Gmail
-              </button>
-            </form>
-          </div>
-        ) : (
           <div>
             <p className="font-['Inter:Bold'] text-[22px] font-bold text-[#071f49]">
               {authMode === "login" ? t.modals.loginTitle : t.modals.registerTitle}
@@ -253,11 +169,12 @@ export default function AuthModal() {
             {/* Bouton Google / Gmail */}
             <button
               type="button"
-              onClick={() => setGoogleStep(true)}
-              className="mt-5 flex h-[44px] w-full cursor-pointer items-center justify-center gap-2.5 rounded-[6px] border border-[#dce2e9] bg-white font-['Inter:Semi_Bold'] text-[13px] font-semibold text-[#172b45] transition-colors hover:border-[#4285F4] hover:bg-[#f8faff]"
+              disabled={googleLoading}
+              onClick={() => void handleGoogleAuth()}
+              className="mt-5 flex h-[44px] w-full cursor-pointer items-center justify-center gap-2.5 rounded-[6px] border border-[#dce2e9] bg-white font-['Inter:Semi_Bold'] text-[13px] font-semibold text-[#172b45] transition-colors hover:border-[#4285F4] hover:bg-[#f8faff] disabled:cursor-wait disabled:opacity-60"
             >
               <GoogleLogo />
-              {t.modals.continueGoogle}
+              {googleLoading ? "Connexion Google en cours..." : t.modals.continueGoogle}
             </button>
 
             <div className="my-4 flex items-center gap-3">
@@ -427,7 +344,6 @@ export default function AuthModal() {
               </form>
             )}
           </div>
-        )}
       </div>
     </Modal>
   );

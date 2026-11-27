@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 class AuthController extends Controller
@@ -73,18 +74,63 @@ class AuthController extends Controller
     public function google(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:120'],
-            'email' => ['required', 'email', 'max:190'],
+            'access_token' => ['required', 'string'],
         ]);
 
-        $email = strtolower(trim($data['email']));
+        $accessToken = $data['access_token'];
+        $expectedClientId = config('services.google.client_id');
+
+        if ($expectedClientId) {
+            $tokenInfo = Http::timeout(10)->get('https://www.googleapis.com/oauth2/v3/tokeninfo', [
+                'access_token' => $accessToken,
+            ]);
+
+            if (!$tokenInfo->ok()) {
+                return response()->json([
+                    'message' => 'Jeton Google invalide ou expiré.',
+                ], 401);
+            }
+
+            $aud = $tokenInfo->json('aud') ?? $tokenInfo->json('azp');
+            if ($aud !== $expectedClientId) {
+                return response()->json([
+                    'message' => 'Ce jeton Google ne correspond pas à cette application.',
+                ], 401);
+            }
+        }
+
+        $userInfo = Http::timeout(10)
+            ->withToken($accessToken)
+            ->get('https://www.googleapis.com/oauth2/v3/userinfo');
+
+        if (!$userInfo->ok()) {
+            return response()->json([
+                'message' => 'Impossible de vérifier votre compte Google.',
+            ], 401);
+        }
+
+        $profile = $userInfo->json();
+        $email = isset($profile['email']) ? strtolower(trim((string) $profile['email'])) : '';
+        $emailVerified = (bool) ($profile['email_verified'] ?? false);
+
+        if ($email === '' || !$emailVerified) {
+            return response()->json([
+                'message' => 'Votre adresse e-mail Google doit être vérifiée.',
+            ], 422);
+        }
+
+        $name = trim((string) ($profile['name'] ?? ''));
+        if ($name === '') {
+            $name = Str::before($email, '@');
+        }
+
         $user = User::where('email', $email)->first();
 
         if (!$user) {
             $user = User::create([
-                'name' => trim($data['name']),
+                'name' => Str::limit($name, 120, ''),
                 'email' => $email,
-                'password' => Str::random(24),
+                'password' => Str::random(32),
                 'account_type' => 'particulier',
                 'provider' => 'google',
                 'role' => 'user',
