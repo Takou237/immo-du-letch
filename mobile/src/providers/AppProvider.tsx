@@ -4,20 +4,26 @@
  */
 import React, { ReactNode } from 'react';
 import { LangProvider } from '../i18n/LangContext';
+import { AuthProvider } from './AuthProvider';
 import { ListingsProvider } from './ListingsProvider';
 import { FavoritesProvider } from './FavoritesProvider';
 import { SavedSearchesProvider } from './SavedSearchesProvider';
+import { CompareProvider } from './CompareProvider';
 
 export function AppProvider({ children }: { children: ReactNode }) {
   return (
     <LangProvider>
-      <ListingsProvider>
-        <FavoritesProvider>
-          <SavedSearchesProvider>
-            {children}
-          </SavedSearchesProvider>
-        </FavoritesProvider>
-      </ListingsProvider>
+      <AuthProvider>
+        <ListingsProvider>
+          <FavoritesProvider>
+            <SavedSearchesProvider>
+              <CompareProvider>
+                {children}
+              </CompareProvider>
+            </SavedSearchesProvider>
+          </FavoritesProvider>
+        </ListingsProvider>
+      </AuthProvider>
     </LangProvider>
   );
 }
