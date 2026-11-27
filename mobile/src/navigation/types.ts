@@ -11,4 +11,6 @@ export type MainTabParamList = {
 export type RootStackParamList = {
   MainTabs: NavigatorScreenParams<MainTabParamList>;
   ListingDetail: { listingId: string };
+  Compare: undefined;
+  Profile: undefined;
 };

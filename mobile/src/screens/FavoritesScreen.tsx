@@ -13,13 +13,14 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Heart, Clock, Trash2, Search } from 'lucide-react-native';
+import { Heart, Clock, Trash2, Search, Scale } from 'lucide-react-native';
 
 import { AppHeader } from '../components/AppHeader';
 import { ListingRowCard } from '../components/search/ListingRowCard';
 import { ListingCard } from '../components/home/ListingCard';
 import { useListings } from '../hooks/useListings';
 import { useFavorites } from '../hooks/useFavorites';
+import { useCompare } from '../hooks/useCompare';
 import { useLang } from '../i18n/LangContext';
 import { RootStackParamList } from '../navigation/types';
 import { colors } from '../theme';
@@ -31,6 +32,7 @@ export function FavoritesScreen() {
   const { lang, t } = useLang();
   const { listings } = useListings();
   const { favorites, recentlyViewed, toggleFavorite, clearRecent } = useFavorites();
+  const { compareIds, clearCompare } = useCompare();
 
   const [tab, setTab] = useState<'favorites' | 'recent'>('favorites');
 
@@ -199,6 +201,28 @@ export function FavoritesScreen() {
           }
         />
       )}
+
+      {compareIds.length > 0 && (
+        <View style={styles.compareBar}>
+          <View style={styles.compareBarLeft}>
+            <Scale size={16} color={colors.gold} />
+            <Text style={styles.compareBarText}>
+              {t.favorites.compareTitle} ({compareIds.length}/3)
+            </Text>
+          </View>
+          <View style={styles.compareBarActions}>
+            <TouchableOpacity onPress={clearCompare}>
+              <Text style={styles.compareClearText}>{t.favorites.clearCompare}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.compareOpenBtn}
+              onPress={() => navigation.navigate('Compare')}
+            >
+              <Text style={styles.compareOpenText}>{t.favorites.openCompare}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -322,6 +346,45 @@ const styles = StyleSheet.create({
   exploreBtnText: {
     color: colors.navy,
     fontSize: 14,
+    fontWeight: '800',
+  },
+  compareBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.navy,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  compareBarLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  compareBarText: {
+    color: colors.textOnNavy,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  compareBarActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  compareClearText: {
+    color: '#CBD5E1',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  compareOpenBtn: {
+    backgroundColor: colors.gold,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+  },
+  compareOpenText: {
+    color: colors.navy,
+    fontSize: 12,
     fontWeight: '800',
   },
 });

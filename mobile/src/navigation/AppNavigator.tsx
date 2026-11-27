@@ -13,6 +13,8 @@ import { MySearchesScreen } from '../screens/MySearchesScreen';
 import { FavoritesScreen } from '../screens/FavoritesScreen';
 import { SellScreen } from '../screens/SellScreen';
 import { ListingDetailScreen } from '../screens/ListingDetailScreen';
+import { CompareScreen } from '../screens/CompareScreen';
+import { ProfileScreen } from '../screens/ProfileScreen';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -89,6 +91,8 @@ export function AppNavigator() {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="MainTabs" component={MainTabs} />
         <Stack.Screen name="ListingDetail" component={ListingDetailScreen} />
+        <Stack.Screen name="Compare" component={CompareScreen} />
+        <Stack.Screen name="Profile" component={ProfileScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

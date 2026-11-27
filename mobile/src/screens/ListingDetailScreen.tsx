@@ -11,6 +11,7 @@ import {
   StyleSheet,
   Linking,
   Share,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -34,12 +35,15 @@ import {
   Clock,
   UserPlus,
   UserCheck,
+  Scale,
 } from 'lucide-react-native';
 
 import { RootStackParamList } from '../navigation/types';
 import { useListings } from '../hooks/useListings';
 import { useFavorites } from '../hooks/useFavorites';
 import { useSavedSearches } from '../hooks/useSavedSearches';
+import { useCompare } from '../hooks/useCompare';
+import { FinancingCalculator } from '../components/detail/FinancingCalculator';
 import { useLang } from '../i18n/LangContext';
 import { formatFullFCFA, formatPricePerSqm, formatSurface } from '../utils/formatPrice';
 import { getPriceRating } from '../utils/listingUtils';
@@ -55,6 +59,7 @@ export function ListingDetailScreen({ route, navigation }: Props) {
   const { listings } = useListings();
   const { isFavorite, toggleFavorite, addToRecent, favorites } = useFavorites();
   const { isFollowingSeller, toggleFollowSeller } = useSavedSearches();
+  const { isComparing, toggleCompare, compareIds } = useCompare();
 
   const listing = useMemo(
     () => listings.find(l => l.id === listingId),
@@ -137,6 +142,23 @@ export function ListingDetailScreen({ route, navigation }: Props) {
           {t.propertyTypeSingular[listing.type]} • {listing.city}
         </Text>
         <View style={styles.topBarRight}>
+          <TouchableOpacity
+            style={[
+              styles.navBtn,
+              isComparing(listing.id) && { backgroundColor: colors.gold },
+            ]}
+            onPress={() => {
+              const ok = toggleCompare(listing.id);
+              if (!ok) {
+                Alert.alert(
+                  t.favorites.compareTitle,
+                  lang === 'fr' ? 'Maximum 3 biens en comparaison.' : 'Maximum 3 properties to compare.',
+                );
+              }
+            }}
+          >
+            <Scale size={18} color={colors.navy} />
+          </TouchableOpacity>
           <TouchableOpacity style={styles.navBtn} onPress={handleShare}>
             <Share2 size={18} color={colors.navy} />
           </TouchableOpacity>
@@ -149,6 +171,19 @@ export function ListingDetailScreen({ route, navigation }: Props) {
           </TouchableOpacity>
         </View>
       </View>
+
+      {compareIds.length > 0 && (
+        <TouchableOpacity
+          style={styles.compareBanner}
+          onPress={() => navigation.navigate('Compare')}
+          activeOpacity={0.85}
+        >
+          <Scale size={14} color={colors.gold} />
+          <Text style={styles.compareBannerText}>
+            {t.favorites.openCompare} ({compareIds.length}/3) →
+          </Text>
+        </TouchableOpacity>
+      )}
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Visuel Hero */}
@@ -277,6 +312,13 @@ export function ListingDetailScreen({ route, navigation }: Props) {
             ))}
           </View>
         </View>
+
+        {/* Simulateur de mensualité (vente uniquement, aligné sur le web) */}
+        {listing.transaction === 'vente' && (
+          <View style={{ paddingHorizontal: 16, marginTop: 14 }}>
+            <FinancingCalculator price={listing.price} />
+          </View>
+        )}
 
         {/* Annonceur */}
         <View style={styles.section}>
@@ -423,6 +465,19 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceAlt,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  compareBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: colors.navy,
+    paddingVertical: 8,
+  },
+  compareBannerText: {
+    color: colors.gold,
+    fontSize: 12,
+    fontWeight: '800',
   },
   scroll: {
     flex: 1,

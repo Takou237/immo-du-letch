@@ -6,9 +6,12 @@ import {
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MessageSquare, Bell, User } from 'lucide-react-native';
 import { colors, spacing } from '../theme';
 import { useLang } from '../i18n/LangContext';
+import { RootStackParamList } from '../navigation/types';
 
 interface AppHeaderProps {
   unreadMessages?: number;
@@ -26,6 +29,8 @@ export function AppHeader({
   onProfilePress,
 }: AppHeaderProps) {
   const { t, toggleLang } = useLang();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const handleProfilePress = onProfilePress ?? (() => navigation.navigate('Profile'));
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
@@ -87,7 +92,7 @@ export function AppHeader({
 
           {/* Profil */}
           <TouchableOpacity
-            onPress={onProfilePress}
+            onPress={handleProfilePress}
             style={[styles.iconBtn, styles.profileBtn]}
             activeOpacity={0.75}
             accessibilityLabel={t.header.profile}
