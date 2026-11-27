@@ -7,7 +7,7 @@ import { useLang } from '../i18n/LangContext';
 
 import { MainTabParamList, RootStackParamList } from './types';
 import { colors } from '../theme';
-import { HomeScreen } from '../screens/HomeScreen';
+import HomeScreen from '../screens/HomeScreen';
 import { SearchScreen } from '../screens/SearchScreen';
 import { MySearchesScreen } from '../screens/MySearchesScreen';
 import { FavoritesScreen } from '../screens/FavoritesScreen';
