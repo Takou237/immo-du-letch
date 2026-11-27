@@ -45,6 +45,9 @@ export interface Listing {
   ratingCount?: number;
   createdAt: string;       // ISO date
   priceHistory?: { date: string; price: number }[];
+  /** URL de l'image principale et galerie */
+  image?: string;
+  gallery?: string[];
   /** Gradient colors used as image placeholder [start, end] */
   gradientColors: [string, string];
 }
