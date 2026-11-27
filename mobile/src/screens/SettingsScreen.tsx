@@ -13,6 +13,7 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -27,7 +28,6 @@ import {
   ShieldCheck,
 } from 'lucide-react-native';
 
-import { AppHeader } from '../components/AppHeader';
 import { useLang } from '../i18n/LangContext';
 import { useAuth } from '../hooks/useAuth';
 import { RootStackParamList } from '../navigation/types';
@@ -114,8 +114,7 @@ export function SettingsScreen() {
   };
 
   return (
-    <View style={styles.root}>
-      <AppHeader />
+    <SafeAreaView style={styles.root} edges={['top']}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
@@ -265,7 +264,7 @@ export function SettingsScreen() {
           />
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -52,7 +52,7 @@ export function AppHeader({
             activeOpacity={0.75}
             accessibilityLabel={t.header.notifications}
           >
-            <Bell color={colors.textOnNavy} size={20} strokeWidth={1.8} />
+            <Bell color={colors.textOnNavy} size={18} strokeWidth={1.8} />
             {unreadNotifications > 0 && (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>
@@ -69,7 +69,7 @@ export function AppHeader({
             activeOpacity={0.75}
             accessibilityLabel={t.header.profile}
           >
-            <User color={colors.textOnNavy} size={20} strokeWidth={1.8} />
+            <User color={colors.textOnNavy} size={18} strokeWidth={1.8} />
           </TouchableOpacity>
         </View>
       </View>
@@ -86,14 +86,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
-    paddingVertical: 7,
+    paddingVertical: 3,
     backgroundColor: colors.navy,
   },
 
   // Logo
   logo: {
-    width: 108,
-    height: 34,
+    width: 96,
+    height: 28,
   },
 
   // Icônes
@@ -103,9 +103,9 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -118,10 +118,10 @@ const styles = StyleSheet.create({
   // Badge rouge
   badge: {
     position: 'absolute',
-    top: 6,
-    right: 6,
-    minWidth: 16,
-    height: 16,
+    top: 3,
+    right: 3,
+    minWidth: 15,
+    height: 15,
     borderRadius: 8,
     backgroundColor: '#DC2626',
     alignItems: 'center',
