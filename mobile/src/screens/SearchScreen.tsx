@@ -14,14 +14,13 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Search, SlidersHorizontal, X, ArrowUpDown, SearchX, Bookmark, Check } from 'lucide-react-native';
+import { Search, SlidersHorizontal, X, ArrowUpDown, SearchX } from 'lucide-react-native';
 
 import { AppHeader } from '../components/AppHeader';
 import { ListingRowCard } from '../components/search/ListingRowCard';
 import { FilterSheetModal } from '../components/search/FilterSheetModal';
 import { useListings } from '../hooks/useListings';
 import { useFavorites } from '../hooks/useFavorites';
-import { useSavedSearches } from '../hooks/useSavedSearches';
 import { useLang } from '../i18n/LangContext';
 import { SortKey } from '../types/listing';
 import { RootStackParamList } from '../navigation/types';
@@ -42,16 +41,8 @@ export function SearchScreen() {
     setSortKey,
   } = useListings();
   const { isFavorite, toggleFavorite } = useFavorites();
-  const { saveSearch } = useSavedSearches();
 
   const [filterModalOpen, setFilterModalOpen] = useState(false);
-  const [justSaved, setJustSaved] = useState(false);
-
-  const handleSaveSearch = () => {
-    saveSearch(filters);
-    setJustSaved(true);
-    setTimeout(() => setJustSaved(false), 2000);
-  };
 
   const sortOptions: { key: SortKey; label: string }[] = useMemo(() => [
     { key: 'relevance',  label: t.search.sortRelevance },
@@ -153,20 +144,6 @@ export function SearchScreen() {
           {t.search.results(filteredListings.length)}
         </Text>
         <View style={styles.summaryActions}>
-          {(activeFilterCount > 0 || filters.query.trim().length > 0) && (
-            <TouchableOpacity style={styles.saveSearchBtn} onPress={handleSaveSearch}>
-              {justSaved ? (
-                <Check size={13} color={colors.success} />
-              ) : (
-                <Bookmark size={13} color={colors.navy} />
-              )}
-              <Text style={[styles.saveSearchText, justSaved && { color: colors.success }]}>
-                {justSaved
-                  ? (lang === 'fr' ? 'Enregistrée' : 'Saved')
-                  : t.common.save}
-              </Text>
-            </TouchableOpacity>
-          )}
           {activeFilterCount > 0 && (
             <TouchableOpacity onPress={resetFilters}>
               <Text style={styles.clearAllText}>{t.search.resetFilters}</Text>

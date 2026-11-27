@@ -3,10 +3,9 @@ import { NavigatorScreenParams } from '@react-navigation/native';
 export type MainTabParamList = {
   Home: undefined;
   Search: undefined;
-  Settings: undefined;
-  MySearches: undefined;
   Favorites: undefined;
   Sell: undefined;
+  Settings: undefined;
 };
 
 export type RootStackParamList = {

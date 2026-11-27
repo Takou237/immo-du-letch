@@ -24,7 +24,6 @@ import {
   LogOut,
   Check,
   Heart,
-  Bookmark,
   FileText,
 } from 'lucide-react-native';
 
@@ -32,7 +31,6 @@ import { RootStackParamList } from '../navigation/types';
 import { useAuth } from '../hooks/useAuth';
 import { AccountType } from '../providers/AuthProvider';
 import { useFavorites } from '../hooks/useFavorites';
-import { useSavedSearches } from '../hooks/useSavedSearches';
 import { useListings } from '../hooks/useListings';
 import { useLang } from '../i18n/LangContext';
 import { colors } from '../theme';
@@ -71,7 +69,6 @@ export function ProfileScreen({ navigation }: Props) {
   const { lang, t } = useLang();
   const { user, loginWithEmail, registerWithEmail, loginWithDemo, updateProfile, logout } = useAuth();
   const { favorites } = useFavorites();
-  const { savedSearches } = useSavedSearches();
   const { localListings } = useListings();
 
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -546,14 +543,6 @@ export function ProfileScreen({ navigation }: Props) {
             <Heart size={18} color={colors.navy} />
             <Text style={styles.statVal}>{favorites.length}</Text>
             <Text style={styles.statLbl}>{t.nav.favorites}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.statBox}
-            onPress={() => navigation.navigate('MainTabs', { screen: 'MySearches' })}
-          >
-            <Bookmark size={18} color={colors.navy} />
-            <Text style={styles.statVal}>{savedSearches.length}</Text>
-            <Text style={styles.statLbl}>{t.nav.mySearches}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.statBox}

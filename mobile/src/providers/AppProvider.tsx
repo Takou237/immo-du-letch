@@ -7,7 +7,6 @@ import { LangProvider } from '../i18n/LangContext';
 import { AuthProvider } from './AuthProvider';
 import { ListingsProvider } from './ListingsProvider';
 import { FavoritesProvider } from './FavoritesProvider';
-import { SavedSearchesProvider } from './SavedSearchesProvider';
 import { CompareProvider } from './CompareProvider';
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -16,11 +15,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       <AuthProvider>
         <ListingsProvider>
           <FavoritesProvider>
-            <SavedSearchesProvider>
-              <CompareProvider>
-                {children}
-              </CompareProvider>
-            </SavedSearchesProvider>
+            <CompareProvider>
+              {children}
+            </CompareProvider>
           </FavoritesProvider>
         </ListingsProvider>
       </AuthProvider>

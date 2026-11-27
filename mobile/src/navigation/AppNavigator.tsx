@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Home, Search, Settings, Star, Heart, PlusCircle } from 'lucide-react-native';
+import { Home, Search, Settings, Heart, PlusCircle } from 'lucide-react-native';
 import { useLang } from '../i18n/LangContext';
 
 import { MainTabParamList, RootStackParamList } from './types';
@@ -11,7 +11,6 @@ import { colors } from '../theme';
 import HomeScreen from '../screens/HomeScreen';
 import { SearchScreen } from '../screens/SearchScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
-import { MySearchesScreen } from '../screens/MySearchesScreen';
 import { FavoritesScreen } from '../screens/FavoritesScreen';
 import { SellScreen } from '../screens/SellScreen';
 import { ListingDetailScreen } from '../screens/ListingDetailScreen';
@@ -66,14 +65,6 @@ function MainTabs() {
         options={{
           tabBarLabel: t.nav.search,
           tabBarIcon: ({ color, size }) => <Search color={color} size={size} />,
-        }}
-      />
-      <Tab.Screen
-        name="MySearches"
-        component={MySearchesScreen}
-        options={{
-          tabBarLabel: t.nav.mySearches,
-          tabBarIcon: ({ color, size }) => <Star color={color} size={size} />,
         }}
       />
       <Tab.Screen

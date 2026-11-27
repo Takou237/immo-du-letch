@@ -33,15 +33,12 @@ import {
   TrendingDown,
   Info,
   Clock,
-  UserPlus,
-  UserCheck,
   Scale,
 } from 'lucide-react-native';
 
 import { RootStackParamList } from '../navigation/types';
 import { useListings } from '../hooks/useListings';
 import { useFavorites } from '../hooks/useFavorites';
-import { useSavedSearches } from '../hooks/useSavedSearches';
 import { useCompare } from '../hooks/useCompare';
 import { FinancingCalculator } from '../components/detail/FinancingCalculator';
 import { useLang } from '../i18n/LangContext';
@@ -58,7 +55,6 @@ export function ListingDetailScreen({ route, navigation }: Props) {
   const { lang, t } = useLang();
   const { listings } = useListings();
   const { isFavorite, toggleFavorite, addToRecent, favorites } = useFavorites();
-  const { isFollowingSeller, toggleFollowSeller } = useSavedSearches();
   const { isComparing, toggleCompare, compareIds } = useCompare();
 
   const listing = useMemo(
@@ -353,29 +349,6 @@ export function ListingDetailScreen({ route, navigation }: Props) {
                   </View>
                 )}
               </View>
-              <TouchableOpacity
-                style={[
-                  styles.followBtn,
-                  isFollowingSeller(listing.seller.id) && styles.followBtnActive,
-                ]}
-                onPress={() => toggleFollowSeller(listing.seller.id)}
-              >
-                {isFollowingSeller(listing.seller.id) ? (
-                  <UserCheck size={14} color={colors.navy} />
-                ) : (
-                  <UserPlus size={14} color={colors.gold} />
-                )}
-                <Text
-                  style={[
-                    styles.followBtnText,
-                    isFollowingSeller(listing.seller.id) && styles.followBtnTextActive,
-                  ]}
-                >
-                  {isFollowingSeller(listing.seller.id)
-                    ? (lang === 'fr' ? 'Suivi' : 'Following')
-                    : (lang === 'fr' ? 'Suivre' : 'Follow')}
-                </Text>
-              </TouchableOpacity>
             </View>
           </View>
         </View>
