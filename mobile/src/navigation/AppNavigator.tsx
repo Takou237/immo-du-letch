@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Home, Search, Star, Heart, PlusCircle } from 'lucide-react-native';
+import { useLang } from '../i18n/LangContext';
 
 import { MainTabParamList, RootStackParamList } from './types';
 import { colors } from '../theme';
@@ -17,6 +18,7 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function MainTabs() {
+  const { t } = useLang();
   return (
     <Tab.Navigator
       screenOptions={{
@@ -41,7 +43,7 @@ function MainTabs() {
         name="Home"
         component={HomeScreen}
         options={{
-          tabBarLabel: 'Accueil',
+          tabBarLabel: t.nav.home,
           tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
         }}
       />
@@ -49,7 +51,7 @@ function MainTabs() {
         name="Search"
         component={SearchScreen}
         options={{
-          tabBarLabel: 'Rechercher',
+          tabBarLabel: t.nav.search,
           tabBarIcon: ({ color, size }) => <Search color={color} size={size} />,
         }}
       />
@@ -57,7 +59,7 @@ function MainTabs() {
         name="MySearches"
         component={MySearchesScreen}
         options={{
-          tabBarLabel: 'Recherches',
+          tabBarLabel: t.nav.mySearches,
           tabBarIcon: ({ color, size }) => <Star color={color} size={size} />,
         }}
       />
@@ -65,7 +67,7 @@ function MainTabs() {
         name="Favorites"
         component={FavoritesScreen}
         options={{
-          tabBarLabel: 'Favoris',
+          tabBarLabel: t.nav.favorites,
           tabBarIcon: ({ color, size }) => <Heart color={color} size={size} />,
         }}
       />
@@ -73,7 +75,7 @@ function MainTabs() {
         name="Sell"
         component={SellScreen}
         options={{
-          tabBarLabel: 'Déposer',
+          tabBarLabel: t.nav.sell,
           tabBarIcon: ({ color, size }) => <PlusCircle color={color} size={size} />,
         }}
       />
