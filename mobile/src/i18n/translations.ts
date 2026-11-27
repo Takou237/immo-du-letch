@@ -11,6 +11,7 @@ export const fr = {
   nav: {
     home: 'Accueil',
     search: 'Recherche',
+    settings: 'Paramètres',
     mySearches: 'Recherches',
     favorites: 'Favoris',
     sell: 'Déposer',
@@ -204,6 +205,7 @@ export const en: Translations = {
   nav: {
     home: 'Home',
     search: 'Search',
+    settings: 'Settings',
     mySearches: 'Searches',
     favorites: 'Favorites',
     sell: 'List',

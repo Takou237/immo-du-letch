@@ -3,13 +3,14 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Home, Search, Star, Heart, PlusCircle } from 'lucide-react-native';
+import { Home, Search, Settings, Star, Heart, PlusCircle } from 'lucide-react-native';
 import { useLang } from '../i18n/LangContext';
 
 import { MainTabParamList, RootStackParamList } from './types';
 import { colors } from '../theme';
 import HomeScreen from '../screens/HomeScreen';
 import { SearchScreen } from '../screens/SearchScreen';
+import { SettingsScreen } from '../screens/SettingsScreen';
 import { MySearchesScreen } from '../screens/MySearchesScreen';
 import { FavoritesScreen } from '../screens/FavoritesScreen';
 import { SellScreen } from '../screens/SellScreen';
@@ -42,9 +43,12 @@ function MainTabs() {
           paddingTop: 8,
         },
         tabBarLabelStyle: {
-          fontSize: 11.5,
+          fontSize: 10.5,
           fontWeight: '600',
           marginTop: 2,
+        },
+        tabBarItemStyle: {
+          paddingHorizontal: 2,
         },
       }}
     >
@@ -62,6 +66,14 @@ function MainTabs() {
         options={{
           tabBarLabel: t.nav.search,
           tabBarIcon: ({ color, size }) => <Search color={color} size={size} />,
+        }}
+      />
+      <Tab.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{
+          tabBarLabel: t.nav.settings,
+          tabBarIcon: ({ color, size }) => <Settings color={color} size={size} />,
         }}
       />
       <Tab.Screen
