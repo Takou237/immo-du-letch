@@ -30,6 +30,7 @@ import {
 
 import { useLang } from '../i18n/LangContext';
 import { useAuth } from '../hooks/useAuth';
+import { useNotifications } from '../hooks/useNotifications';
 import { RootStackParamList } from '../navigation/types';
 import { colors, spacing } from '../theme';
 
@@ -78,6 +79,7 @@ function SettingRow({
 export function SettingsScreen() {
   const { lang, toggleLang } = useLang();
   const { user } = useAuth();
+  const { unreadCount } = useNotifications();
   const navigation = useNavigation<NavProp>();
   const isFr = lang === 'fr';
 
@@ -223,6 +225,16 @@ export function SettingsScreen() {
             title={isFr ? 'Notifications' : 'Notifications'}
             subtitle={isFr ? 'Historique de vos alertes' : 'Your alert history'}
             onPress={() => navigation.navigate('Notifications')}
+            right={
+              unreadCount > 0 ? (
+                <View style={styles.notifBadgeRow}>
+                  <View style={styles.notifBadge}>
+                    <Text style={styles.notifBadgeText}>{unreadCount}</Text>
+                  </View>
+                  <ChevronRight color={colors.textMuted} size={18} />
+                </View>
+              ) : undefined
+            }
           />
           <View style={styles.divider} />
           <SettingRow
@@ -345,6 +357,25 @@ const styles = StyleSheet.create({
   langPillText: {
     color: colors.gold,
     fontSize: 12,
+    fontWeight: '800',
+  },
+  notifBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  notifBadge: {
+    minWidth: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#DC2626',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  notifBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
     fontWeight: '800',
   },
 });

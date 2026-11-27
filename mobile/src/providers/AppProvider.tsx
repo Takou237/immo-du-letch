@@ -8,6 +8,7 @@ import { AuthProvider } from './AuthProvider';
 import { ListingsProvider } from './ListingsProvider';
 import { FavoritesProvider } from './FavoritesProvider';
 import { CompareProvider } from './CompareProvider';
+import { NotificationsProvider } from './NotificationsProvider';
 
 export function AppProvider({ children }: { children: ReactNode }) {
   return (
@@ -16,7 +17,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         <ListingsProvider>
           <FavoritesProvider>
             <CompareProvider>
-              {children}
+              <NotificationsProvider>
+                {children}
+              </NotificationsProvider>
             </CompareProvider>
           </FavoritesProvider>
         </ListingsProvider>

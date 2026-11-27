@@ -13,6 +13,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Bell, User } from 'lucide-react-native';
 import { colors, spacing } from '../theme';
 import { useLang } from '../i18n/LangContext';
+import { useNotifications } from '../hooks/useNotifications';
 import { RootStackParamList } from '../navigation/types';
 
 interface AppHeaderProps {
@@ -22,11 +23,13 @@ interface AppHeaderProps {
 }
 
 export function AppHeader({
-  unreadNotifications = 0,
+  unreadNotifications,
   onNotificationsPress,
   onProfilePress,
 }: AppHeaderProps) {
   const { t } = useLang();
+  const { unreadCount } = useNotifications();
+  const badgeCount = unreadNotifications ?? unreadCount;
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const handleProfilePress = onProfilePress ?? (() => navigation.navigate('Profile'));
@@ -56,10 +59,10 @@ export function AppHeader({
             accessibilityLabel={t.header.notifications}
           >
             <Bell color="#0F172A" size={17} strokeWidth={1.9} />
-            {unreadNotifications > 0 && (
+            {badgeCount > 0 && (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>
-                  {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                  {badgeCount > 9 ? '9+' : badgeCount}
                 </Text>
               </View>
             )}
