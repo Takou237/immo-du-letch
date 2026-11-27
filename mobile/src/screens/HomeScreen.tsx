@@ -1,9 +1,13 @@
 /**
  * HomeScreen — Page d'accueil IMMO DU LETCH Mobile.
- * Thème officiel du site (Navy #0B1B2B, Or #D4AF37, Fond #F8FAFC, Blanc #FFFFFF)
- * avec icônes vectorielles Lucide et traduction FR/EN complète.
+ * Ordre des sections :
+ * 1. PromoBanner
+ * 2. SearchBar
+ * 3. Top DEALS for you (4 meilleures offres)
+ * 4. Que recherchez-vous ? (grille 2x3 web)
+ * 5. Biens en vedette
  */
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { ScrollView, StyleSheet, View, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -13,7 +17,6 @@ import { SearchBar } from '../components/home/SearchBar';
 import { PromoBanner } from '../components/home/PromoBanner';
 import { TopDealsSection } from '../components/home/TopDealsSection';
 import { FeaturedCategoriesSection } from '../components/home/FeaturedCategoriesSection';
-import { PropertyTypesSection } from '../components/home/PropertyTypesSection';
 
 import { useListings } from '../hooks/useListings';
 import { useFavorites } from '../hooks/useFavorites';
@@ -24,20 +27,23 @@ import { colors } from '../theme';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
 
-const PROPERTY_TYPES: PropertyType[] = ['villa', 'appartement', 'terrain', 'studio', 'bureau'];
-
 export default function HomeScreen() {
   const navigation = useNavigation<NavProp>();
   const { lang, t } = useLang();
-  const {
-    getFeatured,
-    countByTypeFn,
-    countByTransactionFn,
-    setFilters,
-  } = useListings();
+  const { listings, getFeatured, setFilters, resetFilters } = useListings();
   const { favorites, toggleFavorite } = useFavorites();
 
-  const deals = getFeatured(8);
+  // 4 meilleures offres pour "Top DEALS for you"
+  const topFourDeals = useMemo(() => {
+    const sorted = [...listings].sort((a, b) => {
+      const scoreA = (a.priceDropped ? 100 : 0) + (a.rating ?? 0) * 10 + (a.isNew ? 5 : 0);
+      const scoreB = (b.priceDropped ? 100 : 0) + (b.rating ?? 0) * 10 + (b.isNew ? 5 : 0);
+      return scoreB - scoreA;
+    });
+    return sorted.slice(0, 4);
+  }, [listings]);
+
+  const featuredListings = getFeatured(8);
 
   const handleSearchPress = useCallback(() => {
     navigation.navigate('MainTabs', { screen: 'Search' });
@@ -51,32 +57,21 @@ export default function HomeScreen() {
     navigation.navigate('MainTabs', { screen: 'Search' });
   }, [navigation]);
 
-  const handleVente = useCallback(() => {
-    setFilters({ transaction: 'vente' });
-    navigation.navigate('MainTabs', { screen: 'Search' });
-  }, [navigation, setFilters]);
-
-  const handleLocation = useCallback(() => {
-    setFilters({ transaction: 'location' });
-    navigation.navigate('MainTabs', { screen: 'Search' });
-  }, [navigation, setFilters]);
-
-  const handleType = useCallback((type: PropertyType) => {
+  const handleSelectType = useCallback((type: PropertyType) => {
+    resetFilters();
     setFilters({ type });
     navigation.navigate('MainTabs', { screen: 'Search' });
-  }, [navigation, setFilters]);
+  }, [navigation, resetFilters, setFilters]);
 
-  const typeItems = PROPERTY_TYPES.map(type => ({
-    type,
-    label: t.propertyTypes[type],
-    count: countByTypeFn(type),
-  }));
-
-  const listingsWord = lang === 'fr' ? 'annonces' : 'listings';
+  const handleSelectFurnished = useCallback(() => {
+    resetFilters();
+    setFilters({ transaction: 'location', features: ['Meublé'] });
+    navigation.navigate('MainTabs', { screen: 'Search' });
+  }, [navigation, resetFilters, setFilters]);
 
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
       <AppHeader />
 
       <ScrollView
@@ -101,8 +96,34 @@ export default function HomeScreen() {
           onPress={handleSearchPress}
         />
 
+        {/* 1. Top DEALS for you (4 meilleures offres) */}
         <TopDealsSection
-          listings={deals}
+          listings={topFourDeals}
+          favorites={favorites}
+          lang={lang}
+          onPressCard={handleCardPress}
+          onToggleFav={toggleFavorite}
+          onPressViewAll={handleViewAllDeals}
+          title="Top DEALS for you"
+          badge="DEALS"
+          viewAllLabel={t.home.viewAll}
+          dealLabel={lang === 'fr' ? 'OPPORTUNITÉ' : 'DEAL'}
+          newLabel={t.home.new.toUpperCase()}
+          perMonthLabel={t.common.perMonth}
+          isTopDealsBanner
+        />
+
+        {/* 2. Que recherchez-vous ? (grille 2x3 web) */}
+        <FeaturedCategoriesSection
+          title={t.home.categoriesTitle}
+          lang={lang}
+          onSelectType={handleSelectType}
+          onSelectFurnished={handleSelectFurnished}
+        />
+
+        {/* 3. Biens en vedette */}
+        <TopDealsSection
+          listings={featuredListings}
           favorites={favorites}
           lang={lang}
           onPressCard={handleCardPress}
@@ -114,24 +135,6 @@ export default function HomeScreen() {
           dealLabel={lang === 'fr' ? 'OPPORTUNITÉ' : 'DEAL'}
           newLabel={t.home.new.toUpperCase()}
           perMonthLabel={t.common.perMonth}
-        />
-
-        <FeaturedCategoriesSection
-          title={t.home.categoriesTitle}
-          buyLabel={t.home.buyTab}
-          rentLabel={t.home.rentTab}
-          listingsWord={listingsWord}
-          countVente={countByTransactionFn('vente')}
-          countLocation={countByTransactionFn('location')}
-          onPressVente={handleVente}
-          onPressLocation={handleLocation}
-        />
-
-        <PropertyTypesSection
-          title={t.home.typeLabel}
-          listingsWord={listingsWord}
-          items={typeItems}
-          onPress={handleType}
         />
       </ScrollView>
     </View>
@@ -147,6 +150,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingBottom: 20,
+    paddingBottom: 24,
   },
 });

@@ -1,52 +1,110 @@
 /**
- * FeaturedCategoriesSection — 2 grandes cartes Acheter / Louer avec icônes Lucide.
+ * FeaturedCategoriesSection — Grille 2x3 "Que recherchez-vous ?" alignée sur le web.
  */
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Home, KeyRound } from 'lucide-react-native';
+import {
+  Home,
+  Building2,
+  Map as MapIcon,
+  KeyRound,
+  Briefcase,
+  BedDouble,
+} from 'lucide-react-native';
+import { PropertyType } from '../../types/listing';
 import { colors } from '../../theme';
+
+interface QuickCategory {
+  id: string;
+  labelFr: string;
+  labelEn: string;
+  type?: PropertyType;
+  furnishedRental?: boolean;
+  icon: React.ReactNode;
+}
+
+const CATEGORIES: QuickCategory[] = [
+  {
+    id: 'villa',
+    labelFr: 'Maisons & villas',
+    labelEn: 'Houses & villas',
+    type: 'villa',
+    icon: <Home size={20} color={colors.navy} strokeWidth={1.8} />,
+  },
+  {
+    id: 'appartement',
+    labelFr: 'Appartements',
+    labelEn: 'Apartments',
+    type: 'appartement',
+    icon: <Building2 size={20} color={colors.navy} strokeWidth={1.8} />,
+  },
+  {
+    id: 'terrain',
+    labelFr: 'Terrains',
+    labelEn: 'Land',
+    type: 'terrain',
+    icon: <MapIcon size={20} color={colors.navy} strokeWidth={1.8} />,
+  },
+  {
+    id: 'studio',
+    labelFr: 'Studios & chambres',
+    labelEn: 'Studios & rooms',
+    type: 'studio',
+    icon: <KeyRound size={20} color={colors.navy} strokeWidth={1.8} />,
+  },
+  {
+    id: 'bureau',
+    labelFr: 'Bureaux & commerces',
+    labelEn: 'Offices & commercial',
+    type: 'bureau',
+    icon: <Briefcase size={20} color={colors.navy} strokeWidth={1.8} />,
+  },
+  {
+    id: 'furnished',
+    labelFr: 'Locations meublées',
+    labelEn: 'Furnished rentals',
+    furnishedRental: true,
+    icon: <BedDouble size={20} color={colors.navy} strokeWidth={1.8} />,
+  },
+];
 
 interface FeaturedCategoriesSectionProps {
   title: string;
-  buyLabel: string;
-  rentLabel: string;
-  listingsWord: string;
-  countVente: number;
-  countLocation: number;
-  onPressVente: () => void;
-  onPressLocation: () => void;
+  lang: 'fr' | 'en';
+  onSelectType: (type: PropertyType) => void;
+  onSelectFurnished: () => void;
 }
 
 export function FeaturedCategoriesSection({
   title,
-  buyLabel,
-  rentLabel,
-  listingsWord,
-  countVente,
-  countLocation,
-  onPressVente,
-  onPressLocation,
+  lang,
+  onSelectType,
+  onSelectFurnished,
 }: FeaturedCategoriesSectionProps) {
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
 
-      <View style={styles.row}>
-        <TouchableOpacity style={[styles.card, styles.cardVente]} onPress={onPressVente} activeOpacity={0.85}>
-          <View style={styles.iconBox}>
-            <Home size={22} color={colors.gold} strokeWidth={2.2} />
-          </View>
-          <Text style={styles.cardLabel}>{buyLabel}</Text>
-          <Text style={styles.cardCount}>{countVente} {listingsWord}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={[styles.card, styles.cardLocation]} onPress={onPressLocation} activeOpacity={0.85}>
-          <View style={styles.iconBoxLight}>
-            <KeyRound size={22} color={colors.navy} strokeWidth={2.2} />
-          </View>
-          <Text style={styles.cardLabelDark}>{rentLabel}</Text>
-          <Text style={styles.cardCountDark}>{countLocation} {listingsWord}</Text>
-        </TouchableOpacity>
+      <View style={styles.grid}>
+        {CATEGORIES.map(cat => (
+          <TouchableOpacity
+            key={cat.id}
+            style={styles.card}
+            activeOpacity={0.8}
+            onPress={() => {
+              if (cat.furnishedRental) {
+                onSelectFurnished();
+              } else if (cat.type) {
+                onSelectType(cat.type);
+              }
+            }}
+          >
+            <View style={styles.iconWrap}>{cat.icon}</View>
+            <Text style={styles.cardText} numberOfLines={2}>
+              {lang === 'fr' ? cat.labelFr : cat.labelEn}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
     </View>
   );
@@ -54,70 +112,43 @@ export function FeaturedCategoriesSection({
 
 const styles = StyleSheet.create({
   section: {
-    marginTop: 24,
+    marginTop: 22,
     marginHorizontal: 16,
   },
   sectionTitle: {
-    color: colors.textPrimary,
+    color: colors.navy,
     fontSize: 18,
     fontWeight: '800',
     marginBottom: 12,
   },
-  row: {
+  grid: {
     flexDirection: 'row',
-    gap: 12,
+    flexWrap: 'wrap',
+    gap: 10,
   },
   card: {
-    flex: 1,
-    borderRadius: 14,
-    padding: 16,
-    justifyContent: 'space-between',
-    minHeight: 126,
-  },
-  cardVente: {
-    backgroundColor: colors.navy,
-  },
-  cardLocation: {
-    backgroundColor: colors.surface,
+    width: '48.4%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: colors.border,
-  },
-  iconBox: {
-    width: 42,
-    height: 42,
     borderRadius: 12,
-    backgroundColor: colors.navyLight,
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    minHeight: 58,
+  },
+  iconWrap: {
+    width: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
   },
-  iconBoxLight: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    backgroundColor: colors.goldSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  cardLabel: {
-    color: colors.textOnNavy,
-    fontSize: 17,
-    fontWeight: '800',
-    marginBottom: 2,
-  },
-  cardCount: {
-    color: '#CBD5E1',
-    fontSize: 12,
-  },
-  cardLabelDark: {
-    color: colors.textPrimary,
-    fontSize: 17,
-    fontWeight: '800',
-    marginBottom: 2,
-  },
-  cardCountDark: {
-    color: colors.textSecondary,
-    fontSize: 12,
+  cardText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.navy,
+    lineHeight: 17,
   },
 });

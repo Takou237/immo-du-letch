@@ -14,6 +14,8 @@ import {
   Alert,
   Modal,
   Image,
+  Pressable,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -34,6 +36,9 @@ import {
   Scale,
   Calculator,
   MessageCircle,
+  LifeBuoy,
+  Phone,
+  Mail,
 } from 'lucide-react-native';
 
 import { useLang } from '../i18n/LangContext';
@@ -94,6 +99,7 @@ export function SettingsScreen() {
   const [priceAlerts, setPriceAlerts] = useState(true);
   const [newListingsAlerts, setNewListingsAlerts] = useState(true);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
 
   const handleClearCache = () => {
     Alert.alert(
@@ -255,6 +261,24 @@ export function SettingsScreen() {
           />
         </View>
 
+        {/* ── Support & Accompagnement (web) ── */}
+        <Text style={styles.sectionLabel}>
+          {isFr ? 'SUPPORT & ACCOMPAGNEMENT' : 'SUPPORT & GUIDANCE'}
+        </Text>
+        <View style={styles.card}>
+          <SettingRow
+            icon={<LifeBuoy color={colors.navy} size={18} strokeWidth={2} />}
+            iconBg="#EFF6FF"
+            title={isFr ? 'Aide & Contact' : 'Help & contact'}
+            subtitle={
+              isFr
+                ? 'Conseils, sécurité des transactions & assistance'
+                : 'Advice, transaction safety & assistance'
+            }
+            onPress={() => setSupportOpen(true)}
+          />
+        </View>
+
         {/* ── Stockage & À propos ── */}
         <Text style={styles.sectionLabel}>
           {isFr ? 'STOCKAGE & À PROPOS' : 'STORAGE & ABOUT'}
@@ -287,6 +311,111 @@ export function SettingsScreen() {
         </View>
       </ScrollView>
 
+      {/* Modal Support & Accompagnement / Aide & Contact */}
+      <Modal
+        visible={supportOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSupportOpen(false)}
+      >
+        <Pressable
+          style={styles.aboutOverlay}
+          onPress={() => setSupportOpen(false)}
+        >
+          <Pressable
+            style={styles.aboutCard}
+            onPress={e => e.stopPropagation()}
+          >
+            <View style={styles.aboutHeader}>
+              <Text style={styles.aboutHeaderTitle}>
+                {isFr ? 'Support & Accompagnement' : 'Support & Guidance'}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setSupportOpen(false)}
+                style={styles.aboutCloseBtn}
+              >
+                <X size={18} color={colors.navy} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View style={styles.supportBanner}>
+                <Text style={styles.supportBannerTitle}>
+                  {isFr ? 'Aide & Contact' : 'Help & Contact'}
+                </Text>
+                <Text style={styles.supportBannerSub}>
+                  {isFr
+                    ? 'Notre équipe vous accompagne pour acheter, louer ou déposer une annonce au Cameroun.'
+                    : 'Our team assists you to buy, rent, or post a listing in Cameroon.'}
+                </Text>
+
+                <View style={styles.contactActions}>
+                  <TouchableOpacity
+                    style={styles.contactBtnNavy}
+                    onPress={() => Linking.openURL('tel:+237655000000').catch(() => {})}
+                    activeOpacity={0.85}
+                  >
+                    <Phone size={15} color={colors.gold} />
+                    <Text style={styles.contactBtnNavyText}>+237 6 55 00 00 00</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.contactBtnLight}
+                    onPress={() => Linking.openURL('mailto:contact@immoduletch.cm').catch(() => {})}
+                    activeOpacity={0.85}
+                  >
+                    <Mail size={15} color={colors.navy} />
+                    <Text style={styles.contactBtnLightText}>contact@immoduletch.cm</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.aboutFeatureRow}>
+                <View style={styles.aboutFeatureIcon}>
+                  <ShieldCheck size={16} color={colors.navy} />
+                </View>
+                <View style={styles.aboutFeatureText}>
+                  <Text style={styles.aboutFeatureTitle}>
+                    {isFr ? 'Sécurité des transactions' : 'Transaction safety'}
+                  </Text>
+                  <Text style={styles.aboutFeatureDesc}>
+                    {isFr
+                      ? 'Ne versez jamais d’acompte sans visite physique et sans vérification des documents originaux (titre foncier, permis de bâtir).'
+                      : 'Never pay a deposit without an in-person visit and verification of original documents (land title, building permit).'}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.aboutFeatureRow}>
+                <View style={styles.aboutFeatureIcon}>
+                  <Home size={16} color={colors.navy} />
+                </View>
+                <View style={styles.aboutFeatureText}>
+                  <Text style={styles.aboutFeatureTitle}>
+                    {isFr ? 'Conseils immobiliers' : 'Real estate advice'}
+                  </Text>
+                  <Text style={styles.aboutFeatureDesc}>
+                    {isFr
+                      ? 'Utilisez le comparateur et le simulateur de mensualité pour évaluer chaque bien au prix du marché.'
+                      : 'Use the comparator and monthly payment simulator to evaluate each property against market prices.'}
+                  </Text>
+                </View>
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.aboutOkBtn}
+              onPress={() => setSupportOpen(false)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.aboutOkText}>
+                {isFr ? 'Fermer' : 'Close'}
+              </Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
       {/* Modal À propos */}
       <Modal
         visible={aboutOpen}
@@ -294,8 +423,14 @@ export function SettingsScreen() {
         animationType="slide"
         onRequestClose={() => setAboutOpen(false)}
       >
-        <View style={styles.aboutOverlay}>
-          <View style={styles.aboutCard}>
+        <Pressable
+          style={styles.aboutOverlay}
+          onPress={() => setAboutOpen(false)}
+        >
+          <Pressable
+            style={styles.aboutCard}
+            onPress={e => e.stopPropagation()}
+          >
             <View style={styles.aboutHeader}>
               <Text style={styles.aboutHeaderTitle}>
                 {isFr ? 'À propos' : 'About'}
@@ -417,8 +552,8 @@ export function SettingsScreen() {
                 {isFr ? 'Compris' : 'Got it'}
               </Text>
             </TouchableOpacity>
-          </View>
-        </View>
+          </Pressable>
+        </Pressable>
       </Modal>
     </SafeAreaView>
   );
@@ -627,5 +762,58 @@ const styles = StyleSheet.create({
     color: colors.navy,
     fontSize: 15,
     fontWeight: '800',
+  },
+  supportBanner: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 16,
+  },
+  supportBannerTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.navy,
+    marginBottom: 6,
+  },
+  supportBannerSub: {
+    fontSize: 13,
+    color: colors.textMuted,
+    lineHeight: 19,
+    marginBottom: 14,
+  },
+  contactActions: {
+    gap: 10,
+  },
+  contactBtnNavy: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: colors.navy,
+    borderRadius: 10,
+    paddingVertical: 12,
+  },
+  contactBtnNavyText: {
+    color: colors.gold,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  contactBtnLight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    paddingVertical: 12,
+  },
+  contactBtnLightText: {
+    color: colors.navy,
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

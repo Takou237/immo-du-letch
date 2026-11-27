@@ -2,7 +2,7 @@
  * SearchScreen — Recherche, filtres et tri IMMO DU LETCH Mobile.
  * Principe S : composition des sous-composants, logique via useListings / useFavorites / useLang.
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,11 +11,13 @@ import {
   FlatList,
   ScrollView,
   StyleSheet,
+  Keyboard,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search, SlidersHorizontal, X, ArrowUpDown, SearchX } from 'lucide-react-native';
+import { Search, SlidersHorizontal, X, ArrowUpDown, SearchX, Clock } from 'lucide-react-native';
 
 import { ListingRowCard } from '../components/search/ListingRowCard';
 import { FilterSheetModal } from '../components/search/FilterSheetModal';
@@ -28,6 +30,9 @@ import { colors } from '../theme';
 import { formatFCFA } from '../utils/formatPrice';
 
 type NavProp = NativeStackNavigationProp<RootStackParamList>;
+
+const STORAGE_RECENT_QUERIES = 'immo:recentQueries';
+const MAX_RECENT_QUERIES = 6;
 
 export function SearchScreen() {
   const navigation = useNavigation<NavProp>();
@@ -43,6 +48,44 @@ export function SearchScreen() {
   const { isFavorite, toggleFavorite } = useFavorites();
 
   const [filterModalOpen, setFilterModalOpen] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [recentQueries, setRecentQueries] = useState<string[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const raw = await AsyncStorage.getItem(STORAGE_RECENT_QUERIES);
+        if (raw) setRecentQueries(JSON.parse(raw));
+      } catch {
+        // Silencieux
+      }
+    })();
+  }, []);
+
+  const persistQueries = useCallback((list: string[]) => {
+    setRecentQueries(list);
+    AsyncStorage.setItem(STORAGE_RECENT_QUERIES, JSON.stringify(list)).catch(() => {});
+  }, []);
+
+  const saveRecentQuery = useCallback((q: string) => {
+    const trimmed = q.trim();
+    if (!trimmed) return;
+    setRecentQueries(prev => {
+      const next = [trimmed, ...prev.filter(item => item.toLowerCase() !== trimmed.toLowerCase())].slice(
+        0,
+        MAX_RECENT_QUERIES,
+      );
+      AsyncStorage.setItem(STORAGE_RECENT_QUERIES, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  }, []);
+
+  const handleSelectRecent = (q: string) => {
+    setFilters({ query: q });
+    saveRecentQuery(q);
+    setSearchFocused(false);
+    Keyboard.dismiss();
+  };
 
   const sortOptions: { key: SortKey; label: string }[] = useMemo(() => [
     { key: 'relevance',  label: t.search.sortRelevance },
@@ -76,6 +119,11 @@ export function SearchScreen() {
             style={styles.input}
             value={filters.query}
             onChangeText={text => setFilters({ query: text })}
+            onFocus={() => setSearchFocused(true)}
+            onSubmitEditing={() => {
+              saveRecentQuery(filters.query);
+              setSearchFocused(false);
+            }}
             placeholder={
               lang === 'fr'
                 ? 'Ville, quartier, mot-clé...'
@@ -93,7 +141,10 @@ export function SearchScreen() {
 
         <TouchableOpacity
           style={[styles.filterBtn, activeFilterCount > 0 && styles.filterBtnActive]}
-          onPress={() => setFilterModalOpen(true)}
+          onPress={() => {
+            setSearchFocused(false);
+            setFilterModalOpen(true);
+          }}
           activeOpacity={0.85}
         >
           <SlidersHorizontal
@@ -107,6 +158,53 @@ export function SearchScreen() {
           )}
         </TouchableOpacity>
       </View>
+
+      {/* Recherches récentes au clic sur la barre de recherche */}
+      {searchFocused && recentQueries.length > 0 && (
+        <View style={styles.recentBox}>
+          <View style={styles.recentHeader}>
+            <Text style={styles.recentHeaderTitle}>
+              {lang === 'fr' ? 'Recherches récentes' : 'Recent searches'}
+            </Text>
+            <View style={styles.recentHeaderActions}>
+              <TouchableOpacity onPress={() => persistQueries([])} hitSlop={8}>
+                <Text style={styles.recentClearText}>
+                  {lang === 'fr' ? 'Effacer' : 'Clear'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setSearchFocused(false);
+                  Keyboard.dismiss();
+                }}
+                hitSlop={8}
+              >
+                <X size={16} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+          </View>
+          {recentQueries.map(q => (
+            <View key={q} style={styles.recentRow}>
+              <TouchableOpacity
+                style={styles.recentItemBtn}
+                onPress={() => handleSelectRecent(q)}
+                activeOpacity={0.75}
+              >
+                <Clock size={14} color={colors.textMuted} />
+                <Text style={styles.recentItemText} numberOfLines={1}>
+                  {q}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => persistQueries(recentQueries.filter(item => item !== q))}
+                hitSlop={8}
+              >
+                <X size={14} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
+      )}
 
       {/* Chips de tri horizontal */}
       <View style={styles.sortWrapper}>
@@ -265,7 +363,11 @@ export function SearchScreen() {
             transactionLabel={t.transactions[item.transaction]}
             newLabel={t.home.new.toUpperCase()}
             perMonthLabel={t.common.perMonth}
-            onPress={() => navigation.navigate('ListingDetail', { listingId: item.id })}
+            onPress={() => {
+              if (filters.query.trim()) saveRecentQuery(filters.query);
+              setSearchFocused(false);
+              navigation.navigate('ListingDetail', { listingId: item.id });
+            }}
             onToggleFav={() => toggleFavorite(item.id)}
           />
         )}
@@ -502,5 +604,56 @@ const styles = StyleSheet.create({
     color: colors.gold,
     fontSize: 13,
     fontWeight: '700',
+  },
+  recentBox: {
+    marginHorizontal: 16,
+    marginBottom: 10,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  recentHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  recentHeaderTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: colors.navy,
+  },
+  recentHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  recentClearText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.danger,
+  },
+  recentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 7,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+  },
+  recentItemBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginRight: 8,
+  },
+  recentItemText: {
+    fontSize: 13,
+    color: colors.navy,
+    fontWeight: '500',
   },
 });

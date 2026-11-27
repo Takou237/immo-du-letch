@@ -1,5 +1,5 @@
 /**
- * TopDealsSection — section "Biens en vedette / Top deals" thème IMMO DU LETCH.
+ * TopDealsSection — section horizontale d'annonces (Top DEALS for you / Biens en vedette).
  */
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
@@ -21,6 +21,8 @@ interface TopDealsSectionProps {
   dealLabel: string;
   newLabel: string;
   perMonthLabel: string;
+  /** Variante "Top [• DEALS] for you" avec étiquette corail */
+  isTopDealsBanner?: boolean;
 }
 
 export function TopDealsSection({
@@ -36,16 +38,28 @@ export function TopDealsSection({
   dealLabel,
   newLabel,
   perMonthLabel,
+  isTopDealsBanner = false,
 }: TopDealsSectionProps) {
   return (
     <View style={styles.section}>
       <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <Text style={styles.titleText}>{title}</Text>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{badge}</Text>
+        {isTopDealsBanner ? (
+          <View style={styles.topDealsTitleRow}>
+            <Text style={styles.titleText}>Top</Text>
+            <View style={styles.dealTag}>
+              <View style={styles.dealTagHole} />
+              <Text style={styles.dealTagText}>DEALS</Text>
+            </View>
+            <Text style={styles.titleText}>for you</Text>
           </View>
-        </View>
+        ) : (
+          <View style={styles.titleRow}>
+            <Text style={styles.titleText}>{title}</Text>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{badge}</Text>
+            </View>
+          </View>
+        )}
         <TouchableOpacity style={styles.viewAllBtn} onPress={onPressViewAll} hitSlop={8}>
           <Text style={styles.viewAll}>{viewAllLabel}</Text>
           <ArrowRight size={14} color={colors.navy} strokeWidth={2.5} />
@@ -70,7 +84,7 @@ export function TopDealsSection({
             perMonthLabel={perMonthLabel}
           />
         ))}
-        <View style={{ width: 16 }} />
+        <View style={styles.endSpacer} />
       </ScrollView>
     </View>
   );
@@ -91,6 +105,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  topDealsTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  dealTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#FF8A5B',
+    borderTopLeftRadius: 12,
+    borderBottomLeftRadius: 12,
+    borderTopRightRadius: 6,
+    borderBottomRightRadius: 6,
+    paddingLeft: 7,
+    paddingRight: 9,
+    paddingVertical: 3,
+  },
+  dealTagHole: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: colors.navy,
+  },
+  dealTagText: {
+    color: colors.navy,
+    fontSize: 13,
+    fontWeight: '900',
+    letterSpacing: 0.4,
   },
   titleText: {
     color: colors.textPrimary,
@@ -120,6 +164,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   scroll: {
-    paddingBottom: 4,
+    paddingLeft: 16,
+  },
+  endSpacer: {
+    width: 16,
   },
 });

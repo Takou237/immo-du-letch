@@ -13,6 +13,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
 } from 'react-native';
 import { X, ChevronDown, ChevronRight } from 'lucide-react-native';
 import { Filters, PropertyType, Transaction } from '../../types/listing';
@@ -91,6 +92,7 @@ export function FilterSheetModal({
         behavior="padding"
         keyboardVerticalOffset={Platform.OS === 'android' ? 12 : 0}
       >
+        <Pressable style={styles.backdropDismiss} onPress={onClose} />
         <View style={styles.sheet}>
           {/* Header : Filtres + bouton X circulaire */}
           <View style={styles.header}>
@@ -431,6 +433,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(7, 31, 73, 0.45)',
     justifyContent: 'flex-end',
+  },
+  backdropDismiss: {
+    flex: 1,
   },
   sheet: {
     backgroundColor: colors.surface,

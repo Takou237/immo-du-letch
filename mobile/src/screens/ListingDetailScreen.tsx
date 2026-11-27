@@ -20,6 +20,7 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -38,6 +39,8 @@ import {
   Scale,
   X,
   Mail,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react-native';
 
 import { RootStackParamList } from '../navigation/types';
@@ -75,6 +78,7 @@ export function ListingDetailScreen({ route, navigation }: Props) {
   const [senderEmail, setSenderEmail] = useState(user?.email ?? '');
   const [messageBody, setMessageBody] = useState('');
   const [selectedPhotoIdx, setSelectedPhotoIdx] = useState(0);
+  const [galleryModalOpen, setGalleryModalOpen] = useState(false);
 
   useEffect(() => {
     if (listing) {
@@ -224,7 +228,11 @@ export function ListingDetailScreen({ route, navigation }: Props) {
             </Text>
           </View>
 
-          <View style={styles.heroWrap}>
+          <TouchableOpacity
+            style={styles.heroWrap}
+            activeOpacity={0.92}
+            onPress={() => setGalleryModalOpen(true)}
+          >
             <ListingImage
               uri={activePhotoUri}
               type={listing.type}
@@ -238,7 +246,12 @@ export function ListingDetailScreen({ route, navigation }: Props) {
                 <Text style={styles.dropText}>-{listing.priceDropPercent}%</Text>
               </View>
             )}
-          </View>
+            <View style={styles.photoHintBadge}>
+              <Text style={styles.photoHintText}>
+                {selectedPhotoIdx + 1} / {photos.length}
+              </Text>
+            </View>
+          </TouchableOpacity>
 
           {/* Miniatures sous la photo principale */}
           <View style={styles.thumbsRow}>
@@ -246,7 +259,10 @@ export function ListingDetailScreen({ route, navigation }: Props) {
               <TouchableOpacity
                 key={idx}
                 style={[styles.thumbBox, selectedPhotoIdx === idx && styles.thumbBoxActive]}
-                onPress={() => setSelectedPhotoIdx(idx)}
+                onPress={() => {
+                  setSelectedPhotoIdx(idx);
+                  setGalleryModalOpen(true);
+                }}
                 activeOpacity={0.8}
               >
                 <ListingImage
@@ -258,11 +274,15 @@ export function ListingDetailScreen({ route, navigation }: Props) {
                 />
               </TouchableOpacity>
             ))}
-            <View style={styles.photoCountBox}>
+            <TouchableOpacity
+              style={styles.photoCountBox}
+              onPress={() => setGalleryModalOpen(true)}
+              activeOpacity={0.8}
+            >
               <Text style={styles.photoCountText}>
                 {photos.length} {photos.length > 1 ? 'photos' : 'photo'}
               </Text>
-            </View>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -491,7 +511,66 @@ export function ListingDetailScreen({ route, navigation }: Props) {
         </TouchableOpacity>
       </View>
 
-      {/* Popup Modal "Envoyer un message" (sans barre d'appel) */}
+      {/* Lightbox Visionneuse photos plein écran */}
+      <Modal
+        visible={galleryModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setGalleryModalOpen(false)}
+      >
+        <Pressable
+          style={styles.lightboxOverlay}
+          onPress={() => setGalleryModalOpen(false)}
+        >
+          <View style={styles.lightboxHeader}>
+            <Text style={styles.lightboxCounter}>
+              {selectedPhotoIdx + 1} / {photos.length}
+            </Text>
+            <TouchableOpacity
+              style={styles.lightboxCloseBtn}
+              onPress={() => setGalleryModalOpen(false)}
+            >
+              <X size={20} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+
+          <Pressable
+            style={styles.lightboxImageBox}
+            onPress={e => e.stopPropagation()}
+          >
+            <ListingImage
+              uri={activePhotoUri}
+              type={listing.type}
+              fallbackColor={listing.gradientColors[0]}
+              style={styles.lightboxImage}
+              iconSize={72}
+            />
+
+            {photos.length > 1 && (
+              <>
+                <TouchableOpacity
+                  style={[styles.lightboxNavBtn, styles.lightboxPrev]}
+                  onPress={() =>
+                    setSelectedPhotoIdx(i => (i - 1 + photos.length) % photos.length)
+                  }
+                >
+                  <ChevronLeft size={24} color="#FFFFFF" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.lightboxNavBtn, styles.lightboxNext]}
+                  onPress={() =>
+                    setSelectedPhotoIdx(i => (i + 1) % photos.length)
+                  }
+                >
+                  <ChevronRight size={24} color="#FFFFFF" />
+                </TouchableOpacity>
+              </>
+            )}
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Popup Modal "Envoyer un message" (sans barre d'appel, fermeture au clic en dehors) */}
       <Modal
         visible={msgModalOpen}
         transparent
@@ -502,7 +581,14 @@ export function ListingDetailScreen({ route, navigation }: Props) {
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.modalOverlay}
         >
-          <View style={styles.modalCard}>
+          <Pressable
+            style={styles.modalBackdropPress}
+            onPress={() => setMsgModalOpen(false)}
+          >
+            <Pressable
+              style={styles.modalCard}
+              onPress={e => e.stopPropagation()}
+            >
             <View style={styles.modalTopRow}>
               <Text style={styles.modalOverline}>
                 {isFr ? 'VOTRE INTERLOCUTEUR' : 'YOUR CONTACT'}
@@ -588,7 +674,8 @@ export function ListingDetailScreen({ route, navigation }: Props) {
                 ? "Vos coordonnées sont transmises à l'annonceur pour répondre à votre demande."
                 : 'Your contact details are shared with the advertiser to reply to your request.'}
             </Text>
-          </View>
+            </Pressable>
+          </Pressable>
         </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
@@ -1193,4 +1280,74 @@ const styles = StyleSheet.create({
     marginTop: 10,
     lineHeight: 16,
   },
+  modalBackdropPress: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  photoHintBadge: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    backgroundColor: 'rgba(7, 31, 73, 0.72)',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  photoHintText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  lightboxOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.92)',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+  },
+  lightboxHeader: {
+    position: 'absolute',
+    top: 48,
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    zIndex: 10,
+  },
+  lightboxCounter: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  lightboxCloseBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lightboxImageBox: {
+    width: '100%',
+    height: 340,
+    borderRadius: 14,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  lightboxImage: {
+    width: '100%',
+    height: '100%',
+  },
+  lightboxNavBtn: {
+    position: 'absolute',
+    top: '44%',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(7, 31, 73, 0.7)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lightboxPrev: { left: 10 },
+  lightboxNext: { right: 10 },
 });
