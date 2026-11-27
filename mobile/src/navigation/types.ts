@@ -15,4 +15,5 @@ export type RootStackParamList = {
   Profile: undefined;
   Messages: undefined;
   Notifications: undefined;
+  Support: undefined;
 };

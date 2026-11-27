@@ -23,6 +23,7 @@ import { CompareScreen } from '../screens/CompareScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { MessagesScreen } from '../screens/MessagesScreen';
 import { NotificationsScreen } from '../screens/NotificationsScreen';
+import { SupportScreen } from '../screens/SupportScreen';
 import { FloatingCompareBubble } from '../components/FloatingCompareBubble';
 
 const navigationRef = createNavigationContainerRef<RootStackParamList>();
@@ -133,6 +134,7 @@ export function AppNavigator() {
           <Stack.Screen name="Profile" component={ProfileScreen} />
           <Stack.Screen name="Messages" component={MessagesScreen} />
           <Stack.Screen name="Notifications" component={NotificationsScreen} />
+          <Stack.Screen name="Support" component={SupportScreen} />
         </Stack.Navigator>
       </NavigationContainer>
       <FloatingCompareBubble
