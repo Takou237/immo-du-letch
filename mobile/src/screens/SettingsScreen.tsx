@@ -20,7 +20,6 @@ import {
   User,
   Globe,
   Bell,
-  MessageSquare,
   GitCompare,
   Trash2,
   Info,
@@ -219,14 +218,6 @@ export function SettingsScreen() {
           {isFr ? 'OUTILS & ACTIVITÉ' : 'TOOLS & ACTIVITY'}
         </Text>
         <View style={styles.card}>
-          <SettingRow
-            icon={<MessageSquare color={colors.navy} size={18} strokeWidth={2} />}
-            iconBg="#EFF6FF"
-            title={isFr ? 'Messages' : 'Messages'}
-            subtitle={isFr ? 'Vos échanges avec les vendeurs' : 'Chats with sellers'}
-            onPress={() => navigation.navigate('Messages')}
-          />
-          <View style={styles.divider} />
           <SettingRow
             icon={<Bell color={colors.gold} size={18} strokeWidth={2} />}
             iconBg="#FEF3C7"

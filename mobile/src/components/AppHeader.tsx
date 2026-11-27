@@ -9,30 +9,25 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { MessageSquare, Bell, User } from 'lucide-react-native';
+import { Bell, User } from 'lucide-react-native';
 import { colors, spacing } from '../theme';
 import { useLang } from '../i18n/LangContext';
 import { RootStackParamList } from '../navigation/types';
 
 interface AppHeaderProps {
-  unreadMessages?: number;
   unreadNotifications?: number;
-  onMessagesPress?: () => void;
   onNotificationsPress?: () => void;
   onProfilePress?: () => void;
 }
 
 export function AppHeader({
-  unreadMessages = 0,
   unreadNotifications = 0,
-  onMessagesPress,
   onNotificationsPress,
   onProfilePress,
 }: AppHeaderProps) {
-  const { t, toggleLang } = useLang();
+  const { t } = useLang();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const handleProfilePress = onProfilePress ?? (() => navigation.navigate('Profile'));
-  const handleMessagesPress = onMessagesPress ?? (() => navigation.navigate('Messages'));
   const handleNotificationsPress = onNotificationsPress ?? (() => navigation.navigate('Notifications'));
 
   return (
@@ -49,33 +44,6 @@ export function AppHeader({
 
         {/* ── Icônes droite ── */}
         <View style={styles.actions}>
-
-          {/* Switch langue FR / EN */}
-          <TouchableOpacity
-            onPress={toggleLang}
-            style={styles.langBtn}
-            activeOpacity={0.75}
-            accessibilityLabel={t.common.langToggle}
-          >
-            <Text style={styles.langText}>{t.common.langToggle}</Text>
-          </TouchableOpacity>
-
-          {/* Messages */}
-          <TouchableOpacity
-            onPress={handleMessagesPress}
-            style={styles.iconBtn}
-            activeOpacity={0.75}
-            accessibilityLabel={t.header.messages}
-          >
-            <MessageSquare color={colors.textOnNavy} size={20} strokeWidth={1.8} />
-            {unreadMessages > 0 && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>
-                  {unreadMessages > 9 ? '9+' : unreadMessages}
-                </Text>
-              </View>
-            )}
-          </TouchableOpacity>
 
           {/* Notifications */}
           <TouchableOpacity
@@ -164,21 +132,5 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 9,
     fontWeight: '700',
-  },
-
-  // Bouton langue
-  langBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: colors.gold,
-    marginRight: 4,
-  },
-  langText: {
-    color: colors.gold,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.5,
   },
 });

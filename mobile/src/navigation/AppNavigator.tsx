@@ -1,5 +1,9 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import React, { useState } from 'react';
+import { View, StyleSheet } from 'react-native';
+import {
+  NavigationContainer,
+  createNavigationContainerRef,
+} from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,6 +22,9 @@ import { CompareScreen } from '../screens/CompareScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { MessagesScreen } from '../screens/MessagesScreen';
 import { NotificationsScreen } from '../screens/NotificationsScreen';
+import { FloatingCompareBubble } from '../components/FloatingCompareBubble';
+
+const navigationRef = createNavigationContainerRef<RootStackParamList>();
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -96,16 +103,41 @@ function MainTabs() {
 }
 
 export function AppNavigator() {
+  const [currentRoute, setCurrentRoute] = useState<string | undefined>('MainTabs');
+
+  const syncRoute = () => {
+    const route = navigationRef.getCurrentRoute();
+    setCurrentRoute(route?.name);
+  };
+
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="MainTabs" component={MainTabs} />
-        <Stack.Screen name="ListingDetail" component={ListingDetailScreen} />
-        <Stack.Screen name="Compare" component={CompareScreen} />
-        <Stack.Screen name="Profile" component={ProfileScreen} />
-        <Stack.Screen name="Messages" component={MessagesScreen} />
-        <Stack.Screen name="Notifications" component={NotificationsScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <View style={styles.root}>
+      <NavigationContainer
+        ref={navigationRef}
+        onReady={syncRoute}
+        onStateChange={syncRoute}
+      >
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="MainTabs" component={MainTabs} />
+          <Stack.Screen name="ListingDetail" component={ListingDetailScreen} />
+          <Stack.Screen name="Compare" component={CompareScreen} />
+          <Stack.Screen name="Profile" component={ProfileScreen} />
+          <Stack.Screen name="Messages" component={MessagesScreen} />
+          <Stack.Screen name="Notifications" component={NotificationsScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+      <FloatingCompareBubble
+        currentRouteName={currentRoute}
+        onPress={() => {
+          if (navigationRef.isReady()) {
+            navigationRef.navigate('Compare');
+          }
+        }}
+      />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+});

@@ -1,7 +1,7 @@
 /**
  * CompareProvider — IMMO DU LETCH Mobile
  * Principe S : gestion exclusive de la liste de comparaison (max 3 biens).
- * Aligné sur src/store/AppStore.tsx du web.
+ * Règle métier : impossible de comparer un bien à vendre avec un bien à louer.
  */
 import React, {
   createContext,
@@ -12,7 +12,10 @@ import React, {
   useMemo,
   ReactNode,
 } from 'react';
+import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useListingsContext } from './ListingsProvider';
+import { useLang } from '../i18n/LangContext';
 
 const STORAGE_COMPARE = 'immo:compare';
 export const MAX_COMPARE = 3;
@@ -28,6 +31,8 @@ interface CompareContextValue {
 const CompareContext = createContext<CompareContextValue | null>(null);
 
 export function CompareProvider({ children }: { children: ReactNode }) {
+  const { listings } = useListingsContext();
+  const { lang } = useLang();
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [hydrated, setHydrated] = useState(false);
 
@@ -49,21 +54,40 @@ export function CompareProvider({ children }: { children: ReactNode }) {
     AsyncStorage.setItem(STORAGE_COMPARE, JSON.stringify(compareIds)).catch(() => {});
   }, [compareIds, hydrated]);
 
-  /** Retourne true si ajouté/retiré, false si limite MAX_COMPARE atteinte */
+  /** Retourne true si ajouté/retiré, false si refusé (limite ou transaction différente) */
   const toggleCompare = useCallback((id: string): boolean => {
-    let ok = true;
-    setCompareIds(prev => {
-      if (prev.includes(id)) {
-        return prev.filter(item => item !== id);
+    if (compareIds.includes(id)) {
+      setCompareIds(prev => prev.filter(item => item !== id));
+      return true;
+    }
+
+    if (compareIds.length >= MAX_COMPARE) {
+      Alert.alert(
+        lang === 'fr' ? 'Comparateur plein' : 'Comparison full',
+        lang === 'fr'
+          ? `Vous pouvez comparer jusqu'à ${MAX_COMPARE} biens maximum.`
+          : `You can compare up to ${MAX_COMPARE} properties.`,
+      );
+      return false;
+    }
+
+    if (compareIds.length > 0) {
+      const target = listings.find(l => l.id === id);
+      const first = listings.find(l => l.id === compareIds[0]);
+      if (target && first && target.transaction !== first.transaction) {
+        Alert.alert(
+          lang === 'fr' ? 'Comparaison impossible' : 'Cannot compare',
+          lang === 'fr'
+            ? 'Vous ne pouvez pas comparer un bien à vendre avec un bien à louer.'
+            : 'You cannot compare a property for sale with a property for rent.',
+        );
+        return false;
       }
-      if (prev.length >= MAX_COMPARE) {
-        ok = false;
-        return prev;
-      }
-      return [...prev, id];
-    });
-    return ok;
-  }, []);
+    }
+
+    setCompareIds(prev => [...prev, id]);
+    return true;
+  }, [compareIds, listings, lang]);
 
   const removeFromCompare = useCallback((id: string) => {
     setCompareIds(prev => prev.filter(item => item !== id));
