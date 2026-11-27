@@ -13,4 +13,6 @@ export type RootStackParamList = {
   ListingDetail: { listingId: string };
   Compare: undefined;
   Profile: undefined;
+  Messages: undefined;
+  Notifications: undefined;
 };

@@ -7,7 +7,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Heart, MapPin, Maximize2, BedDouble, Star, TrendingDown } from 'lucide-react-native';
 import { Listing } from '../../types/listing';
 import { formatFCFA, formatSurface } from '../../utils/formatPrice';
-import { PropertyTypeIcon } from '../PropertyTypeIcon';
+import { ListingImage } from '../ListingImage';
 import { colors } from '../../theme';
 
 interface ListingCardProps {
@@ -36,7 +36,14 @@ export function ListingCard({
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.88}>
       {/* Zone visuelle */}
-      <View style={[styles.colorBlock, { backgroundColor: listing.gradientColors[0] }]}>
+      <View style={styles.colorBlock}>
+        <ListingImage
+          uri={listing.image}
+          type={listing.type}
+          fallbackColor={listing.gradientColors[0]}
+          iconSize={28}
+          style={StyleSheet.absoluteFill}
+        />
         <View style={styles.dealBadge}>
           <Text style={styles.dealText}>{listing.isNew ? newLabel : dealLabel}</Text>
         </View>
@@ -56,10 +63,6 @@ export function ListingCard({
             strokeWidth={2}
           />
         </TouchableOpacity>
-
-        <View style={styles.typeIconWrap}>
-          <PropertyTypeIcon type={listing.type} size={26} color="rgba(255,255,255,0.9)" />
-        </View>
       </View>
 
       {/* Corps */}

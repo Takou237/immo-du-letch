@@ -31,6 +31,8 @@ export function AppHeader({
   const { t, toggleLang } = useLang();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const handleProfilePress = onProfilePress ?? (() => navigation.navigate('Profile'));
+  const handleMessagesPress = onMessagesPress ?? (() => navigation.navigate('Messages'));
+  const handleNotificationsPress = onNotificationsPress ?? (() => navigation.navigate('Notifications'));
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
@@ -58,7 +60,7 @@ export function AppHeader({
 
           {/* Messages */}
           <TouchableOpacity
-            onPress={onMessagesPress}
+            onPress={handleMessagesPress}
             style={styles.iconBtn}
             activeOpacity={0.75}
             accessibilityLabel={t.header.messages}
@@ -75,7 +77,7 @@ export function AppHeader({
 
           {/* Notifications */}
           <TouchableOpacity
-            onPress={onNotificationsPress}
+            onPress={handleNotificationsPress}
             style={styles.iconBtn}
             activeOpacity={0.75}
             accessibilityLabel={t.header.notifications}

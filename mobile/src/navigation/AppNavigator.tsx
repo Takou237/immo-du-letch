@@ -15,6 +15,8 @@ import { SellScreen } from '../screens/SellScreen';
 import { ListingDetailScreen } from '../screens/ListingDetailScreen';
 import { CompareScreen } from '../screens/CompareScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
+import { MessagesScreen } from '../screens/MessagesScreen';
+import { NotificationsScreen } from '../screens/NotificationsScreen';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -93,6 +95,8 @@ export function AppNavigator() {
         <Stack.Screen name="ListingDetail" component={ListingDetailScreen} />
         <Stack.Screen name="Compare" component={CompareScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="Messages" component={MessagesScreen} />
+        <Stack.Screen name="Notifications" component={NotificationsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

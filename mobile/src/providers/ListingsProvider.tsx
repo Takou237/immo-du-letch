@@ -22,6 +22,7 @@ import {
   DEFAULT_FILTERS,
 } from '../types/listing';
 import { LISTINGS, LISTING_GRADIENTS } from '../data/listings';
+import { fetchRemoteListings } from '../api/listingsApi';
 import {
   filterListings,
   sortListings,
@@ -74,10 +75,23 @@ interface ListingsContextValue {
 const ListingsContext = createContext<ListingsContextValue | null>(null);
 
 export function ListingsProvider({ children }: { children: ReactNode }) {
+  const [baseListings, setBaseListings] = useState<Listing[]>(LISTINGS);
   const [localListings, setLocalListings] = useState<LocalListing[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [filters, setFiltersState] = useState<Filters>(DEFAULT_FILTERS);
   const [sortKey, setSortKey] = useState<SortKey>('relevance');
+
+  useEffect(() => {
+    let active = true;
+    fetchRemoteListings().then(remote => {
+      if (active && remote && remote.length > 0) {
+        setBaseListings(remote);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -98,8 +112,8 @@ export function ListingsProvider({ children }: { children: ReactNode }) {
   }, [localListings, hydrated]);
 
   const allListings = useMemo<Listing[]>(
-    () => [...localListings, ...LISTINGS],
-    [localListings],
+    () => [...localListings, ...baseListings],
+    [localListings, baseListings],
   );
 
   const setFilters = useCallback((partial: Partial<Filters>) => {

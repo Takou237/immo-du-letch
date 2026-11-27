@@ -17,7 +17,7 @@ import {
 } from 'lucide-react-native';
 import { Listing } from '../../types/listing';
 import { formatFCFA, formatSurface } from '../../utils/formatPrice';
-import { PropertyTypeIcon } from '../PropertyTypeIcon';
+import { ListingImage } from '../ListingImage';
 import { colors } from '../../theme';
 
 interface ListingRowCardProps {
@@ -46,7 +46,14 @@ export function ListingRowCard({
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.88}>
       {/* Bandeau visuel supérieur */}
-      <View style={[styles.banner, { backgroundColor: listing.gradientColors[0] }]}>
+      <View style={styles.banner}>
+        <ListingImage
+          uri={listing.image}
+          type={listing.type}
+          fallbackColor={listing.gradientColors[0]}
+          iconSize={32}
+          style={StyleSheet.absoluteFill}
+        />
         <View style={styles.badgesLeft}>
           <View style={styles.transBadge}>
             <Text style={styles.transBadgeText}>{transactionLabel}</Text>
@@ -72,10 +79,6 @@ export function ListingRowCard({
             strokeWidth={2}
           />
         </TouchableOpacity>
-
-        <View style={styles.iconBottomRight}>
-          <PropertyTypeIcon type={listing.type} size={28} color="rgba(255,255,255,0.9)" />
-        </View>
       </View>
 
       {/* Contenu */}
