@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -32,6 +33,7 @@ export function AppHeader({
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" />
       <View style={styles.container}>
 
         {/* ── Logo gauche ── */}
@@ -52,7 +54,7 @@ export function AppHeader({
             activeOpacity={0.75}
             accessibilityLabel={t.header.notifications}
           >
-            <Bell color={colors.textOnNavy} size={18} strokeWidth={1.8} />
+            <Bell color="#0F172A" size={18} strokeWidth={1.9} />
             {unreadNotifications > 0 && (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>
@@ -65,11 +67,11 @@ export function AppHeader({
           {/* Profil */}
           <TouchableOpacity
             onPress={handleProfilePress}
-            style={[styles.iconBtn, styles.profileBtn]}
+            style={styles.iconBtn}
             activeOpacity={0.75}
             accessibilityLabel={t.header.profile}
           >
-            <User color={colors.textOnNavy} size={18} strokeWidth={1.8} />
+            <User color="#0F172A" size={18} strokeWidth={1.9} />
           </TouchableOpacity>
         </View>
       </View>
@@ -79,40 +81,41 @@ export function AppHeader({
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: colors.navy,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   container: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: 3,
-    backgroundColor: colors.navy,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    backgroundColor: '#FFFFFF',
   },
 
   // Logo
   logo: {
-    width: 96,
-    height: 28,
+    width: 118,
+    height: 38,
   },
 
   // Icônes
   actions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 8,
   },
   iconBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-  },
-  profileBtn: {
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.3)',
   },
 
   // Badge rouge
