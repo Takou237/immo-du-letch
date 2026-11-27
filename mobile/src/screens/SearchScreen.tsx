@@ -67,8 +67,11 @@ export function SearchScreen() {
     if (filters.transaction) count++;
     if (filters.city) count++;
     if (filters.type) count++;
+    if (filters.priceMin > 0) count++;
     if (filters.priceMax > 0) count++;
+    if (filters.surfaceMin > 0) count++;
     if (filters.bedroomsMin > 0) count++;
+    count += filters.features.length + filters.documents.length;
     return count;
   }, [filters]);
 
@@ -208,6 +211,15 @@ export function SearchScreen() {
               <X size={12} color={colors.navy} />
             </TouchableOpacity>
           )}
+          {filters.priceMin > 0 && (
+            <TouchableOpacity
+              style={styles.activeChip}
+              onPress={() => setFilters({ priceMin: 0 })}
+            >
+              <Text style={styles.activeChipText}>≥ {formatFCFA(filters.priceMin)}</Text>
+              <X size={12} color={colors.navy} />
+            </TouchableOpacity>
+          )}
           {filters.priceMax > 0 && (
             <TouchableOpacity
               style={styles.activeChip}
@@ -217,6 +229,39 @@ export function SearchScreen() {
               <X size={12} color={colors.navy} />
             </TouchableOpacity>
           )}
+          {filters.surfaceMin > 0 && (
+            <TouchableOpacity
+              style={styles.activeChip}
+              onPress={() => setFilters({ surfaceMin: 0 })}
+            >
+              <Text style={styles.activeChipText}>≥ {filters.surfaceMin} m²</Text>
+              <X size={12} color={colors.navy} />
+            </TouchableOpacity>
+          )}
+          {filters.features.map(f => (
+            <TouchableOpacity
+              key={f}
+              style={styles.activeChip}
+              onPress={() =>
+                setFilters({ features: filters.features.filter(item => item !== f) })
+              }
+            >
+              <Text style={styles.activeChipText}>{f}</Text>
+              <X size={12} color={colors.navy} />
+            </TouchableOpacity>
+          ))}
+          {filters.documents.map(d => (
+            <TouchableOpacity
+              key={d}
+              style={styles.activeChip}
+              onPress={() =>
+                setFilters({ documents: filters.documents.filter(item => item !== d) })
+              }
+            >
+              <Text style={styles.activeChipText}>{d}</Text>
+              <X size={12} color={colors.navy} />
+            </TouchableOpacity>
+          ))}
           {filters.bedroomsMin > 0 && (
             <TouchableOpacity
               style={styles.activeChip}

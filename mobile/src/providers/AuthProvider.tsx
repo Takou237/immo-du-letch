@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const raw = await AsyncStorage.getItem(STORAGE_USER);
         if (raw) setUser(JSON.parse(raw));
-      } catch (_) {
+      } catch {
         // Silencieux
       } finally {
         setHydrated(true);

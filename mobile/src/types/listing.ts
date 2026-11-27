@@ -57,6 +57,8 @@ export interface Filters {
   priceMax: number;
   surfaceMin: number;
   bedroomsMin: number;
+  features: string[];
+  documents: string[];
   query: string;
 }
 
@@ -68,5 +70,7 @@ export const DEFAULT_FILTERS: Filters = {
   priceMax: 0,
   surfaceMin: 0,
   bedroomsMin: 0,
+  features: [],
+  documents: [],
   query: '',
 };

@@ -36,7 +36,7 @@ export function CompareProvider({ children }: { children: ReactNode }) {
       try {
         const raw = await AsyncStorage.getItem(STORAGE_COMPARE);
         if (raw) setCompareIds(JSON.parse(raw));
-      } catch (_) {
+      } catch {
         // Silencieux
       } finally {
         setHydrated(true);

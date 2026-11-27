@@ -49,7 +49,7 @@ export function SavedSearchesProvider({ children }: { children: ReactNode }) {
         ]);
         if (rawSearches) setSavedSearches(JSON.parse(rawSearches));
         if (rawSellers) setFollowedSellerIds(JSON.parse(rawSellers));
-      } catch (_) {
+      } catch {
         // Silencieux si lecture échoue
       } finally {
         setHydrated(true);

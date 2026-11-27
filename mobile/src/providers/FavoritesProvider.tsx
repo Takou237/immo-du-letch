@@ -36,7 +36,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
         ]);
         if (rawFav) setFavorites(JSON.parse(rawFav));
         if (rawRec) setRecent(JSON.parse(rawRec));
-      } catch (_) {
+      } catch {
         // Silencieux : si lecture échoue, on part de zéro
       } finally {
         setHydrated(true);

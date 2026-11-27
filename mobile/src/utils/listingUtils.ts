@@ -15,6 +15,18 @@ export function filterListings(listings: Listing[], filters: Filters): Listing[]
     if (filters.priceMin > 0 && l.price < filters.priceMin) return false;
     if (filters.surfaceMin > 0 && l.surface < filters.surfaceMin) return false;
     if (filters.bedroomsMin > 0 && (l.bedrooms ?? 0) < filters.bedroomsMin) return false;
+    if (filters.features.length > 0) {
+      const hayFeats = `${l.features.join(' ')} ${l.featuresEn.join(' ')} ${l.description}`.toLowerCase();
+      for (const f of filters.features) {
+        if (!hayFeats.includes(f.toLowerCase())) return false;
+      }
+    }
+    if (filters.documents.length > 0) {
+      const hayDocs = `${l.features.join(' ')} ${l.featuresEn.join(' ')} ${l.description}`.toLowerCase();
+      for (const d of filters.documents) {
+        if (!hayDocs.includes(d.toLowerCase())) return false;
+      }
+    }
     if (filters.query) {
       const q = filters.query.toLowerCase();
       const hay = `${l.title} ${l.titleEn} ${l.city} ${l.neighborhood} ${l.description}`.toLowerCase();

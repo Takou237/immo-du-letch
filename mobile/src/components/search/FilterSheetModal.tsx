@@ -1,17 +1,18 @@
 /**
- * FilterSheetModal — modale de filtres avancés pour SearchScreen.
+ * FilterSheetModal — modale de filtres avancés calquée sur le design mobile du site web.
  * Thème officiel IMMO DU LETCH, traduction FR/EN complète, icônes Lucide.
  */
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Modal,
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   ScrollView,
   StyleSheet,
 } from 'react-native';
-import { X, RotateCcw } from 'lucide-react-native';
+import { X, ChevronDown, ChevronRight } from 'lucide-react-native';
 import { Filters, PropertyType, Transaction } from '../../types/listing';
 import { CITY_OPTIONS } from '../../data/listings';
 import { useLang } from '../../i18n/LangContext';
@@ -27,16 +28,23 @@ interface FilterSheetModalProps {
 }
 
 const PROPERTY_TYPES: PropertyType[] = ['villa', 'appartement', 'terrain', 'studio', 'bureau'];
+const ROOM_OPTIONS = [0, 1, 2, 3, 4, 5];
 
-const BUDGET_PRESETS = [
-  { labelFr: 'Tout', labelEn: 'Any', value: 0 },
-  { labelFr: '≤ 500K', labelEn: '≤ 500K', value: 500_000 },
-  { labelFr: '≤ 20M', labelEn: '≤ 20M', value: 20_000_000 },
-  { labelFr: '≤ 60M', labelEn: '≤ 60M', value: 60_000_000 },
-  { labelFr: '≤ 150M', labelEn: '≤ 150M', value: 150_000_000 },
+const EQUIPMENT_OPTIONS = [
+  { value: 'Jardin', fr: 'Jardin', en: 'Garden' },
+  { value: 'Parking', fr: 'Parking', en: 'Parking' },
+  { value: 'Terrasse', fr: 'Terrasse', en: 'Terrace' },
+  { value: 'Piscine', fr: 'Piscine', en: 'Pool' },
+  { value: 'Climatisation', fr: 'Climatisation', en: 'Air conditioning' },
+  { value: 'Groupe électrogène', fr: 'Groupe électrogène', en: 'Generator' },
+  { value: 'Meublé', fr: 'Meublé', en: 'Furnished' },
 ];
 
-const ROOM_PRESETS = [0, 1, 2, 3, 4];
+const DOCUMENT_OPTIONS = [
+  { value: 'Titre foncier', fr: 'Titre foncier', en: 'Title deed' },
+  { value: 'Permis de bâtir', fr: 'Permis de bâtir', en: 'Building permit' },
+  { value: 'Plan cadastral', fr: 'Plan cadastral', en: 'Cadastral plan' },
+];
 
 export function FilterSheetModal({
   visible,
@@ -47,160 +55,363 @@ export function FilterSheetModal({
   onClose,
 }: FilterSheetModalProps) {
   const { lang, t } = useLang();
+  const [openDropdown, setOpenDropdown] = useState<'city' | 'type' | 'rooms' | null>(null);
 
-  const toggleTransaction = (val: Transaction | '') => {
+  const toggleTransaction = (val: Transaction) => {
     onChangeFilters({ transaction: filters.transaction === val ? '' : val });
   };
 
-  const toggleCity = (city: string) => {
-    onChangeFilters({ city: filters.city === city ? '' : city });
+  const toggleArrayItem = (key: 'features' | 'documents', value: string) => {
+    const current = filters[key];
+    const next = current.includes(value)
+      ? current.filter(v => v !== value)
+      : [...current, value];
+    onChangeFilters({ [key]: next });
   };
 
-  const toggleType = (type: PropertyType) => {
-    onChangeFilters({ type: filters.type === type ? '' : type });
+  const toggleDropdown = (name: 'city' | 'type' | 'rooms') => {
+    setOpenDropdown(prev => (prev === name ? null : name));
   };
+
+  const selectedCityLabel = filters.city || t.home.cityPlaceholder;
+  const selectedTypeLabel = filters.type
+    ? t.propertyTypeSingular[filters.type]
+    : (lang === 'fr' ? 'Tous les biens' : 'All properties');
+  const selectedRoomsLabel =
+    filters.bedroomsMin > 0
+      ? `${filters.bedroomsMin}+`
+      : (lang === 'fr' ? 'Toutes' : 'Any');
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <View style={styles.sheet}>
-          {/* Header modale */}
+          {/* Header : Filtres + bouton X circulaire */}
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>{t.search.filtersTitle}</Text>
-            <View style={styles.headerActions}>
-              <TouchableOpacity style={styles.resetBtn} onPress={onReset}>
-                <RotateCcw size={15} color={colors.textSecondary} />
-                <Text style={styles.resetText}>{t.search.resetFilters}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-                <X size={20} color={colors.navy} />
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.headerTitle}>
+              {lang === 'fr' ? 'Filtres' : 'Filters'}
+            </Text>
+            <TouchableOpacity style={styles.closeBtn} onPress={onClose} activeOpacity={0.8}>
+              <X size={18} color={colors.navy} />
+            </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
-            {/* Transaction */}
-            <Text style={styles.sectionLabel}>
-              {lang === 'fr' ? 'Transaction' : 'Transaction'}
+            {/* TRANSACTION */}
+            <Text style={styles.upperLabel}>
+              {lang === 'fr' ? 'TRANSACTION' : 'TRANSACTION'}
             </Text>
-            <View style={styles.chipsWrap}>
+            <View style={styles.row2}>
               <TouchableOpacity
-                style={[styles.chip, filters.transaction === '' && styles.chipActive]}
-                onPress={() => onChangeFilters({ transaction: '' })}
-              >
-                <Text style={[styles.chipText, filters.transaction === '' && styles.chipTextActive]}>
-                  {lang === 'fr' ? 'Tout' : 'All'}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.chip, filters.transaction === 'vente' && styles.chipActive]}
+                style={[
+                  styles.transBtn,
+                  filters.transaction === 'vente' && styles.transBtnActive,
+                ]}
                 onPress={() => toggleTransaction('vente')}
+                activeOpacity={0.85}
               >
-                <Text style={[styles.chipText, filters.transaction === 'vente' && styles.chipTextActive]}>
+                <Text
+                  style={[
+                    styles.transBtnText,
+                    filters.transaction === 'vente' && styles.transBtnTextActive,
+                  ]}
+                >
                   {t.home.buyTab}
                 </Text>
               </TouchableOpacity>
+
               <TouchableOpacity
-                style={[styles.chip, filters.transaction === 'location' && styles.chipActive]}
+                style={[
+                  styles.transBtn,
+                  filters.transaction === 'location' && styles.transBtnActive,
+                ]}
                 onPress={() => toggleTransaction('location')}
+                activeOpacity={0.85}
               >
-                <Text style={[styles.chipText, filters.transaction === 'location' && styles.chipTextActive]}>
+                <Text
+                  style={[
+                    styles.transBtnText,
+                    filters.transaction === 'location' && styles.transBtnTextActive,
+                  ]}
+                >
                   {t.home.rentTab}
                 </Text>
               </TouchableOpacity>
             </View>
 
-            {/* Ville */}
-            <Text style={styles.sectionLabel}>{t.home.cityLabel}</Text>
-            <View style={styles.chipsWrap}>
-              <TouchableOpacity
-                style={[styles.chip, filters.city === '' && styles.chipActive]}
-                onPress={() => onChangeFilters({ city: '' })}
-              >
-                <Text style={[styles.chipText, filters.city === '' && styles.chipTextActive]}>
-                  {t.home.cityPlaceholder}
+            {/* VILLE + TYPE DE BIEN */}
+            <View style={styles.row2}>
+              <View style={styles.col}>
+                <Text style={styles.upperLabel}>
+                  {lang === 'fr' ? 'VILLE' : 'CITY'}
                 </Text>
-              </TouchableOpacity>
-              {CITY_OPTIONS.map(city => {
-                const active = filters.city === city;
-                return (
-                  <TouchableOpacity
-                    key={city}
-                    style={[styles.chip, active && styles.chipActive]}
-                    onPress={() => toggleCity(city)}
-                  >
-                    <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                      {city}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+                <TouchableOpacity
+                  style={styles.selectBox}
+                  onPress={() => toggleDropdown('city')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.selectText} numberOfLines={1}>
+                    {selectedCityLabel}
+                  </Text>
+                  <ChevronDown size={16} color={colors.navy} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.col}>
+                <Text style={styles.upperLabel}>
+                  {lang === 'fr' ? 'TYPE DE BIEN' : 'PROPERTY TYPE'}
+                </Text>
+                <TouchableOpacity
+                  style={styles.selectBox}
+                  onPress={() => toggleDropdown('type')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.selectText} numberOfLines={1}>
+                    {selectedTypeLabel}
+                  </Text>
+                  <ChevronDown size={16} color={colors.navy} />
+                </TouchableOpacity>
+              </View>
             </View>
 
-            {/* Type de bien */}
-            <Text style={styles.sectionLabel}>{t.home.typeLabel}</Text>
-            <View style={styles.chipsWrap}>
-              {PROPERTY_TYPES.map(type => {
-                const active = filters.type === type;
-                return (
-                  <TouchableOpacity
-                    key={type}
-                    style={[styles.chip, active && styles.chipActive]}
-                    onPress={() => toggleType(type)}
+            {/* Dropdown inline Ville */}
+            {openDropdown === 'city' && (
+              <View style={styles.dropdownPanel}>
+                <TouchableOpacity
+                  style={[styles.dropdownChip, filters.city === '' && styles.dropdownChipActive]}
+                  onPress={() => {
+                    onChangeFilters({ city: '' });
+                    setOpenDropdown(null);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.dropdownChipText,
+                      filters.city === '' && styles.dropdownChipTextActive,
+                    ]}
                   >
-                    <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                      {t.propertyTypeSingular[type]}
+                    {t.home.cityPlaceholder}
+                  </Text>
+                </TouchableOpacity>
+                {CITY_OPTIONS.map(c => (
+                  <TouchableOpacity
+                    key={c}
+                    style={[styles.dropdownChip, filters.city === c && styles.dropdownChipActive]}
+                    onPress={() => {
+                      onChangeFilters({ city: c });
+                      setOpenDropdown(null);
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.dropdownChipText,
+                        filters.city === c && styles.dropdownChipTextActive,
+                      ]}
+                    >
+                      {c}
                     </Text>
                   </TouchableOpacity>
-                );
-              })}
-            </View>
+                ))}
+              </View>
+            )}
 
-            {/* Budget max */}
-            <Text style={styles.sectionLabel}>{t.home.budgetLabel}</Text>
-            <View style={styles.chipsWrap}>
-              {BUDGET_PRESETS.map(preset => {
-                const active = filters.priceMax === preset.value;
-                return (
-                  <TouchableOpacity
-                    key={preset.value}
-                    style={[styles.chip, active && styles.chipActive]}
-                    onPress={() => onChangeFilters({ priceMax: preset.value })}
+            {/* Dropdown inline Type */}
+            {openDropdown === 'type' && (
+              <View style={styles.dropdownPanel}>
+                <TouchableOpacity
+                  style={[styles.dropdownChip, filters.type === '' && styles.dropdownChipActive]}
+                  onPress={() => {
+                    onChangeFilters({ type: '' });
+                    setOpenDropdown(null);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.dropdownChipText,
+                      filters.type === '' && styles.dropdownChipTextActive,
+                    ]}
                   >
-                    <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                      {lang === 'fr' ? preset.labelFr : preset.labelEn}
+                    {lang === 'fr' ? 'Tous les biens' : 'All properties'}
+                  </Text>
+                </TouchableOpacity>
+                {PROPERTY_TYPES.map(pt => (
+                  <TouchableOpacity
+                    key={pt}
+                    style={[styles.dropdownChip, filters.type === pt && styles.dropdownChipActive]}
+                    onPress={() => {
+                      onChangeFilters({ type: pt });
+                      setOpenDropdown(null);
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.dropdownChipText,
+                        filters.type === pt && styles.dropdownChipTextActive,
+                      ]}
+                    >
+                      {t.propertyTypeSingular[pt]}
                     </Text>
                   </TouchableOpacity>
-                );
-              })}
+                ))}
+              </View>
+            )}
+
+            {/* PRIX MIN + PRIX MAX */}
+            <View style={styles.row2}>
+              <View style={styles.col}>
+                <Text style={styles.upperLabel}>
+                  {lang === 'fr' ? 'PRIX MIN' : 'MIN PRICE'}
+                </Text>
+                <TextInput
+                  style={styles.inputBox}
+                  value={filters.priceMin > 0 ? String(filters.priceMin) : ''}
+                  onChangeText={val =>
+                    onChangeFilters({ priceMin: Number(val.replace(/\D/g, '')) || 0 })
+                  }
+                  keyboardType="numeric"
+                  placeholder="—"
+                  placeholderTextColor={colors.textMuted}
+                />
+              </View>
+
+              <View style={styles.col}>
+                <Text style={styles.upperLabel}>
+                  {lang === 'fr' ? 'PRIX MAX' : 'MAX PRICE'}
+                </Text>
+                <TextInput
+                  style={styles.inputBox}
+                  value={filters.priceMax > 0 ? String(filters.priceMax) : ''}
+                  onChangeText={val =>
+                    onChangeFilters({ priceMax: Number(val.replace(/\D/g, '')) || 0 })
+                  }
+                  keyboardType="numeric"
+                  placeholder="—"
+                  placeholderTextColor={colors.textMuted}
+                />
+              </View>
             </View>
 
-            {/* Chambres min */}
-            <Text style={styles.sectionLabel}>{t.home.roomsLabel}</Text>
-            <View style={styles.chipsWrap}>
-              {ROOM_PRESETS.map(count => {
-                const active = filters.bedroomsMin === count;
-                return (
+            {/* SURFACE MIN (M²) + CHAMBRES MIN */}
+            <View style={styles.row2}>
+              <View style={styles.col}>
+                <Text style={styles.upperLabel}>
+                  {lang === 'fr' ? 'SURFACE MIN (M²)' : 'MIN AREA (M²)'}
+                </Text>
+                <TextInput
+                  style={styles.inputBox}
+                  value={filters.surfaceMin > 0 ? String(filters.surfaceMin) : ''}
+                  onChangeText={val =>
+                    onChangeFilters({ surfaceMin: Number(val.replace(/\D/g, '')) || 0 })
+                  }
+                  keyboardType="numeric"
+                  placeholder="—"
+                  placeholderTextColor={colors.textMuted}
+                />
+              </View>
+
+              <View style={styles.col}>
+                <Text style={styles.upperLabel}>
+                  {lang === 'fr' ? 'CHAMBRES MIN' : 'MIN BEDROOMS'}
+                </Text>
+                <TouchableOpacity
+                  style={styles.selectBox}
+                  onPress={() => toggleDropdown('rooms')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.selectText}>{selectedRoomsLabel}</Text>
+                  <ChevronDown size={16} color={colors.navy} />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Dropdown inline Chambres */}
+            {openDropdown === 'rooms' && (
+              <View style={styles.dropdownPanel}>
+                {ROOM_OPTIONS.map(count => (
                   <TouchableOpacity
                     key={count}
-                    style={[styles.chip, active && styles.chipActive]}
-                    onPress={() => onChangeFilters({ bedroomsMin: count })}
+                    style={[
+                      styles.dropdownChip,
+                      filters.bedroomsMin === count && styles.dropdownChipActive,
+                    ]}
+                    onPress={() => {
+                      onChangeFilters({ bedroomsMin: count });
+                      setOpenDropdown(null);
+                    }}
                   >
-                    <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                      {count === 0 ? t.home.roomsAny : `${count}+`}
+                    <Text
+                      style={[
+                        styles.dropdownChipText,
+                        filters.bedroomsMin === count && styles.dropdownChipTextActive,
+                      ]}
+                    >
+                      {count === 0 ? (lang === 'fr' ? 'Toutes' : 'Any') : `${count}+`}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
+            {/* ÉQUIPEMENTS */}
+            <Text style={styles.upperLabel}>
+              {lang === 'fr' ? 'ÉQUIPEMENTS' : 'AMENITIES'}
+            </Text>
+            <View style={styles.pillWrap}>
+              {EQUIPMENT_OPTIONS.map(item => {
+                const active = filters.features.includes(item.value);
+                return (
+                  <TouchableOpacity
+                    key={item.value}
+                    style={[styles.pill, active && styles.pillActive]}
+                    onPress={() => toggleArrayItem('features', item.value)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.pillText, active && styles.pillTextActive]}>
+                      {lang === 'fr' ? item.fr : item.en}
                     </Text>
                   </TouchableOpacity>
                 );
               })}
             </View>
 
-            <View style={{ height: 24 }} />
+            {/* DOCUMENTS */}
+            <Text style={styles.upperLabel}>
+              {lang === 'fr' ? 'DOCUMENTS' : 'DOCUMENTS'}
+            </Text>
+            <View style={styles.pillWrap}>
+              {DOCUMENT_OPTIONS.map(doc => {
+                const active = filters.documents.includes(doc.value);
+                return (
+                  <TouchableOpacity
+                    key={doc.value}
+                    style={[styles.pill, active && styles.pillActive]}
+                    onPress={() => toggleArrayItem('documents', doc.value)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.pillText, active && styles.pillTextActive]}>
+                      {lang === 'fr' ? doc.fr : doc.en}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <View style={styles.bottomSpacer} />
           </ScrollView>
 
-          {/* Bouton Appliquer */}
+          {/* Footer 2 boutons : Réinitialiser | Voir X biens > */}
           <View style={styles.footer}>
+            <TouchableOpacity style={styles.resetBtn} onPress={onReset} activeOpacity={0.8}>
+              <Text style={styles.resetBtnText}>{t.search.resetFilters}</Text>
+            </TouchableOpacity>
+
             <TouchableOpacity style={styles.applyBtn} onPress={onClose} activeOpacity={0.85}>
-              <Text style={styles.applyText}>{t.search.applyFilters(resultCount)}</Text>
+              <Text style={styles.applyBtnText}>
+                {lang === 'fr'
+                  ? `Voir ${resultCount} bien${resultCount > 1 ? 's' : ''}`
+                  : `View ${resultCount} propert${resultCount > 1 ? 'ies' : 'y'}`}
+              </Text>
+              <ChevronRight size={16} color={colors.navy} strokeWidth={2.5} />
             </TouchableOpacity>
           </View>
         </View>
@@ -212,102 +423,200 @@ export function FilterSheetModal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(6, 16, 26, 0.55)',
+    backgroundColor: 'rgba(7, 31, 73, 0.45)',
     justifyContent: 'flex-end',
   },
   sheet: {
     backgroundColor: colors.surface,
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
-    maxHeight: '85%',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '92%',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingTop: 18,
+    paddingBottom: 12,
   },
   headerTitle: {
-    fontSize: 17,
+    fontSize: 20,
     fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  resetBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  resetText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textSecondary,
+    color: colors.navy,
   },
   closeBtn: {
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: 20,
-    padding: 6,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   body: {
     paddingHorizontal: 20,
-    paddingTop: 12,
   },
-  sectionLabel: {
-    fontSize: 13,
+  upperLabel: {
+    fontSize: 11,
     fontWeight: '700',
-    color: colors.textPrimary,
+    letterSpacing: 0.6,
+    color: colors.textMuted,
     marginTop: 14,
     marginBottom: 8,
   },
-  chipsWrap: {
+  row2: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  col: {
+    flex: 1,
+  },
+  transBtn: {
+    flex: 1,
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  transBtnActive: {
+    backgroundColor: colors.navy,
+    borderColor: colors.navy,
+  },
+  transBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.navy,
+  },
+  transBtnTextActive: {
+    color: colors.textOnNavy,
+  },
+  selectBox: {
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  selectText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.navy,
+    flex: 1,
+    marginRight: 6,
+  },
+  inputBox: {
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    color: colors.navy,
+  },
+  dropdownPanel: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: 10,
+    padding: 10,
+    marginTop: 8,
+  },
+  dropdownChip: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  dropdownChipActive: {
+    backgroundColor: colors.navy,
+    borderColor: colors.navy,
+  },
+  dropdownChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.navy,
+  },
+  dropdownChipTextActive: {
+    color: colors.gold,
+  },
+  pillWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
   },
-  chip: {
-    backgroundColor: colors.surfaceAlt,
+  pill: {
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 10,
+    backgroundColor: colors.surface,
     paddingHorizontal: 14,
     paddingVertical: 8,
   },
-  chipActive: {
+  pillActive: {
     backgroundColor: colors.navy,
     borderColor: colors.navy,
   },
-  chipText: {
+  pillText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '500',
     color: colors.textSecondary,
   },
-  chipTextActive: {
-    color: colors.gold,
+  pillTextActive: {
+    color: colors.textOnNavy,
+    fontWeight: '700',
+  },
+  bottomSpacer: {
+    height: 20,
   },
   footer: {
+    flexDirection: 'row',
+    gap: 12,
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: colors.borderLight,
+    backgroundColor: colors.surface,
+  },
+  resetBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  resetBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.navy,
   },
   applyBtn: {
+    flex: 1.35,
+    height: 48,
+    borderRadius: 10,
     backgroundColor: colors.gold,
-    borderRadius: 12,
-    paddingVertical: 14,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
   },
-  applyText: {
-    color: colors.navy,
-    fontSize: 15,
+  applyBtnText: {
+    fontSize: 14,
     fontWeight: '800',
+    color: colors.navy,
   },
 });

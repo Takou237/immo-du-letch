@@ -84,7 +84,7 @@ export function ListingsProvider({ children }: { children: ReactNode }) {
       try {
         const raw = await AsyncStorage.getItem(STORAGE_LOCAL_LISTINGS);
         if (raw) setLocalListings(JSON.parse(raw));
-      } catch (_) {
+      } catch {
         // Silencieux si lecture échoue
       } finally {
         setHydrated(true);
