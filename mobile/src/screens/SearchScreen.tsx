@@ -14,9 +14,9 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, SlidersHorizontal, X, ArrowUpDown, SearchX } from 'lucide-react-native';
 
-import { AppHeader } from '../components/AppHeader';
 import { ListingRowCard } from '../components/search/ListingRowCard';
 import { FilterSheetModal } from '../components/search/FilterSheetModal';
 import { useListings } from '../hooks/useListings';
@@ -67,9 +67,7 @@ export function SearchScreen() {
   }, [filters]);
 
   return (
-    <View style={styles.root}>
-      <AppHeader />
-
+    <SafeAreaView style={styles.root} edges={['top']}>
       {/* Barre de recherche + bouton filtres */}
       <View style={styles.searchBarRow}>
         <View style={styles.inputWrap}>
@@ -294,7 +292,7 @@ export function SearchScreen() {
         onReset={resetFilters}
         onClose={() => setFilterModalOpen(false)}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

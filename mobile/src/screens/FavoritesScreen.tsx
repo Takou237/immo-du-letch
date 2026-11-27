@@ -13,9 +13,9 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Heart, Clock, Trash2, Search, Scale } from 'lucide-react-native';
 
-import { AppHeader } from '../components/AppHeader';
 import { ListingRowCard } from '../components/search/ListingRowCard';
 import { ListingCard } from '../components/home/ListingCard';
 import { useListings } from '../hooks/useListings';
@@ -53,9 +53,7 @@ export function FavoritesScreen() {
   );
 
   return (
-    <View style={styles.root}>
-      <AppHeader />
-
+    <SafeAreaView style={styles.root} edges={['top']}>
       {/* En-tête + Onglets */}
       <View style={styles.topSection}>
         <Text style={styles.pageTitle}>{t.favorites.title}</Text>
@@ -223,7 +221,7 @@ export function FavoritesScreen() {
           </View>
         </View>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -7,7 +7,7 @@ import {
   Image,
   StatusBar,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Bell, User } from 'lucide-react-native';
@@ -27,12 +27,13 @@ export function AppHeader({
   onProfilePress,
 }: AppHeaderProps) {
   const { t } = useLang();
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const handleProfilePress = onProfilePress ?? (() => navigation.navigate('Profile'));
   const handleNotificationsPress = onNotificationsPress ?? (() => navigation.navigate('Notifications'));
 
   return (
-    <SafeAreaView edges={['top']} style={styles.safeArea}>
+    <View style={[styles.safeArea, { paddingTop: Math.max(insets.top - 8, 4) }]}>
       <StatusBar barStyle="dark-content" />
       <View style={styles.container}>
 
@@ -54,7 +55,7 @@ export function AppHeader({
             activeOpacity={0.75}
             accessibilityLabel={t.header.notifications}
           >
-            <Bell color="#0F172A" size={18} strokeWidth={1.9} />
+            <Bell color="#0F172A" size={17} strokeWidth={1.9} />
             {unreadNotifications > 0 && (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>
@@ -71,11 +72,11 @@ export function AppHeader({
             activeOpacity={0.75}
             accessibilityLabel={t.header.profile}
           >
-            <User color="#0F172A" size={18} strokeWidth={1.9} />
+            <User color="#0F172A" size={17} strokeWidth={1.9} />
           </TouchableOpacity>
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -90,14 +91,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
-    paddingVertical: 6,
+    paddingTop: 0,
+    paddingBottom: 6,
     backgroundColor: '#FFFFFF',
   },
 
   // Logo
   logo: {
-    width: 118,
-    height: 38,
+    width: 100,
+    height: 32,
   },
 
   // Icônes
@@ -107,9 +109,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: '#FFFFFF',

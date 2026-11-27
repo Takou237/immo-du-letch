@@ -23,7 +23,6 @@ import {
   Minus,
 } from 'lucide-react-native';
 
-import { AppHeader } from '../components/AppHeader';
 import { useListings } from '../hooks/useListings';
 import { useLang } from '../i18n/LangContext';
 import { CITY_OPTIONS } from '../data/listings';
@@ -257,8 +256,7 @@ export function SellScreen() {
   // ── Succès ──
   if (submitted) {
     return (
-      <SafeAreaView style={styles.safe} edges={[]}>
-        <AppHeader />
+      <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.successWrap}>
           <View style={styles.successIcon}>
             <Check color="#fff" size={36} strokeWidth={3} />
@@ -285,8 +283,7 @@ export function SellScreen() {
   const typeOptions = TYPE_OPTIONS.map(o => ({ key: o.key, label: isFr ? o.fr : o.en }));
 
   return (
-    <SafeAreaView style={styles.safe} edges={[]}>
-      <AppHeader />
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
