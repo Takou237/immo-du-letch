@@ -64,7 +64,7 @@ export function ListingDetailScreen({ route, navigation }: Props) {
   const isFr = lang === 'fr';
   const { listings } = useListings();
   const { isFavorite, toggleFavorite, addToRecent, favorites } = useFavorites();
-  const { isComparing, toggleCompare } = useCompare();
+  const { isComparing, toggleCompare, compareEnabled } = useCompare();
   const { user } = useAuth();
 
   const listing = useMemo(
@@ -197,15 +197,17 @@ export function ListingDetailScreen({ route, navigation }: Props) {
           {typeSingular} • {listing.city}
         </Text>
         <View style={styles.topBarRight}>
-          <TouchableOpacity
-            style={[
-              styles.navBtn,
-              isComparing(listing.id) && styles.navBtnGold,
-            ]}
-            onPress={() => toggleCompare(listing.id)}
-          >
-            <Scale size={18} color={colors.navy} />
-          </TouchableOpacity>
+          {compareEnabled && (
+            <TouchableOpacity
+              style={[
+                styles.navBtn,
+                isComparing(listing.id) && styles.navBtnGold,
+              ]}
+              onPress={() => toggleCompare(listing.id)}
+            >
+              <Scale size={18} color={colors.navy} />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity style={styles.navBtn} onPress={handleShare}>
             <Share2 size={18} color={colors.navy} />
           </TouchableOpacity>

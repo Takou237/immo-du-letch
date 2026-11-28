@@ -18,10 +18,13 @@ import { useListingsContext } from './ListingsProvider';
 import { useLang } from '../i18n/LangContext';
 
 const STORAGE_COMPARE = 'immo:compare';
+const STORAGE_COMPARE_ENABLED = 'immo:compareEnabled';
 export const MAX_COMPARE = 3;
 
 interface CompareContextValue {
   compareIds: string[];
+  compareEnabled: boolean;
+  setCompareEnabled: (enabled: boolean) => void;
   toggleCompare: (id: string) => boolean;
   removeFromCompare: (id: string) => void;
   clearCompare: () => void;
@@ -34,13 +37,18 @@ export function CompareProvider({ children }: { children: ReactNode }) {
   const { listings } = useListingsContext();
   const { lang } = useLang();
   const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [compareEnabled, setCompareEnabledState] = useState<boolean>(true);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     (async () => {
       try {
-        const raw = await AsyncStorage.getItem(STORAGE_COMPARE);
+        const [raw, rawEnabled] = await Promise.all([
+          AsyncStorage.getItem(STORAGE_COMPARE),
+          AsyncStorage.getItem(STORAGE_COMPARE_ENABLED),
+        ]);
         if (raw) setCompareIds(JSON.parse(raw));
+        if (rawEnabled !== null) setCompareEnabledState(JSON.parse(rawEnabled));
       } catch {
         // Silencieux
       } finally {
@@ -53,6 +61,11 @@ export function CompareProvider({ children }: { children: ReactNode }) {
     if (!hydrated) return;
     AsyncStorage.setItem(STORAGE_COMPARE, JSON.stringify(compareIds)).catch(() => {});
   }, [compareIds, hydrated]);
+
+  const setCompareEnabled = useCallback((enabled: boolean) => {
+    setCompareEnabledState(enabled);
+    AsyncStorage.setItem(STORAGE_COMPARE_ENABLED, JSON.stringify(enabled)).catch(() => {});
+  }, []);
 
   /** Retourne true si ajouté/retiré, false si refusé (limite ou transaction différente) */
   const toggleCompare = useCallback((id: string): boolean => {
@@ -104,11 +117,13 @@ export function CompareProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<CompareContextValue>(() => ({
     compareIds,
+    compareEnabled,
+    setCompareEnabled,
     toggleCompare,
     removeFromCompare,
     clearCompare,
     isComparing,
-  }), [compareIds, toggleCompare, removeFromCompare, clearCompare, isComparing]);
+  }), [compareIds, compareEnabled, setCompareEnabled, toggleCompare, removeFromCompare, clearCompare, isComparing]);
 
   return (
     <CompareContext.Provider value={value}>

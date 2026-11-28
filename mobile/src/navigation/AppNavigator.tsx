@@ -9,7 +9,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Home, Search, Settings, Heart, PlusCircle } from 'lucide-react-native';
 import { useLang } from '../i18n/LangContext';
-import { useNotifications } from '../hooks/useNotifications';
 
 import { MainTabParamList, RootStackParamList } from './types';
 import { colors } from '../theme';
@@ -33,7 +32,6 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 function MainTabs() {
   const { t } = useLang();
-  const { unreadCount } = useNotifications();
   const insets = useSafeAreaInsets();
   const bottomPadding = Math.max(insets.bottom, 12);
 
@@ -99,13 +97,6 @@ function MainTabs() {
         options={{
           tabBarLabel: t.nav.settings,
           tabBarIcon: ({ color, size }) => <Settings color={color} size={size} />,
-          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
-          tabBarBadgeStyle: {
-            backgroundColor: '#DC2626',
-            color: '#FFFFFF',
-            fontSize: 10,
-            fontWeight: '700',
-          },
         }}
       />
     </Tab.Navigator>

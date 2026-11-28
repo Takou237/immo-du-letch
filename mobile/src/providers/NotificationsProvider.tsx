@@ -16,6 +16,7 @@ import React, {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const STORAGE_NOTIFS = 'immo:notifications';
+const STORAGE_NOTIFS_ENABLED = 'immo:notificationsEnabled';
 
 export type NotifType = 'price' | 'favorite' | 'message' | 'new';
 
@@ -47,6 +48,8 @@ const INITIAL_NOTIFS: NotifItem[] = [
 interface NotificationsContextValue {
   notifications: NotifItem[];
   unreadCount: number;
+  notificationsEnabled: boolean;
+  setNotificationsEnabled: (enabled: boolean) => void;
   markReadAndRemove: (id: string) => void;
   clearAll: () => void;
 }
@@ -55,14 +58,21 @@ const NotificationsContext = createContext<NotificationsContextValue | null>(nul
 
 export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<NotifItem[]>(INITIAL_NOTIFS);
+  const [notificationsEnabled, setNotificationsEnabledState] = useState<boolean>(true);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     (async () => {
       try {
-        const raw = await AsyncStorage.getItem(STORAGE_NOTIFS);
+        const [raw, rawEnabled] = await Promise.all([
+          AsyncStorage.getItem(STORAGE_NOTIFS),
+          AsyncStorage.getItem(STORAGE_NOTIFS_ENABLED),
+        ]);
         if (raw !== null) {
           setNotifications(JSON.parse(raw));
+        }
+        if (rawEnabled !== null) {
+          setNotificationsEnabledState(JSON.parse(rawEnabled));
         }
       } catch {
         // Silencieux
@@ -77,6 +87,11 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     AsyncStorage.setItem(STORAGE_NOTIFS, JSON.stringify(notifications)).catch(() => {});
   }, [notifications, hydrated]);
 
+  const setNotificationsEnabled = useCallback((enabled: boolean) => {
+    setNotificationsEnabledState(enabled);
+    AsyncStorage.setItem(STORAGE_NOTIFS_ENABLED, JSON.stringify(enabled)).catch(() => {});
+  }, []);
+
   /** Lire une notification la fait disparaître de la liste */
   const markReadAndRemove = useCallback((id: string) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
@@ -88,10 +103,12 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<NotificationsContextValue>(() => ({
     notifications,
-    unreadCount: notifications.length,
+    unreadCount: notificationsEnabled ? notifications.length : 0,
+    notificationsEnabled,
+    setNotificationsEnabled,
     markReadAndRemove,
     clearAll,
-  }), [notifications, markReadAndRemove, clearAll]);
+  }), [notifications, notificationsEnabled, setNotificationsEnabled, markReadAndRemove, clearAll]);
 
   return (
     <NotificationsContext.Provider value={value}>

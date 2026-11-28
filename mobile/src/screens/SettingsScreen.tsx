@@ -41,6 +41,7 @@ import {
 import { useLang } from '../i18n/LangContext';
 import { useAuth } from '../hooks/useAuth';
 import { useNotifications } from '../hooks/useNotifications';
+import { useCompare } from '../hooks/useCompare';
 import { RootStackParamList } from '../navigation/types';
 import { colors, spacing } from '../theme';
 
@@ -89,7 +90,8 @@ function SettingRow({
 export function SettingsScreen() {
   const { lang, toggleLang } = useLang();
   const { user } = useAuth();
-  const { unreadCount } = useNotifications();
+  const { notificationsEnabled, setNotificationsEnabled } = useNotifications();
+  const { compareEnabled, setCompareEnabled } = useCompare();
   const navigation = useNavigation<NavProp>();
   const isFr = lang === 'fr';
 
@@ -187,6 +189,44 @@ export function SettingsScreen() {
           />
           <View style={styles.divider} />
           <SettingRow
+            icon={<Bell color={colors.gold} size={18} strokeWidth={2} />}
+            iconBg="#FEF3C7"
+            title={isFr ? 'Notifications' : 'Notifications'}
+            subtitle={
+              isFr
+                ? 'Activer ou désactiver les notifications'
+                : 'Enable or disable notifications'
+            }
+            right={
+              <Switch
+                value={notificationsEnabled}
+                onValueChange={setNotificationsEnabled}
+                trackColor={{ false: '#CBD5E1', true: colors.navy }}
+                thumbColor={notificationsEnabled ? colors.gold : '#F8FAFC'}
+              />
+            }
+          />
+          <View style={styles.divider} />
+          <SettingRow
+            icon={<GitCompare color="#7C3AED" size={18} strokeWidth={2} />}
+            iconBg="#F3E8FF"
+            title={isFr ? 'Comparateur de biens' : 'Property comparison'}
+            subtitle={
+              isFr
+                ? 'Activer ou désactiver la comparaison de biens'
+                : 'Enable or disable property comparison'
+            }
+            right={
+              <Switch
+                value={compareEnabled}
+                onValueChange={setCompareEnabled}
+                trackColor={{ false: '#CBD5E1', true: colors.navy }}
+                thumbColor={compareEnabled ? colors.gold : '#F8FAFC'}
+              />
+            }
+          />
+          <View style={styles.divider} />
+          <SettingRow
             icon={<Bell color="#10B981" size={18} strokeWidth={2} />}
             iconBg="#D1FAE5"
             title={isFr ? 'Alertes baisse de prix' : 'Price drop alerts'}
@@ -211,8 +251,8 @@ export function SettingsScreen() {
             title={isFr ? 'Nouveaux biens correspondants' : 'Matching new listings'}
             subtitle={
               isFr
-                ? 'Selon vos recherches sauvegardées'
-                : 'Based on your saved searches'
+                ? 'Selon vos critères de recherche'
+                : 'Based on your search criteria'
             }
             right={
               <Switch
@@ -222,38 +262,6 @@ export function SettingsScreen() {
                 thumbColor={newListingsAlerts ? colors.gold : '#F8FAFC'}
               />
             }
-          />
-        </View>
-
-        {/* ── Raccourcis ── */}
-        <Text style={styles.sectionLabel}>
-          {isFr ? 'OUTILS & ACTIVITÉ' : 'TOOLS & ACTIVITY'}
-        </Text>
-        <View style={styles.card}>
-          <SettingRow
-            icon={<Bell color={colors.gold} size={18} strokeWidth={2} />}
-            iconBg="#FEF3C7"
-            title={isFr ? 'Notifications' : 'Notifications'}
-            subtitle={isFr ? 'Historique de vos alertes' : 'Your alert history'}
-            onPress={() => navigation.navigate('Notifications')}
-            right={
-              unreadCount > 0 ? (
-                <View style={styles.notifBadgeRow}>
-                  <View style={styles.notifBadge}>
-                    <Text style={styles.notifBadgeText}>{unreadCount}</Text>
-                  </View>
-                  <ChevronRight color={colors.textMuted} size={18} />
-                </View>
-              ) : undefined
-            }
-          />
-          <View style={styles.divider} />
-          <SettingRow
-            icon={<GitCompare color="#7C3AED" size={18} strokeWidth={2} />}
-            iconBg="#F3E8FF"
-            title={isFr ? 'Comparateur de biens' : 'Property comparison'}
-            subtitle={isFr ? 'Comparer jusqu’à 3 annonces' : 'Compare up to 3 listings'}
-            onPress={() => navigation.navigate('Compare')}
           />
         </View>
 

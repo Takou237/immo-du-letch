@@ -32,7 +32,7 @@ export function FavoritesScreen() {
   const { lang, t } = useLang();
   const { listings } = useListings();
   const { favorites, recentlyViewed, toggleFavorite, clearRecent } = useFavorites();
-  const { compareIds, clearCompare } = useCompare();
+  const { compareIds, clearCompare, compareEnabled } = useCompare();
 
   const [tab, setTab] = useState<'favorites' | 'recent'>('favorites');
 
@@ -200,7 +200,7 @@ export function FavoritesScreen() {
         />
       )}
 
-      {compareIds.length > 0 && (
+      {compareEnabled && compareIds.length > 0 && (
         <View style={styles.compareBar}>
           <View style={styles.compareBarLeft}>
             <Scale size={16} color={colors.gold} />

@@ -16,12 +16,12 @@ interface Props {
 }
 
 export function FloatingCompareBubble({ currentRouteName, onPress }: Props) {
-  const { compareIds } = useCompare();
+  const { compareIds, compareEnabled } = useCompare();
   const { lang } = useLang();
   const insets = useSafeAreaInsets();
 
-  // Masquée si aucun bien sélectionné ou déjà sur la page Compare
-  if (compareIds.length === 0 || currentRouteName === 'Compare') {
+  // Masquée si comparateur désactivé, aucun bien sélectionné ou déjà sur la page Compare
+  if (!compareEnabled || compareIds.length === 0 || currentRouteName === 'Compare') {
     return null;
   }
 
