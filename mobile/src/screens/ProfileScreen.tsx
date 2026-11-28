@@ -27,6 +27,13 @@ import {
   Check,
   Heart,
   FileText,
+  ShieldCheck,
+  Clock,
+  Phone,
+  User as UserIcon,
+  PlusCircle,
+  Trash2,
+  MapPin,
 } from 'lucide-react-native';
 
 import { RootStackParamList } from '../navigation/types';
@@ -35,6 +42,7 @@ import { AccountType } from '../providers/AuthProvider';
 import { useFavorites } from '../hooks/useFavorites';
 import { useListings } from '../hooks/useListings';
 import { useLang } from '../i18n/LangContext';
+import { formatFullFCFA } from '../utils/formatPrice';
 import { colors } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
@@ -70,8 +78,8 @@ const DEMO_GMAIL_ACCOUNTS: { name: string; email: string; accountType: AccountTy
 export function ProfileScreen({ navigation }: Props) {
   const { lang, t } = useLang();
   const { user, loginWithEmail, registerWithEmail, loginWithDemo, updateProfile, logout } = useAuth();
-  const { favorites } = useFavorites();
-  const { localListings } = useListings();
+  const { favorites, recentlyViewed } = useFavorites();
+  const { localListings, deleteLocalListing } = useListings();
 
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [googleStep, setGoogleStep] = useState(false);
@@ -515,15 +523,30 @@ export function ProfileScreen({ navigation }: Props) {
     );
   }
 
-  // ── ÉCRAN CONNECTÉ (ESPACE PERSONNEL) ──
+  // ── ÉCRAN CONNECTÉ (ESPACE PERSONNEL PRO) ──
+  const handleConfirmLogout = () => {
+    Alert.alert(
+      lang === 'fr' ? 'Déconnexion' : 'Sign out',
+      lang === 'fr'
+        ? 'Voulez-vous vraiment vous déconnecter de votre compte ?'
+        : 'Do you really want to sign out?',
+      [
+        { text: lang === 'fr' ? 'Annuler' : 'Cancel', style: 'cancel' },
+        { text: lang === 'fr' ? 'Se déconnecter' : 'Sign out', style: 'destructive', onPress: logout },
+      ],
+    );
+  };
+
   return (
     <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
       <View style={styles.topBar}>
         <TouchableOpacity style={styles.navBtn} onPress={() => navigation.goBack()}>
           <ArrowLeft size={20} color={colors.navy} />
         </TouchableOpacity>
-        <Text style={styles.topTitle}>{t.header.profile}</Text>
-        <TouchableOpacity style={styles.logoutIconBtn} onPress={logout}>
+        <Text style={styles.topTitle}>
+          {lang === 'fr' ? 'Mon compte' : 'My account'}
+        </Text>
+        <TouchableOpacity style={styles.logoutIconBtn} onPress={handleConfirmLogout}>
           <LogOut size={18} color={colors.danger} />
         </TouchableOpacity>
       </View>
@@ -540,85 +563,208 @@ export function ProfileScreen({ navigation }: Props) {
           keyboardShouldPersistTaps="handled"
           automaticallyAdjustKeyboardInsets
         >
-        <View style={styles.profileBanner}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{user.name.slice(0, 2).toUpperCase()}</Text>
-          </View>
-          <View style={styles.profileInfo}>
-            <Text style={styles.userName}>{user.name}</Text>
-            <Text style={styles.userEmail}>{user.email}</Text>
-            <View style={styles.accountBadge}>
-              <Text style={styles.accountBadgeText}>
-                {accountTypeLabels[user.accountType][lang]}
+          {/* Carte Profil Premium */}
+          <View style={styles.profileBanner}>
+            <View style={styles.profileTopRow}>
+              <View style={styles.avatarWrap}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>{user.name.slice(0, 2).toUpperCase()}</Text>
+                </View>
+                <View style={styles.onlineDot} />
+              </View>
+              <View style={styles.profileInfo}>
+                <View style={styles.userNameRow}>
+                  <Text style={styles.userName} numberOfLines={1}>{user.name}</Text>
+                  <ShieldCheck size={17} color={colors.gold} />
+                </View>
+                <Text style={styles.userEmail} numberOfLines={1}>{user.email}</Text>
+                {!!user.phone && (
+                  <Text style={styles.userPhone}>{user.phone}</Text>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.profileFooterRow}>
+              <View style={styles.accountBadge}>
+                <Text style={styles.accountBadgeText}>
+                  {accountTypeLabels[user.accountType][lang]}
+                </Text>
+              </View>
+              <Text style={styles.memberLabel}>
+                {lang === 'fr' ? 'Compte vérifié · IMMO DU LETCH' : 'Verified · IMMO DU LETCH'}
               </Text>
             </View>
           </View>
-        </View>
 
-        <View style={styles.statsRow}>
-          <TouchableOpacity
-            style={styles.statBox}
-            onPress={() => navigation.navigate('MainTabs', { screen: 'Favorites' })}
-          >
-            <Heart size={18} color={colors.navy} />
-            <Text style={styles.statVal}>{favorites.length}</Text>
-            <Text style={styles.statLbl}>{t.nav.favorites}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.statBox}
-            onPress={() => navigation.navigate('MainTabs', { screen: 'Sell' })}
-          >
-            <FileText size={18} color={colors.navy} />
-            <Text style={styles.statVal}>{localListings.length}</Text>
-            <Text style={styles.statLbl}>{t.sell.myListings}</Text>
-          </TouchableOpacity>
-        </View>
+          {/* Tableau de bord KPI (3 tuiles) */}
+          <View style={styles.statsRow}>
+            <TouchableOpacity
+              style={styles.statBox}
+              onPress={() => navigation.navigate('MainTabs', { screen: 'Favorites' })}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.statIconWrap, styles.statIconFav]}>
+                <Heart size={16} color="#DC2626" />
+              </View>
+              <Text style={styles.statVal}>{favorites.length}</Text>
+              <Text style={styles.statLbl}>{t.nav.favorites}</Text>
+            </TouchableOpacity>
 
-        <View style={styles.formCard}>
-          <Text style={styles.sectionTitle}>
-            {lang === 'fr' ? 'Informations du compte' : 'Account details'}
-          </Text>
+            <TouchableOpacity
+              style={styles.statBox}
+              onPress={() => navigation.navigate('MainTabs', { screen: 'Sell' })}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.statIconWrap, styles.statIconListings]}>
+                <FileText size={16} color={colors.navy} />
+              </View>
+              <Text style={styles.statVal}>{localListings.length}</Text>
+              <Text style={styles.statLbl}>{t.sell.myListings}</Text>
+            </TouchableOpacity>
 
-          <Text style={styles.fieldLabel}>{lang === 'fr' ? 'Nom' : 'Name'}</Text>
-          <TextInput
-            style={styles.input}
-            value={editName || user.name}
-            onChangeText={setEditName}
-          />
-
-          <Text style={styles.fieldLabel}>{lang === 'fr' ? 'Téléphone' : 'Phone'}</Text>
-          <TextInput
-            style={styles.input}
-            value={editPhone || user.phone}
-            onChangeText={setEditPhone}
-            keyboardType="phone-pad"
-          />
-
-          <Text style={styles.fieldLabel}>{lang === 'fr' ? 'Type de compte' : 'Account type'}</Text>
-          <View style={styles.typeGrid}>
-            {(['particulier', 'agence', 'agent_independant'] as AccountType[]).map(at => (
-              <TouchableOpacity
-                key={at}
-                style={[styles.typeChip, editType === at && styles.typeChipActive]}
-                onPress={() => setEditType(at)}
-              >
-                <Text
-                  style={[
-                    styles.typeChipText,
-                    editType === at && styles.typeChipTextActive,
-                  ]}
-                >
-                  {accountTypeLabels[at][lang]}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            <TouchableOpacity
+              style={styles.statBox}
+              onPress={() => navigation.navigate('MainTabs', { screen: 'Favorites' })}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.statIconWrap, styles.statIconRecent]}>
+                <Clock size={16} color="#B45309" />
+              </View>
+              <Text style={styles.statVal}>{recentlyViewed.length}</Text>
+              <Text style={styles.statLbl}>
+                {lang === 'fr' ? 'Consultés' : 'Viewed'}
+              </Text>
+            </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.submitGoldBtn} onPress={handleSaveProfile}>
-            <Check size={16} color={colors.navy} />
-            <Text style={styles.submitGoldText}>{t.common.save}</Text>
+          {/* Mes annonces déposées */}
+          <View style={styles.formCard}>
+            <View style={styles.cardHeaderRow}>
+              <Text style={styles.sectionTitle}>
+                {lang === 'fr' ? 'Mes annonces déposées' : 'My posted listings'}
+              </Text>
+              <TouchableOpacity
+                style={styles.addMiniBtn}
+                onPress={() => navigation.navigate('MainTabs', { screen: 'Sell' })}
+              >
+                <PlusCircle size={14} color={colors.navy} />
+                <Text style={styles.addMiniBtnText}>
+                  {lang === 'fr' ? 'Déposer' : 'Post'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {localListings.length === 0 ? (
+              <View style={styles.emptyListingsBox}>
+                <Text style={styles.emptyListingsText}>
+                  {lang === 'fr'
+                    ? 'Vous n’avez pas encore publié d’annonce depuis cet appareil.'
+                    : 'You have not posted any listing from this device yet.'}
+                </Text>
+              </View>
+            ) : (
+              localListings.map(item => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={styles.myListingRow}
+                  onPress={() => navigation.navigate('ListingDetail', { listingId: item.id })}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.myListingInfo}>
+                    <Text style={styles.myListingTitle} numberOfLines={1}>{item.title}</Text>
+                    <View style={styles.myListingMetaRow}>
+                      <MapPin size={12} color={colors.textMuted} />
+                      <Text style={styles.myListingMeta}>
+                        {item.neighborhood}, {item.city} · {formatFullFCFA(item.price)}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.myListingRight}>
+                    <View style={styles.pendingPill}>
+                      <Text style={styles.pendingPillText}>
+                        {lang === 'fr' ? 'En attente' : 'Pending'}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={() => deleteLocalListing(item.id)}
+                      hitSlop={8}
+                    >
+                      <Trash2 size={16} color={colors.danger} />
+                    </TouchableOpacity>
+                  </View>
+                </TouchableOpacity>
+              ))
+            )}
+          </View>
+
+          {/* Carte Informations du compte */}
+          <View style={styles.formCard}>
+            <Text style={styles.sectionTitle}>
+              {lang === 'fr' ? 'Informations personnelles' : 'Personal information'}
+            </Text>
+
+            <Text style={styles.fieldLabel}>
+              {lang === 'fr' ? 'Nom complet ou agence' : 'Full name or agency'}
+            </Text>
+            <View style={styles.iconInputWrap}>
+              <UserIcon size={16} color={colors.textMuted} />
+              <TextInput
+                style={styles.iconInputField}
+                value={editName || user.name}
+                onChangeText={setEditName}
+              />
+            </View>
+
+            <Text style={styles.fieldLabel}>{lang === 'fr' ? 'Téléphone' : 'Phone'}</Text>
+            <View style={styles.iconInputWrap}>
+              <Phone size={16} color={colors.textMuted} />
+              <TextInput
+                style={styles.iconInputField}
+                value={editPhone || user.phone}
+                onChangeText={setEditPhone}
+                keyboardType="phone-pad"
+              />
+            </View>
+
+            <Text style={styles.fieldLabel}>{lang === 'fr' ? 'Statut du compte' : 'Account status'}</Text>
+            <View style={styles.typeGrid}>
+              {(['particulier', 'agence', 'agent_independant'] as AccountType[]).map(at => (
+                <TouchableOpacity
+                  key={at}
+                  style={[styles.typeChip, editType === at && styles.typeChipActive]}
+                  onPress={() => setEditType(at)}
+                >
+                  <Text
+                    style={[
+                      styles.typeChipText,
+                      editType === at && styles.typeChipTextActive,
+                    ]}
+                  >
+                    {accountTypeLabels[at][lang]}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TouchableOpacity style={styles.submitGoldBtn} onPress={handleSaveProfile} activeOpacity={0.85}>
+              <Check size={16} color={colors.navy} />
+              <Text style={styles.submitGoldText}>
+                {lang === 'fr' ? 'Enregistrer les modifications' : 'Save changes'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Bouton Se déconnecter */}
+          <TouchableOpacity
+            style={styles.logoutFullBtn}
+            onPress={handleConfirmLogout}
+            activeOpacity={0.8}
+          >
+            <LogOut size={16} color={colors.danger} />
+            <Text style={styles.logoutFullText}>
+              {lang === 'fr' ? 'Se déconnecter' : 'Sign out'}
+            </Text>
           </TouchableOpacity>
-        </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -939,52 +1085,91 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   profileBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
     backgroundColor: colors.navy,
-    borderRadius: 16,
+    borderRadius: 18,
     padding: 18,
     marginBottom: 14,
   },
+  profileTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  avatarWrap: {
+    position: 'relative',
+  },
   avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: colors.gold,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  onlineDot: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#22C55E',
+    borderWidth: 2,
+    borderColor: colors.navy,
+  },
   avatarText: {
     color: colors.navy,
-    fontSize: 20,
+    fontSize: 21,
     fontWeight: '800',
   },
   profileInfo: {
     flex: 1,
   },
+  userNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   userName: {
     color: colors.textOnNavy,
     fontSize: 18,
     fontWeight: '800',
+    flexShrink: 1,
   },
   userEmail: {
     color: '#CBD5E1',
+    fontSize: 12.5,
+    marginTop: 2,
+  },
+  userPhone: {
+    color: '#94A3B8',
     fontSize: 12,
     marginTop: 2,
   },
+  profileFooterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.12)',
+  },
   accountBadge: {
-    alignSelf: 'flex-start',
     backgroundColor: colors.navyLight,
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    marginTop: 6,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
   accountBadgeText: {
     color: colors.gold,
-    fontSize: 11,
+    fontSize: 11.5,
     fontWeight: '700',
+  },
+  memberLabel: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '600',
   },
   statsRow: {
     flexDirection: 'row',
@@ -996,18 +1181,30 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
   },
+  statIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statIconFav: { backgroundColor: '#FEE2E2' },
+  statIconListings: { backgroundColor: '#EFF6FF' },
+  statIconRecent: { backgroundColor: '#FEF3C7' },
   statVal: {
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: '800',
     color: colors.navy,
   },
   statLbl: {
-    fontSize: 11,
+    fontSize: 11.5,
+    fontWeight: '600',
     color: colors.textSecondary,
     textAlign: 'center',
   },
@@ -1015,8 +1212,116 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 16,
+    marginBottom: 14,
+  },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  addMiniBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: colors.goldSoft,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  addMiniBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.navy,
+  },
+  emptyListingsBox: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  emptyListingsText: {
+    fontSize: 12.5,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  myListingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    gap: 10,
+  },
+  myListingInfo: { flex: 1 },
+  myListingTitle: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: colors.navy,
+    marginBottom: 3,
+  },
+  myListingMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  myListingMeta: {
+    fontSize: 11.5,
+    color: colors.textMuted,
+  },
+  myListingRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  pendingPill: {
+    backgroundColor: '#FEF3C7',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  pendingPillText: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: '#92400E',
+  },
+  iconInputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    backgroundColor: '#FFFFFF',
+  },
+  iconInputField: {
+    flex: 1,
+    paddingVertical: 11,
+    fontSize: 14,
+    color: colors.navy,
+  },
+  logoutFullBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    borderRadius: 12,
+    paddingVertical: 14,
+    marginTop: 4,
+  },
+  logoutFullText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.danger,
   },
   sectionTitle: {
     fontSize: 16,
