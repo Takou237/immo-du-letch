@@ -13,7 +13,19 @@ import React, {
   ReactNode,
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  GoogleSignin,
+  isCancelledResponse,
+  isSuccessResponse,
+} from '@react-native-google-signin/google-signin';
 import { api, ApiError, ApiUser, getApiToken, setApiToken } from '../api/client';
+
+const GOOGLE_WEB_CLIENT_ID =
+  '181114454555-152od25c44l5kjgoqeqem6e7qfeq6peo.apps.googleusercontent.com';
+
+GoogleSignin.configure({
+  webClientId: GOOGLE_WEB_CLIENT_ID,
+});
 
 const STORAGE_USER = 'immo:user';
 
@@ -42,7 +54,7 @@ interface AuthContextValue {
   user: UserProfile | null;
   loginWithEmail: (email: string, password: string) => Promise<void>;
   registerWithEmail: (input: RegisterInput) => Promise<void>;
-  loginWithDemo: (name: string, email: string, accountType?: AccountType) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   updateProfile: (partial: Partial<Pick<UserProfile, 'name' | 'phone' | 'accountType' | 'agencyName'>>) => Promise<void>;
   logout: () => void;
 }
@@ -141,25 +153,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const loginWithDemo = useCallback(
-    async (name: string, email: string, accountType: AccountType = 'particulier') => {
-      try {
-        const res = await api.googleLogin(name, email);
-        await setApiToken(res.token);
-        setUser(mapApiUser(res.user, accountType));
-      } catch {
-        setUser({
-          id: `demo_${Date.now()}`,
-          name,
-          email,
-          phone: '+237 699 123 456',
-          accountType,
-          createdAt: new Date().toISOString(),
-        });
-      }
-    },
-    [],
-  );
+  const loginWithGoogle = useCallback(async () => {
+    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+    const response = await GoogleSignin.signIn();
+    if (isCancelledResponse(response)) {
+      return;
+    }
+    if (!isSuccessResponse(response)) {
+      throw new Error('Connexion Google incomplète.');
+    }
+    const gUser = response.data.user;
+    const email = gUser.email.trim().toLowerCase();
+    const name = (gUser.name || email.split('@')[0] || 'Utilisateur').trim();
+    const res = await api.googleLogin(name, email);
+    await setApiToken(res.token);
+    setUser(mapApiUser(res.user));
+  }, []);
 
   const updateProfile = useCallback(
     async (partial: Partial<Pick<UserProfile, 'name' | 'phone' | 'accountType' | 'agencyName'>>) => {
@@ -180,6 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     api.logout().catch(() => {});
+    GoogleSignin.signOut().catch(() => {});
     setApiToken(null).catch(() => {});
     setUser(null);
   }, []);
@@ -188,10 +198,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     loginWithEmail,
     registerWithEmail,
-    loginWithDemo,
+    loginWithGoogle,
     updateProfile,
     logout,
-  }), [user, loginWithEmail, registerWithEmail, loginWithDemo, updateProfile, logout]);
+  }), [user, loginWithEmail, registerWithEmail, loginWithGoogle, updateProfile, logout]);
 
   return (
     <AuthContext.Provider value={value}>

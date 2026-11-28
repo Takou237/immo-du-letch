@@ -70,19 +70,14 @@ function GoogleLogo() {
   );
 }
 
-const DEMO_GMAIL_ACCOUNTS: { name: string; email: string; accountType: AccountType }[] = [
-  { name: 'Ken Daniel', email: 'ken.daniel@gmail.com', accountType: 'particulier' },
-  { name: 'IMMO DU LETCH Pro', email: 'contact.immoduletch@gmail.com', accountType: 'agence' },
-];
-
 export function ProfileScreen({ navigation }: Props) {
   const { lang, t } = useLang();
-  const { user, loginWithEmail, registerWithEmail, loginWithDemo, updateProfile, logout } = useAuth();
+  const { user, loginWithEmail, registerWithEmail, loginWithGoogle, updateProfile, logout } = useAuth();
   const { favorites, recentlyViewed } = useFavorites();
   const { localListings, deleteLocalListing } = useListings();
 
   const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [googleStep, setGoogleStep] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   // Connexion
   const [email, setEmail] = useState('');
@@ -109,6 +104,25 @@ export function ProfileScreen({ navigation }: Props) {
   };
 
   const isEmailValid = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
+
+  const handleGoogleLogin = async () => {
+    if (googleLoading) return;
+    setGoogleLoading(true);
+    try {
+      await loginWithGoogle();
+    } catch (err) {
+      Alert.alert(
+        lang === 'fr' ? 'Connexion Google impossible' : 'Google sign-in failed',
+        err instanceof Error
+          ? err.message
+          : (lang === 'fr'
+              ? 'Impossible de se connecter avec Google pour le moment.'
+              : 'Unable to sign in with Google right now.'),
+      );
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const handleLogin = async () => {
     if (!isEmailValid(email)) {
@@ -254,10 +268,7 @@ export function ProfileScreen({ navigation }: Props) {
             <View style={styles.segmentWrap}>
               <TouchableOpacity
                 style={[styles.segmentBtn, mode === 'login' && styles.segmentBtnActive]}
-                onPress={() => {
-                  setMode('login');
-                  setGoogleStep(false);
-                }}
+                onPress={() => setMode('login')}
               >
                 <Text style={[styles.segmentText, mode === 'login' && styles.segmentTextActive]}>
                   {lang === 'fr' ? 'Connexion' : 'Sign in'}
@@ -266,10 +277,7 @@ export function ProfileScreen({ navigation }: Props) {
 
               <TouchableOpacity
                 style={[styles.segmentBtn, mode === 'register' && styles.segmentBtnActive]}
-                onPress={() => {
-                  setMode('register');
-                  setGoogleStep(false);
-                }}
+                onPress={() => setMode('register')}
               >
                 <Text style={[styles.segmentText, mode === 'register' && styles.segmentTextActive]}>
                   {lang === 'fr' ? 'Inscription' : 'Sign up'}
@@ -279,38 +287,20 @@ export function ProfileScreen({ navigation }: Props) {
 
             {/* Bouton Google */}
             <TouchableOpacity
-              style={[styles.googleBtn, googleStep && styles.googleBtnActive]}
-              onPress={() => setGoogleStep(prev => !prev)}
+              style={[styles.googleBtn, googleLoading && styles.googleBtnDisabled]}
+              onPress={handleGoogleLogin}
+              disabled={googleLoading}
               activeOpacity={0.85}
             >
               <GoogleLogo />
               <Text style={styles.googleBtnText}>
-                {lang === 'fr'
-                  ? 'Continuer avec Google (Gmail)'
-                  : 'Continue with Google (Gmail)'}
+                {googleLoading
+                  ? (lang === 'fr' ? 'Connexion Google...' : 'Signing in...')
+                  : (lang === 'fr'
+                      ? 'Continuer avec Google'
+                      : 'Continue with Google')}
               </Text>
             </TouchableOpacity>
-
-            {/* Sélecteur rapide compte Gmail démo */}
-            {googleStep && (
-              <View style={styles.googleList}>
-                {DEMO_GMAIL_ACCOUNTS.map(acc => (
-                  <TouchableOpacity
-                    key={acc.email}
-                    style={styles.googleAccountItem}
-                    onPress={() => loginWithDemo(acc.name, acc.email, acc.accountType)}
-                  >
-                    <View style={styles.googleAvatar}>
-                      <Text style={styles.googleAvatarText}>{acc.name.charAt(0)}</Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.googleAccName}>{acc.name}</Text>
-                      <Text style={styles.googleAccEmail}>{acc.email}</Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
 
             {/* Séparateur OU PAR E-MAIL */}
             <View style={styles.dividerRow}>
@@ -878,51 +868,13 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.surface,
   },
-  googleBtnActive: {
-    borderColor: colors.info,
+  googleBtnDisabled: {
+    opacity: 0.6,
   },
   googleBtnText: {
     fontSize: 14,
     fontWeight: '700',
     color: colors.navy,
-  },
-  googleList: {
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    overflow: 'hidden',
-  },
-  googleAccountItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    padding: 10,
-    backgroundColor: colors.surfaceAlt,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  googleAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.navy,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  googleAvatarText: {
-    color: colors.gold,
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  googleAccName: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.navy,
-  },
-  googleAccEmail: {
-    fontSize: 11,
-    color: colors.textSecondary,
   },
   dividerRow: {
     flexDirection: 'row',
