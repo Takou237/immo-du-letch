@@ -3,7 +3,7 @@
  * Formulaire "Déposer une annonce" aligné sur le design web.
  * 1 page, sans étapes multiples, bouton "Soumettre pour validation".
  */
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -22,9 +22,14 @@ import {
   ChevronDown,
   Plus,
   Minus,
+  HelpCircle,
+  Home,
+  SlidersHorizontal,
 } from 'lucide-react-native';
 
+import { PageGuideModal, GuideStep } from '../components/PageGuideModal';
 import { useListings } from '../hooks/useListings';
+import { usePageGuide } from '../hooks/usePageGuide';
 import { useLang } from '../i18n/LangContext';
 import { CITY_OPTIONS } from '../data/listings';
 import { PropertyType, Transaction } from '../types/listing';
@@ -194,6 +199,31 @@ export function SellScreen() {
   const [photoCount, setPhotoCount] = useState(0);
   const [description, setDescription] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const { visible: guideVisible, openGuide, closeGuide } = usePageGuide('sell');
+
+  const guideSteps: GuideStep[] = useMemo(() => [
+    {
+      title: isFr ? 'Transaction & Type de bien' : 'Transaction & Type',
+      description: isFr
+        ? 'Choisissez si vous vendez ou louez, puis sélectionnez le type de bien (maison, appartement, studio, terrain ou bureau).'
+        : 'Choose Sale or Rent, then select the property type.',
+      icon: <Home size={26} color={colors.navy} />,
+    },
+    {
+      title: isFr ? 'Localisation, Prix & Équipements' : 'Location, Price & Amenities',
+      description: isFr
+        ? 'Indiquez la ville, le quartier, le prix en FCFA, la surface en m², le nombre de pièces et cochez les équipements disponibles.'
+        : 'Enter city, district, price in FCFA, surface, rooms, and select available amenities.',
+      icon: <SlidersHorizontal size={26} color={colors.navy} />,
+    },
+    {
+      title: isFr ? 'Photos & Soumission' : 'Photos & Submission',
+      description: isFr
+        ? 'Ajoutez des photos et une description, puis touchez "Soumettre pour validation" pour enregistrer votre annonce.'
+        : 'Add photos and description, then tap "Submit for review" to save your listing.',
+      icon: <Upload size={26} color={colors.navy} />,
+    },
+  ], [isFr]);
 
   const toggleEquipment = (key: string) => {
     setEquipments(prev =>
@@ -298,9 +328,14 @@ export function SellScreen() {
           showsVerticalScrollIndicator={false}
         >
         {/* ── Titre page ── */}
-        <Text style={styles.pageTitle}>
-          {isFr ? 'Déposer une annonce' : 'Post a listing'}
-        </Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.pageTitle}>
+            {isFr ? 'Déposer une annonce' : 'Post a listing'}
+          </Text>
+          <TouchableOpacity style={styles.helpBtn} onPress={openGuide} hitSlop={8}>
+            <HelpCircle size={18} color={colors.navy} />
+          </TouchableOpacity>
+        </View>
         <Text style={styles.pageSub}>
           {isFr
             ? 'Votre annonce sera soumise à validation avant publication.'
@@ -488,6 +523,13 @@ export function SellScreen() {
         <View style={styles.bottomPad} />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <PageGuideModal
+        visible={guideVisible}
+        pageTitle={isFr ? 'Déposer' : 'List'}
+        steps={guideSteps}
+        onClose={closeGuide}
+      />
     </SafeAreaView>
   );
 }
@@ -792,5 +834,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
     color: '#fff',
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  helpBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

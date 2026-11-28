@@ -10,7 +10,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Bell, User } from 'lucide-react-native';
+import { Bell, User, HelpCircle } from 'lucide-react-native';
 import { colors, spacing } from '../theme';
 import { useLang } from '../i18n/LangContext';
 import { useNotifications } from '../hooks/useNotifications';
@@ -20,12 +20,14 @@ interface AppHeaderProps {
   unreadNotifications?: number;
   onNotificationsPress?: () => void;
   onProfilePress?: () => void;
+  onHelpPress?: () => void;
 }
 
 export function AppHeader({
   unreadNotifications,
   onNotificationsPress,
   onProfilePress,
+  onHelpPress,
 }: AppHeaderProps) {
   const { t } = useLang();
   const { unreadCount } = useNotifications();
@@ -50,6 +52,18 @@ export function AppHeader({
 
         {/* ── Icônes droite ── */}
         <View style={styles.actions}>
+
+          {/* Aide / Guide */}
+          {onHelpPress && (
+            <TouchableOpacity
+              onPress={onHelpPress}
+              style={styles.iconBtn}
+              activeOpacity={0.75}
+              accessibilityLabel="Guide"
+            >
+              <HelpCircle color="#0F172A" size={17} strokeWidth={1.9} />
+            </TouchableOpacity>
+          )}
 
           {/* Notifications */}
           <TouchableOpacity

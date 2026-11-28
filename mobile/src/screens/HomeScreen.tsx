@@ -11,15 +11,18 @@ import React, { useCallback, useMemo } from 'react';
 import { ScrollView, StyleSheet, View, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Search, Flame, LayoutGrid, Bell } from 'lucide-react-native';
 
 import { AppHeader } from '../components/AppHeader';
 import { SearchBar } from '../components/home/SearchBar';
 import { PromoBanner } from '../components/home/PromoBanner';
 import { TopDealsSection } from '../components/home/TopDealsSection';
 import { FeaturedCategoriesSection } from '../components/home/FeaturedCategoriesSection';
+import { PageGuideModal, GuideStep } from '../components/PageGuideModal';
 
 import { useListings } from '../hooks/useListings';
 import { useFavorites } from '../hooks/useFavorites';
+import { usePageGuide } from '../hooks/usePageGuide';
 import { useLang } from '../i18n/LangContext';
 import { PropertyType } from '../types/listing';
 import { RootStackParamList } from '../navigation/types';
@@ -30,8 +33,41 @@ type NavProp = NativeStackNavigationProp<RootStackParamList>;
 export default function HomeScreen() {
   const navigation = useNavigation<NavProp>();
   const { lang, t } = useLang();
+  const isFr = lang === 'fr';
   const { listings, getFeatured, setFilters, resetFilters } = useListings();
   const { favorites, toggleFavorite } = useFavorites();
+  const { visible: guideVisible, openGuide, closeGuide } = usePageGuide('home', 1900);
+
+  const guideSteps: GuideStep[] = useMemo(() => [
+    {
+      title: isFr ? 'Barre de recherche rapide' : 'Quick search bar',
+      description: isFr
+        ? 'Touchez la barre de recherche ou le bouton "Rechercher" pour trouver un bien par ville, quartier ou mot-clé.'
+        : 'Tap the search bar or "Search" button to find a property by city, district, or keyword.',
+      icon: <Search size={26} color={colors.navy} />,
+    },
+    {
+      title: isFr ? 'Top DEALS for you' : 'Top DEALS for you',
+      description: isFr
+        ? 'Retrouvez ici les 4 meilleures offres du moment et faites défiler horizontalement pour voir chaque bien.'
+        : 'Discover the top 4 current deals and swipe horizontally to explore each property.',
+      icon: <Flame size={26} color="#EA580C" />,
+    },
+    {
+      title: isFr ? 'Que recherchez-vous ?' : 'What are you looking for?',
+      description: isFr
+        ? 'Accédez en un clic aux villas, appartements, terrains, studios, bureaux ou locations meublées.'
+        : 'Jump in one tap to villas, apartments, land, studios, offices, or furnished rentals.',
+      icon: <LayoutGrid size={26} color={colors.navy} />,
+    },
+    {
+      title: isFr ? 'Notifications & Profil' : 'Notifications & Profile',
+      description: isFr
+        ? 'En haut à droite, consultez vos alertes (cloche), accédez à votre compte (icône profil) ou rouvrez ce guide (?).'
+        : 'At the top right, view alerts (bell), open your account (profile icon), or reopen this guide (?).',
+      icon: <Bell size={26} color={colors.navy} />,
+    },
+  ], [isFr]);
 
   // 4 meilleures offres pour "Top DEALS for you"
   const topFourDeals = useMemo(() => {
@@ -72,7 +108,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.root}>
       <StatusBar barStyle="dark-content" />
-      <AppHeader />
+      <AppHeader onHelpPress={openGuide} />
 
       <ScrollView
         style={styles.scroll}
@@ -137,6 +173,13 @@ export default function HomeScreen() {
           perMonthLabel={t.common.perMonth}
         />
       </ScrollView>
+
+      <PageGuideModal
+        visible={guideVisible}
+        pageTitle={t.nav.home}
+        steps={guideSteps}
+        onClose={closeGuide}
+      />
     </View>
   );
 }

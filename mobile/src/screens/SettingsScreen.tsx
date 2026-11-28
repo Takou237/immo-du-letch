@@ -3,7 +3,7 @@
  * Paramètres de l'application : compte, langue FR/EN, notifications,
  * raccourcis (Messages, Comparateur), et informations de version.
  */
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -36,12 +36,15 @@ import {
   Calculator,
   MessageCircle,
   LifeBuoy,
+  HelpCircle,
 } from 'lucide-react-native';
 
+import { PageGuideModal, GuideStep } from '../components/PageGuideModal';
 import { useLang } from '../i18n/LangContext';
 import { useAuth } from '../hooks/useAuth';
 import { useNotifications } from '../hooks/useNotifications';
 import { useCompare } from '../hooks/useCompare';
+import { usePageGuide } from '../hooks/usePageGuide';
 import { RootStackParamList } from '../navigation/types';
 import { colors, spacing } from '../theme';
 
@@ -98,6 +101,31 @@ export function SettingsScreen() {
   const [priceAlerts, setPriceAlerts] = useState(true);
   const [newListingsAlerts, setNewListingsAlerts] = useState(true);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const { visible: guideVisible, openGuide, closeGuide } = usePageGuide('settings');
+
+  const guideSteps: GuideStep[] = useMemo(() => [
+    {
+      title: isFr ? 'Compte & Profil' : 'Account & Profile',
+      description: isFr
+        ? 'Connectez-vous ou gérez votre profil personnel, vos annonces déposées et votre statut (Particulier ou Agence).'
+        : 'Sign in or manage your personal profile, posted listings, and account type.',
+      icon: <User size={26} color={colors.navy} />,
+    },
+    {
+      title: isFr ? 'Langue, Notifications & Comparateur' : 'Language, Notifications & Comparator',
+      description: isFr
+        ? 'Basculez entre Français et Anglais et activez ou désactivez les notifications et le comparateur de biens.'
+        : 'Switch between French and English, and enable or disable notifications and property comparison.',
+      icon: <Globe size={26} color={colors.gold} />,
+    },
+    {
+      title: isFr ? 'Aide, Contact & À propos' : 'Help, Contact & About',
+      description: isFr
+        ? 'Consultez les conseils immobiliers, la FAQ, les contacts directs et les informations sur IMMO DU LETCH.'
+        : 'Read real estate advice, FAQ, direct contacts, and information about IMMO DU LETCH.',
+      icon: <LifeBuoy size={26} color={colors.navy} />,
+    },
+  ], [isFr]);
 
   const handleClearCache = () => {
     Alert.alert(
@@ -135,9 +163,14 @@ export function SettingsScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.pageTitle}>
-          {isFr ? 'Paramètres' : 'Settings'}
-        </Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.pageTitle}>
+            {isFr ? 'Paramètres' : 'Settings'}
+          </Text>
+          <TouchableOpacity style={styles.helpBtn} onPress={openGuide} hitSlop={8}>
+            <HelpCircle size={18} color={colors.navy} />
+          </TouchableOpacity>
+        </View>
         <Text style={styles.pageSub}>
           {isFr
             ? 'Gérez votre compte, vos préférences et vos notifications.'
@@ -454,6 +487,13 @@ export function SettingsScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      <PageGuideModal
+        visible={guideVisible}
+        pageTitle={isFr ? 'Paramètres' : 'Settings'}
+        steps={guideSteps}
+        onClose={closeGuide}
+      />
     </SafeAreaView>
   );
 }
@@ -714,5 +754,21 @@ const styles = StyleSheet.create({
     color: colors.navy,
     fontSize: 14,
     fontWeight: '700',
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  helpBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

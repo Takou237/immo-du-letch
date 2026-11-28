@@ -14,13 +14,15 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Heart, Clock, Trash2, Search, Scale } from 'lucide-react-native';
+import { Heart, Clock, Trash2, Search, Scale, HelpCircle } from 'lucide-react-native';
 
 import { ListingRowCard } from '../components/search/ListingRowCard';
 import { ListingCard } from '../components/home/ListingCard';
+import { PageGuideModal, GuideStep } from '../components/PageGuideModal';
 import { useListings } from '../hooks/useListings';
 import { useFavorites } from '../hooks/useFavorites';
 import { useCompare } from '../hooks/useCompare';
+import { usePageGuide } from '../hooks/usePageGuide';
 import { useLang } from '../i18n/LangContext';
 import { RootStackParamList } from '../navigation/types';
 import { colors } from '../theme';
@@ -35,6 +37,24 @@ export function FavoritesScreen() {
   const { compareIds, clearCompare, compareEnabled } = useCompare();
 
   const [tab, setTab] = useState<'favorites' | 'recent'>('favorites');
+  const { visible: guideVisible, openGuide, closeGuide } = usePageGuide('favorites');
+
+  const guideSteps: GuideStep[] = useMemo(() => [
+    {
+      title: lang === 'fr' ? 'Vos biens favoris' : 'Your favorite properties',
+      description: lang === 'fr'
+        ? 'Retrouvez ici toutes les annonces sur lesquelles vous avez touché le cœur, même hors connexion.'
+        : 'Find all listings where you tapped the heart icon, even offline.',
+      icon: <Heart size={26} color="#DC2626" />,
+    },
+    {
+      title: lang === 'fr' ? 'Consultés récemment' : 'Recently viewed',
+      description: lang === 'fr'
+        ? 'Basculez sur l’onglet "Consultés récemment" pour retrouver rapidement les derniers biens ouverts.'
+        : 'Switch to the "Recently viewed" tab to quickly revisit the last listings you opened.',
+      icon: <Clock size={26} color={colors.navy} />,
+    },
+  ], [lang]);
 
   const favListings = useMemo(
     () =>
@@ -56,7 +76,12 @@ export function FavoritesScreen() {
     <SafeAreaView style={styles.root} edges={['top']}>
       {/* En-tête + Onglets */}
       <View style={styles.topSection}>
-        <Text style={styles.pageTitle}>{t.favorites.title}</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.pageTitle}>{t.favorites.title}</Text>
+          <TouchableOpacity style={styles.helpBtn} onPress={openGuide} hitSlop={8}>
+            <HelpCircle size={18} color={colors.navy} />
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.tabsRow}>
           <TouchableOpacity
@@ -221,6 +246,13 @@ export function FavoritesScreen() {
           </View>
         </View>
       )}
+
+      <PageGuideModal
+        visible={guideVisible}
+        pageTitle={t.nav.favorites}
+        steps={guideSteps}
+        onClose={closeGuide}
+      />
     </SafeAreaView>
   );
 }
@@ -384,5 +416,21 @@ const styles = StyleSheet.create({
     color: colors.navy,
     fontSize: 12,
     fontWeight: '800',
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  helpBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

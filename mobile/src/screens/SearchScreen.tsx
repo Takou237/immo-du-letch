@@ -17,12 +17,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search, SlidersHorizontal, X, ArrowUpDown, SearchX, Clock } from 'lucide-react-native';
+import { Search, SlidersHorizontal, X, ArrowUpDown, SearchX, Clock, HelpCircle } from 'lucide-react-native';
 
 import { ListingRowCard } from '../components/search/ListingRowCard';
 import { FilterSheetModal } from '../components/search/FilterSheetModal';
+import { PageGuideModal, GuideStep } from '../components/PageGuideModal';
 import { useListings } from '../hooks/useListings';
 import { useFavorites } from '../hooks/useFavorites';
+import { usePageGuide } from '../hooks/usePageGuide';
 import { useLang } from '../i18n/LangContext';
 import { SortKey } from '../types/listing';
 import { RootStackParamList } from '../navigation/types';
@@ -50,6 +52,31 @@ export function SearchScreen() {
   const [filterModalOpen, setFilterModalOpen] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [recentQueries, setRecentQueries] = useState<string[]>([]);
+  const { visible: guideVisible, openGuide, closeGuide } = usePageGuide('search');
+
+  const guideSteps: GuideStep[] = useMemo(() => [
+    {
+      title: lang === 'fr' ? 'Recherche & Historique' : 'Search & History',
+      description: lang === 'fr'
+        ? 'Tapez une ville, un quartier ou un mot-clé. En touchant la barre, vos recherches récentes apparaissent juste en dessous.'
+        : 'Type a city, district, or keyword. Tapping the bar shows your recent searches right below.',
+      icon: <Search size={26} color={colors.navy} />,
+    },
+    {
+      title: lang === 'fr' ? 'Filtres avancés' : 'Advanced filters',
+      description: lang === 'fr'
+        ? 'Touchez l’icône des réglages pour filtrer par transaction (Acheter/Louer), ville, type, budget, surface, équipements et documents.'
+        : 'Tap the filter icon to filter by transaction, city, type, budget, area, amenities, and documents.',
+      icon: <SlidersHorizontal size={26} color={colors.navy} />,
+    },
+    {
+      title: lang === 'fr' ? 'Tri rapide' : 'Quick sorting',
+      description: lang === 'fr'
+        ? 'Utilisez la ligne "Trier par" pour classer les biens par prix croissant/décroissant, nouveauté, surface ou vues.'
+        : 'Use the "Sort by" row to sort properties by price, newest, area, or views.',
+      icon: <ArrowUpDown size={26} color={colors.navy} />,
+    },
+  ], [lang]);
 
   useEffect(() => {
     (async () => {
@@ -156,6 +183,18 @@ export function SearchScreen() {
               <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
             </View>
           )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.helpBtn}
+          onPress={() => {
+            setSearchFocused(false);
+            openGuide();
+          }}
+          activeOpacity={0.85}
+          accessibilityLabel="Guide"
+        >
+          <HelpCircle size={18} color={colors.navy} />
         </TouchableOpacity>
       </View>
 
@@ -393,6 +432,13 @@ export function SearchScreen() {
         onChangeFilters={setFilters}
         onReset={resetFilters}
         onClose={() => setFilterModalOpen(false)}
+      />
+
+      <PageGuideModal
+        visible={guideVisible}
+        pageTitle={t.nav.search}
+        steps={guideSteps}
+        onClose={closeGuide}
       />
     </SafeAreaView>
   );
@@ -655,5 +701,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.navy,
     fontWeight: '500',
+  },
+  helpBtn: {
+    width: 42,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
