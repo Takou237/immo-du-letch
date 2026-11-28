@@ -63,7 +63,7 @@ export function ListingDetailScreen({ route, navigation }: Props) {
   const { listingId } = route.params;
   const { lang, t } = useLang();
   const isFr = lang === 'fr';
-  const { listings } = useListings();
+  const { listings, recordView } = useListings();
   const { isFavorite, toggleFavorite, addToRecent, favorites } = useFavorites();
   const { isComparing, toggleCompare, compareEnabled } = useCompare();
   const { user } = useAuth();
@@ -80,6 +80,10 @@ export function ListingDetailScreen({ route, navigation }: Props) {
   const [messageBody, setMessageBody] = useState('');
   const [selectedPhotoIdx, setSelectedPhotoIdx] = useState(0);
   const [galleryModalOpen, setGalleryModalOpen] = useState(false);
+
+  useEffect(() => {
+    recordView(listingId);
+  }, [listingId, recordView]);
 
   useEffect(() => {
     if (listing) {

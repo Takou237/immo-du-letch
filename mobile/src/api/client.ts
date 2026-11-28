@@ -161,6 +161,11 @@ export const api = {
       method: 'DELETE',
     }),
 
+  incrementView: (slug: string) =>
+    request<{ views?: number }>(`/listings/${encodeURIComponent(slug)}/view`, {
+      method: 'POST',
+    }),
+
   // ── Favoris ───────────────────────────────────────────
   getFavorites: () => request<{ favorites: string[] }>('/favorites'),
 

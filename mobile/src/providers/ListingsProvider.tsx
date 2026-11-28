@@ -10,6 +10,7 @@ import React, {
   useEffect,
   useMemo,
   useCallback,
+  useRef,
   ReactNode,
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -71,6 +72,7 @@ interface ListingsContextValue {
   countByTransactionFn: (transaction: Transaction) => number;
   addLocalListing: (input: CreateLocalListingInput) => LocalListing;
   deleteLocalListing: (id: string) => void;
+  recordView: (id: string) => void;
 }
 
 const ListingsContext = createContext<ListingsContextValue | null>(null);
@@ -81,6 +83,8 @@ export function ListingsProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
   const [filters, setFiltersState] = useState<Filters>(DEFAULT_FILTERS);
   const [sortKey, setSortKey] = useState<SortKey>('relevance');
+  // Suivi des annonces déjà vues durant la session en cours (1 vue max par annonce et par session)
+  const viewedInSessionRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     let active = true;
@@ -195,6 +199,28 @@ export function ListingsProvider({ children }: { children: ReactNode }) {
       .catch(() => {});
   }, []);
 
+  const recordView = useCallback((id: string) => {
+    if (!id || viewedInSessionRef.current.has(id)) {
+      return;
+    }
+    viewedInSessionRef.current.add(id);
+
+    setBaseListings(prev =>
+      prev.some(l => l.id === id)
+        ? prev.map(l => (l.id === id ? { ...l, views: l.views + 1 } : l))
+        : prev,
+    );
+    setLocalListings(prev =>
+      prev.some(l => l.id === id)
+        ? prev.map(l => (l.id === id ? { ...l, views: l.views + 1 } : l))
+        : prev,
+    );
+
+    if (!id.startsWith('local_')) {
+      api.incrementView(id).catch(() => {});
+    }
+  }, []);
+
   const filteredListings = useMemo(
     () => sortListings(filterListings(allListings, filters), sortKey),
     [allListings, filters, sortKey],
@@ -241,6 +267,7 @@ export function ListingsProvider({ children }: { children: ReactNode }) {
     countByTransactionFn,
     addLocalListing,
     deleteLocalListing,
+    recordView,
   }), [
     allListings,
     localListings,
@@ -257,6 +284,7 @@ export function ListingsProvider({ children }: { children: ReactNode }) {
     countByTransactionFn,
     addLocalListing,
     deleteLocalListing,
+    recordView,
   ]);
 
   return (
