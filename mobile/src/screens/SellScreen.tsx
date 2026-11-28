@@ -194,42 +194,6 @@ export function SellScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const isFr = lang === 'fr';
 
-  // ── Guard : non connecté → écran d'invitation ──
-  if (!user) {
-    return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <View style={styles.lockWrap}>
-          <View style={styles.lockIconCircle}>
-            <Lock color={colors.gold} size={40} strokeWidth={1.8} />
-          </View>
-          <Text style={styles.lockTitle}>
-            {isFr ? 'Connexion requise' : 'Sign in required'}
-          </Text>
-          <Text style={styles.lockSub}>
-            {isFr
-              ? 'Pour déposer une annonce, vous devez d\'abord créer un compte ou vous connecter.'
-              : 'To post a listing, you need to sign in or create an account first.'}
-          </Text>
-          <TouchableOpacity
-            style={styles.lockBtn}
-            onPress={() => navigation.navigate('Profile')}
-            activeOpacity={0.85}
-          >
-            <UserPlus color="#fff" size={18} strokeWidth={2} />
-            <Text style={styles.lockBtnText}>
-              {isFr ? 'Créer un compte / Se connecter' : 'Sign up / Sign in'}
-            </Text>
-          </TouchableOpacity>
-          <Text style={styles.lockHint}>
-            {isFr
-              ? 'C\'est gratuit et ne prend que quelques secondes.'
-              : 'It\'s free and only takes a few seconds.'}
-          </Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   // Champs du formulaire
   const [transaction, setTransaction] = useState<Transaction>('vente');
   const [type, setType] = useState<PropertyType>('villa');
@@ -268,6 +232,42 @@ export function SellScreen() {
       icon: <Upload size={26} color={colors.navy} />,
     },
   ], [isFr]);
+
+  // ── Guard : non connecté → écran d'invitation ──
+  if (!user) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <View style={styles.lockWrap}>
+          <View style={styles.lockIconCircle}>
+            <Lock color={colors.gold} size={40} strokeWidth={1.8} />
+          </View>
+          <Text style={styles.lockTitle}>
+            {isFr ? 'Connexion requise' : 'Sign in required'}
+          </Text>
+          <Text style={styles.lockSub}>
+            {isFr
+              ? 'Pour déposer une annonce, vous devez d\'abord créer un compte ou vous connecter.'
+              : 'To post a listing, you need to sign in or create an account first.'}
+          </Text>
+          <TouchableOpacity
+            style={styles.lockBtn}
+            onPress={() => navigation.navigate('Profile')}
+            activeOpacity={0.85}
+          >
+            <UserPlus color="#fff" size={18} strokeWidth={2} />
+            <Text style={styles.lockBtnText}>
+              {isFr ? 'Créer un compte / Se connecter' : 'Sign up / Sign in'}
+            </Text>
+          </TouchableOpacity>
+          <Text style={styles.lockHint}>
+            {isFr
+              ? 'C\'est gratuit et ne prend que quelques secondes.'
+              : 'It\'s free and only takes a few seconds.'}
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const toggleEquipment = (key: string) => {
     setEquipments(prev =>
