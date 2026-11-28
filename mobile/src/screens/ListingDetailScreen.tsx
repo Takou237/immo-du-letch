@@ -48,6 +48,7 @@ import { useListings } from '../hooks/useListings';
 import { useFavorites } from '../hooks/useFavorites';
 import { useCompare } from '../hooks/useCompare';
 import { useAuth } from '../hooks/useAuth';
+import { api } from '../api/client';
 import { FinancingCalculator } from '../components/detail/FinancingCalculator';
 import { ListingImage } from '../components/ListingImage';
 import { ListingCard } from '../components/home/ListingCard';
@@ -142,7 +143,7 @@ export function ListingDetailScreen({ route, navigation }: Props) {
     Linking.openURL(`tel:${cleanPhone}`).catch(() => {});
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!senderName.trim() || !senderEmail.trim() || !messageBody.trim()) {
       Alert.alert(
         isFr ? 'Champs requis' : 'Required fields',
@@ -152,6 +153,18 @@ export function ListingDetailScreen({ route, navigation }: Props) {
       );
       return;
     }
+
+    try {
+      await api.sendInquiry(listing.id, {
+        name: senderName.trim(),
+        email: senderEmail.trim(),
+        phone: user?.phone || undefined,
+        message: messageBody.trim(),
+      });
+    } catch {
+      // Fallback hors-ligne : confirmation locale conservée
+    }
+
     setMsgModalOpen(false);
     Alert.alert(
       isFr ? 'Message envoyé' : 'Message sent',

@@ -23,6 +23,7 @@ import {
 } from '../types/listing';
 import { LISTINGS, LISTING_GRADIENTS } from '../data/listings';
 import { fetchRemoteListings } from '../api/listingsApi';
+import { api, getApiToken } from '../api/client';
 import {
   filterListings,
   sortListings,
@@ -157,11 +158,41 @@ export function ListingsProvider({ children }: { children: ReactNode }) {
       localStatus: 'pending',
     };
     setLocalListings(prev => [created, ...prev]);
+
+    // Synchronisation avec le backend Laravel si connecté
+    getApiToken()
+      .then(token => {
+        if (!token) return null;
+        return api.createListing({
+          title: created.title,
+          price: created.price,
+          transaction: created.transaction,
+          type: created.type,
+          city: created.city,
+          neighborhood: created.neighborhood,
+          rooms: created.bedrooms,
+          bedrooms: created.bedrooms,
+          bathrooms: created.bathrooms,
+          surface: created.surface,
+          description: created.description,
+          features: created.features,
+          condition: created.condition,
+          sellerPhone: created.seller.phone,
+        });
+      })
+      .catch(() => {});
+
     return created;
   }, []);
 
   const deleteLocalListing = useCallback((id: string) => {
     setLocalListings(prev => prev.filter(l => l.id !== id));
+    getApiToken()
+      .then(token => {
+        if (!token) return null;
+        return api.deleteListing(id);
+      })
+      .catch(() => {});
   }, []);
 
   const filteredListings = useMemo(

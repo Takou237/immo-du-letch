@@ -5,6 +5,7 @@
  */
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { api, getApiToken } from '../api/client';
 
 const STORAGE_FAV  = 'immo:favorites';
 const STORAGE_REC  = 'immo:recent';
@@ -36,6 +37,14 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
         ]);
         if (rawFav) setFavorites(JSON.parse(rawFav));
         if (rawRec) setRecent(JSON.parse(rawRec));
+
+        const token = await getApiToken();
+        if (token) {
+          const remote = await api.getFavorites().catch(() => null);
+          if (remote?.favorites) {
+            setFavorites(prev => Array.from(new Set([...remote.favorites, ...prev])));
+          }
+        }
       } catch {
         // Silencieux : si lecture échoue, on part de zéro
       } finally {
@@ -60,6 +69,12 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     setFavorites(prev =>
       prev.includes(id) ? prev.filter(f => f !== id) : [id, ...prev],
     );
+    getApiToken()
+      .then(token => {
+        if (token) return api.toggleFavorite(id);
+        return null;
+      })
+      .catch(() => {});
   }, []);
 
   const isFavorite = useCallback(

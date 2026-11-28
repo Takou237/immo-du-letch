@@ -110,7 +110,7 @@ export function ProfileScreen({ navigation }: Props) {
 
   const isEmailValid = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!isEmailValid(email)) {
       Alert.alert(
         lang === 'fr' ? 'E-mail invalide' : 'Invalid email',
@@ -129,10 +129,17 @@ export function ProfileScreen({ navigation }: Props) {
       );
       return;
     }
-    loginWithEmail(email);
+    try {
+      await loginWithEmail(email, password);
+    } catch (err) {
+      Alert.alert(
+        lang === 'fr' ? 'Connexion impossible' : 'Sign in failed',
+        err instanceof Error ? err.message : (lang === 'fr' ? 'Identifiants invalides.' : 'Invalid credentials.'),
+      );
+    }
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!regName.trim()) {
       Alert.alert(
         lang === 'fr' ? 'Nom requis' : 'Name required',
@@ -161,12 +168,20 @@ export function ProfileScreen({ navigation }: Props) {
       );
       return;
     }
-    registerWithEmail({
-      name: regName,
-      email: regEmail,
-      phone: regPhone,
-      accountType: regAccountType,
-    });
+    try {
+      await registerWithEmail({
+        name: regName,
+        email: regEmail,
+        password: regPassword,
+        phone: regPhone,
+        accountType: regAccountType,
+      });
+    } catch (err) {
+      Alert.alert(
+        lang === 'fr' ? 'Inscription impossible' : 'Sign up failed',
+        err instanceof Error ? err.message : (lang === 'fr' ? 'Impossible de créer le compte.' : 'Unable to create account.'),
+      );
+    }
   };
 
   const handleForgotPassword = () => {
