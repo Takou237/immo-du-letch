@@ -3,7 +3,10 @@
  * Formulaire "Déposer une annonce" aligné sur le design web.
  * 1 page, sans étapes multiples, bouton "Soumettre pour validation".
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RootStackParamList } from '../navigation/types';
 import {
   View,
   Text,
@@ -31,6 +34,7 @@ import { PageGuideModal, GuideStep } from '../components/PageGuideModal';
 import { useListings } from '../hooks/useListings';
 import { usePageGuide } from '../hooks/usePageGuide';
 import { useLang } from '../i18n/LangContext';
+import { useAuthContext } from '../providers/AuthProvider';
 import { CITY_OPTIONS } from '../data/listings';
 import { PropertyType, Transaction } from '../types/listing';
 import { colors, spacing } from '../theme';
@@ -184,7 +188,20 @@ function Stepper({
 export function SellScreen() {
   const { lang } = useLang();
   const { addLocalListing } = useListings();
+  const { user } = useAuthContext();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const isFr = lang === 'fr';
+
+  // Guard : non connecté → page de connexion
+  useEffect(() => {
+    if (!user) {
+      navigation.navigate('Profile');
+    }
+  }, [user, navigation]);
+
+  if (!user) {
+    return null;
+  }
 
   // Champs du formulaire
   const [transaction, setTransaction] = useState<Transaction>('vente');

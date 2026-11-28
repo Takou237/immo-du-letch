@@ -45,14 +45,14 @@ function MainTabs() {
           backgroundColor: colors.navy,
           borderTopColor: colors.navyLight,
           borderTopWidth: 1,
-          height: 58 + bottomPadding,
+          height: 62 + bottomPadding,
           paddingBottom: bottomPadding,
-          paddingTop: 8,
+          paddingTop: 6,
         },
         tabBarLabelStyle: {
           fontSize: 10.5,
           fontWeight: '600',
-          marginTop: 2,
+          marginTop: 1,
         },
         tabBarItemStyle: {
           paddingHorizontal: 2,
