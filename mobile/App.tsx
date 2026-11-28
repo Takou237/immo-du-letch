@@ -7,13 +7,15 @@ import { StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppProvider } from './src/providers/AppProvider';
 import { AppNavigator } from './src/navigation/AppNavigator';
+import { SplashOverlay } from './src/components/SplashOverlay';
 
 function App() {
   return (
     <SafeAreaProvider>
       <AppProvider>
-        <StatusBar barStyle="light-content" />
+        <StatusBar barStyle="dark-content" />
         <AppNavigator />
+        <SplashOverlay />
       </AppProvider>
     </SafeAreaProvider>
   );
