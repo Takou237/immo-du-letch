@@ -302,12 +302,12 @@ export function SellScreen() {
       bedrooms: pieces,
       city,
       neighborhood: neighborhood.trim(),
-      description: description.trim(),
+      description: description.trim() || `${type} à ${transaction === 'vente' ? 'vendre' : 'louer'} à ${city}`,
       features: equipments.map(k =>
         EQUIPMENT_OPTIONS.find(e => e.key === k)?.[isFr ? 'fr' : 'en'] ?? k,
       ),
-      sellerName: 'Moi',
-      sellerPhone: '+237 ',
+      sellerName: user.name,
+      sellerPhone: user.phone || '',
     });
 
     setSubmitted(true);

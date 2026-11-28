@@ -165,26 +165,34 @@ export function ListingsProvider({ children }: { children: ReactNode }) {
 
     // Synchronisation avec le backend Laravel si connecté
     getApiToken()
-      .then(token => {
-        if (!token) return null;
-        return api.createListing({
-          title: created.title,
-          price: created.price,
-          transaction: created.transaction,
-          type: created.type,
-          city: created.city,
-          neighborhood: created.neighborhood,
-          rooms: created.bedrooms,
-          bedrooms: created.bedrooms,
-          bathrooms: created.bathrooms,
-          surface: created.surface,
-          description: created.description,
-          features: created.features,
-          condition: created.condition,
-          sellerPhone: created.seller.phone,
-        });
+      .then(async token => {
+        if (!token) {
+          console.log('[addListing] Pas de token → annonce locale uniquement');
+          return null;
+        }
+        try {
+          const result = await api.createListing({
+            title: created.title,
+            price: created.price,
+            transaction: created.transaction,
+            type: created.type,
+            city: created.city,
+            neighborhood: created.neighborhood,
+            rooms: created.bedrooms ?? 1,       // ← champ requis par le backend
+            bedrooms: created.bedrooms,
+            bathrooms: created.bathrooms,
+            surface: created.surface,
+            description: created.description || ' ',
+            features: created.features,
+            condition: created.condition,
+            sellerPhone: input.sellerPhone || undefined,
+          });
+          console.log('[addListing] Annonce envoyée au backend ✓', result);
+        } catch (err) {
+          console.error('[addListing] Erreur backend:', err);
+        }
       })
-      .catch(() => {});
+      .catch(err => console.error('[addListing] Erreur token:', err));
 
     return created;
   }, []);

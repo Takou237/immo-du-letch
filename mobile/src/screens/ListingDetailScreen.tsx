@@ -59,6 +59,8 @@ import { colors } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ListingDetail'>;
 
+const WEB_BASE_URL = 'https://immo-du-letch-eosin.vercel.app';
+
 export function ListingDetailScreen({ route, navigation }: Props) {
   const { listingId } = route.params;
   const { lang, t } = useLang();
@@ -179,8 +181,16 @@ export function ListingDetailScreen({ route, navigation }: Props) {
   };
 
   const handleShare = () => {
+    const listingUrl = `${WEB_BASE_URL}/annonce/${listing.id}`;
+    const listingTitle = isFr ? listing.title : listing.titleEn;
+    const shareMessage = isFr
+      ? `${listingTitle} — ${formatFullFCFA(listing.price)}\n📍 ${listing.neighborhood}, ${listing.city}\n\n🔗 Voir l'annonce : ${listingUrl}\n\nVia IMMO DU LETCH`
+      : `${listingTitle} — ${formatFullFCFA(listing.price)}\n📍 ${listing.neighborhood}, ${listing.city}\n\n🔗 View listing: ${listingUrl}\n\nVia IMMO DU LETCH`;
+
     Share.share({
-      message: `${title} — ${formatFullFCFA(listing.price)} (${listing.neighborhood}, ${listing.city}) | IMMO DU LETCH`,
+      message: shareMessage,
+      url: listingUrl,          // utilisé par iOS pour afficher un aperçu
+      title: listingTitle,
     }).catch(() => {});
   };
 
