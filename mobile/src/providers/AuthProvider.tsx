@@ -106,21 +106,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await setApiToken(res.token);
       setUser(mapApiUser(res.user));
     } catch (err) {
-      const apiErr = err as ApiError;
-      if (apiErr.status) {
-        // Erreur explicite serveur (ex: mot de passe incorrect) -> remonter à l'UI
-        throw err;
-      }
-      // Pas de réseau -> repli hors-ligne
-      const fallbackName = cleanEmail.split('@')[0] || 'Utilisateur';
-      setUser({
-        id: `user_${Date.now()}`,
-        name: fallbackName.charAt(0).toUpperCase() + fallbackName.slice(1),
-        email: cleanEmail,
-        phone: '+237 699 000 000',
-        accountType: 'particulier',
-        createdAt: new Date().toISOString(),
-      });
+      // Toujours remonter l'erreur à l'UI (identifiants invalides OU pas de réseau)
+      throw err;
     }
   }, []);
 

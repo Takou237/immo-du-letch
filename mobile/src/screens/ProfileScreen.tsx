@@ -92,7 +92,7 @@ export function ProfileScreen({ navigation }: Props) {
   // Inscription
   const [regName, setRegName] = useState('');
   const [regEmail, setRegEmail] = useState('');
-  const [regPhone, setRegPhone] = useState('+237 6');
+  const [regPhone, setRegPhone] = useState('');
   const [regAccountType, setRegAccountType] = useState<AccountType>('particulier');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirm, setRegConfirm] = useState('');
@@ -132,9 +132,12 @@ export function ProfileScreen({ navigation }: Props) {
     try {
       await loginWithEmail(email, password);
     } catch (err) {
+      const isNetwork = err instanceof Error && !('status' in err);
       Alert.alert(
         lang === 'fr' ? 'Connexion impossible' : 'Sign in failed',
-        err instanceof Error ? err.message : (lang === 'fr' ? 'Identifiants invalides.' : 'Invalid credentials.'),
+        isNetwork
+          ? (lang === 'fr' ? 'Vérifiez votre connexion internet.' : 'Please check your internet connection.')
+          : (lang === 'fr' ? 'E-mail ou mot de passe incorrect.' : 'Incorrect email or password.'),
       );
     }
   };

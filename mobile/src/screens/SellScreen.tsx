@@ -3,7 +3,7 @@
  * Formulaire "Déposer une annonce" aligné sur le design web.
  * 1 page, sans étapes multiples, bouton "Soumettre pour validation".
  */
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/types';
@@ -28,6 +28,8 @@ import {
   HelpCircle,
   Home,
   SlidersHorizontal,
+  Lock,
+  UserPlus,
 } from 'lucide-react-native';
 
 import { PageGuideModal, GuideStep } from '../components/PageGuideModal';
@@ -192,15 +194,40 @@ export function SellScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const isFr = lang === 'fr';
 
-  // Guard : non connecté → page de connexion
-  useEffect(() => {
-    if (!user) {
-      navigation.navigate('Profile');
-    }
-  }, [user, navigation]);
-
+  // ── Guard : non connecté → écran d'invitation ──
   if (!user) {
-    return null;
+    return (
+      <SafeAreaView style={styles.safe} edges={['top']}>
+        <View style={styles.lockWrap}>
+          <View style={styles.lockIconCircle}>
+            <Lock color={colors.gold} size={40} strokeWidth={1.8} />
+          </View>
+          <Text style={styles.lockTitle}>
+            {isFr ? 'Connexion requise' : 'Sign in required'}
+          </Text>
+          <Text style={styles.lockSub}>
+            {isFr
+              ? 'Pour déposer une annonce, vous devez d\'abord créer un compte ou vous connecter.'
+              : 'To post a listing, you need to sign in or create an account first.'}
+          </Text>
+          <TouchableOpacity
+            style={styles.lockBtn}
+            onPress={() => navigation.navigate('Profile')}
+            activeOpacity={0.85}
+          >
+            <UserPlus color="#fff" size={18} strokeWidth={2} />
+            <Text style={styles.lockBtnText}>
+              {isFr ? 'Créer un compte / Se connecter' : 'Sign up / Sign in'}
+            </Text>
+          </TouchableOpacity>
+          <Text style={styles.lockHint}>
+            {isFr
+              ? 'C\'est gratuit et ne prend que quelques secondes.'
+              : 'It\'s free and only takes a few seconds.'}
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   // Champs du formulaire
@@ -867,5 +894,58 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  // ── Écran connexion requise ───────────────────────────────
+  lockWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  lockIconCircle: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: '#FEF9EC',
+    borderWidth: 2,
+    borderColor: colors.gold,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  lockTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: colors.navy,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  lockSub: {
+    fontSize: 14,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 28,
+  },
+  lockBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: colors.navy,
+    borderRadius: 12,
+    paddingHorizontal: 28,
+    paddingVertical: 15,
+    marginBottom: 14,
+  },
+  lockBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  lockHint: {
+    fontSize: 12,
+    color: colors.textMuted,
+    textAlign: 'center',
   },
 });
